@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+
+
+
+.team-image {
+  position: relative;
+  margin-top: -160px;
+  overflow: hidden;
+  object-fit: contain;
+  width: 80%;
+  object-fit: cover;
+  z-index: 1;
+  left: 12%;
+}
+
+
+.transform-text-landing {
+  transform: scale(1.4);
+  margin-top: 12rem;
+}
+
+.side-login-panel
+{
+  background-image: url("./pages/assets/Sideasset.png");
+   width:200px;
+  background-size: cover;
+  background-position:bottom ;
+  background-repeat: no-repeat;
+}
+
+@media (max-width: 767px) {
+
+  .team-image {
+    position: absolute;
+    margin-top: 100px;
+    overflow: hidden;
+    object-fit: contain;
+    width: 100%;
+    object-fit: cover;
+    z-index: 1;
+    left: 4%;
+  }
+
+  .gradient-bg {
+    width: 100%;
+    height: 1400px;
+    background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
+    position: relative;
+    overflow: hidden;
+    object-fit: contain;
+
+  }
+
+}
+
+
+
+.gradient-bg {
+  width: 100%;
+  height: 1400px;
+  /* Adjust as needed */
+  background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
+  position: relative;
+  overflow: hidden;
+  object-fit: contain;
+
+}
+
+/* First layer of the dusty effect - semi-transparent overlay */
+.gradient-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background-color: rgba(222, 222, 222, 0.1);
+  pointer-events: none;
+}
+
+/* Second layer of the dusty effect - noise texture */
+.gradient-bg::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  /* SVG noise filter for the dusty texture */
+  background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.05"/%3E%3C/svg%3E');
+  opacity: 0.2;
+  filter: contrast(120%);
+  pointer-events: none;
+}
+
+/* Additional styling for content within the gradient area */
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 20px;
+}
