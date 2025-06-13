@@ -7,8 +7,13 @@ services:
     ports:
       - "8080:3002"      
     environment:
-      - PORT=3002
-      - MONGO_URI=mongodb://admin:secret@mongodb:27017/employees?authSource=admin
+      - MONGO_URI: mongodb://admin:secret@mongodb:27017/employees?authSource=admin
+      - PORT: 3002
+      - USERNAME: Test
+      - PASSWORD: password0123@
+      - FIRST_NAME: admin
+      - LAST_NAME: admin
+      - EMAIL: admin@admintest.com
     depends_on:
       - mongodb
     networks:

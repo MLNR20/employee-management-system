@@ -1,10 +1,12 @@
 import express from 'express';
 import  {Administrator}  from '../models/administratorsModel.js';
-import {first_name, last_name, username, password, email} from '../config/config.js'
+import { config } from '../config/config.js'
 import bcrypt from 'bcryptjs'; // Use ES6 import for consistency
 import jwt from 'jsonwebtoken'
 
 const routerAdmin = express.Router();
+
+const { username, password, first_name, last_name, email } = config;
 
 
 routerAdmin.get('/', async(req,res) =>{
