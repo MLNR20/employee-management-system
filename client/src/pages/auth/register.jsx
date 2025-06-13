@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import {  useState, useEffect } from "react";
 import icon from "../assets/icon.png";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -15,6 +15,25 @@ const Register = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const {enqueueSnackbar} = useSnackbar();
+
+
+
+
+
+
+  useEffect(()=>{
+        axios.get('http://localhost:8080/admin/')
+          .then(response => {
+            console.log(response.data);
+          })
+          .catch(err => {
+    
+            if(err.message === "Request failed with status code 403") navigate("/login/")
+            console.error(err);
+          });
+    
+      });
+  
 
   const validateForm = () => {
     const newErrors = {};
@@ -115,7 +134,7 @@ const Register = () => {
       username,
     };
 
-    axios.post("http://localhost:3002/admin/register", admin).then(() => {
+    axios.post("http://localhost:8080/admin/register", admin).then(() => {
       navigate("/login/");
     }).catch(err => {
       console.error("Registration failed", err);

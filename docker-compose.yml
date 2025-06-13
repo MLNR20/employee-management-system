@@ -1,0 +1,51 @@
+services:
+  backend:
+    build:
+      context: ./server  
+    image: react-app:latest 
+    container_name: backend
+    ports:
+      - "8080:3002"      
+    environment:
+      - PORT=3002
+      - MONGO_URI=mongodb://admin:secret@mongodb:27017/employees?authSource=admin
+    depends_on:
+      - mongodb
+    networks:
+      - mern-network
+
+  frontend:
+    build:
+      context: ./client  
+    image: mern-app:latest  
+    container_name: frontend
+    ports:
+      - "3000:3000"       
+    environment:
+      - REACT_APP_BACKEND_URL=http://backend:3002
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - mern-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    volumes:
+      - mongodb-data:/data/db
+    restart: unless-stopped
+    networks:     
+      - mern-network
+
+volumes:
+  mongodb-data:
+
+networks:
+  mern-network:
+    driver: bridge

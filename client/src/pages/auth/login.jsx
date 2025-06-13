@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import icon from "../assets/icon.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
@@ -15,6 +15,22 @@ function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const { enqueueSnackbar } = useSnackbar();
+
+
+
+    useEffect(()=>{
+        axios.get('http://localhost:8080/admin/')
+          .then(response => {
+            console.log(response.data);
+          })
+          .catch(err => {
+    
+            if(err.message === "Request failed with status code 403") navigate("/login/")
+            console.error(err);
+          });
+    
+      });
+    
 
     const validateForm = () => {
       const newErrors = {};
@@ -44,7 +60,7 @@ function Login() {
             password,
         };
 
-        axios.post('http://localhost:3002/admin/login', data)
+        axios.post('http://localhost:8080/admin/login', data)
             .then((response) => {
                 navigate('/employees/');
                 sessionStorage.setItem('token', response.data.token);
@@ -53,11 +69,11 @@ function Login() {
 
               if(error.response.data === "User not found")
               {
-                enqueueSnackbar('Incorrect username.', { variant: 'error' });
+                enqueueSnackbar('Incorrect username or password.', { variant: 'error' });
               }
               else if(error.response.data === "Invalid password")
               {
-                enqueueSnackbar("Incorrect password.", {variant: "error"});
+                enqueueSnackbar("Incorrect username or password.", {variant: "error"});
               }
 
                 console.error(error);

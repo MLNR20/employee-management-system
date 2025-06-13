@@ -40,7 +40,7 @@ export default function View_Employees() {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://localhost:3002/employees/${id}`,
+          .delete(`http://localhost:8080/employees/${id}`,
             {
               headers:{
                 Authorization: `Bearer ${token}`
@@ -67,7 +67,7 @@ export default function View_Employees() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3002/employees/", {headers:{Authorization: `Bearer ${token}`}})
+      .get("http://localhost:8080/employees/", {headers:{Authorization: `Bearer ${token}`}})
       .then((response) => {
         setEmployees(response.data.data);
         setNoOfEmployees(response.data.data.length);

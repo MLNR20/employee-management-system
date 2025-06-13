@@ -21,7 +21,7 @@ export default function Edit_Employees() {
 
 
     useEffect(()=>{
-        axios.get(`http://localhost:3002/employees/${id}`,{
+        axios.get(`http://localhost:8080/employees/${id}`,{
           headers:{
              Authorization: `Bearer ${token}`
           }
@@ -118,7 +118,7 @@ export default function Edit_Employees() {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .put(`http://localhost:3002/employees/${id}`,employees,
+          .put(`http://localhost:8080/employees/${id}`,employees,
           {headers:
               {
                 Authorization: `Bearer ${token}`

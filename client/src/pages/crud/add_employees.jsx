@@ -21,7 +21,7 @@ export default function Add_Employees() {
 
 
   useEffect(()=>{
-    axios.get('http://localhost:3002/employees/protected', {
+    axios.get('http://localhost:8080/employees/protected', {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(response => {
@@ -126,7 +126,7 @@ export default function Add_Employees() {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .post("http://localhost:3002/employees/",employees, 
+          .post("http://localhost:8080/employees/",employees, 
             {
               headers:{
                 Authorization: `Bearer ${token}`
@@ -136,7 +136,7 @@ export default function Add_Employees() {
           .then(() => {
             Swal.fire({
               title: "Success!",
-              text: "Employee successfully addded.",
+              text: "Employee successfully added.",
               icon: "success",
               showCancelButton: true,
               confirmButtonColor: "#3F7D58",

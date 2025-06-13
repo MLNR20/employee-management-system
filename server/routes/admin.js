@@ -6,6 +6,32 @@ import jwt from 'jsonwebtoken'
 const routerAdmin = express.Router();
 
 
+routerAdmin.get('/', async(req,res) =>{
+
+ try {
+      const result = await Administrator.find();
+
+      if(result.length === 0)
+      {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash("password0123@", saltRounds);
+        const newUser = new Administrator({username: "Test", password: hashedPassword, first_name: "Admin", last_name:"Account", email: "test@gmail.com"});
+        await newUser.save();
+        res.json({message: "Newly created!"});
+      }
+      else
+      {
+        res.json(result);
+      }
+
+    } 
+    catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+
+
+})
+
 routerAdmin.post('/login', async(req,res)=>{
 
     const user = {
@@ -13,9 +39,7 @@ routerAdmin.post('/login', async(req,res)=>{
         password: req.body.password
     }
 
-
-    
-
+  
     const usernameMatch = await Administrator.findOne({
         username: req.body.username,
     })
@@ -93,7 +117,7 @@ routerAdmin.post('/register', async (request, response) => {
     if(error.code === 11000)
     {
       return response.status(400).json({message: "Username or email already exists",       message: 'Duplicate entry',
-        code: error.code, // 👈 sends MongoDB error code
+        code: error.code, 
       });
     }
     
