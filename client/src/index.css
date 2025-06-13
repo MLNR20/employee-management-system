@@ -46,43 +46,59 @@ code {
   background-repeat: no-repeat;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 600px) {
 
   .team-image {
     position: absolute;
-    margin-top: 100px;
+    margin-top: 8rem;
     overflow: hidden;
     object-fit: contain;
     width: 100%;
+    transform: scale(2.2);
     object-fit: cover;
     z-index: 1;
-    left: 4%;
+    left: -4%;
   }
 
+  .content
+  {
+    padding:4rem;
+  }
   .gradient-bg {
     width: 100%;
-    height: 1400px;
+    height: 80rem;
     background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
     position: relative;
     overflow: hidden;
     object-fit: contain;
 
   }
+  
+}
+
+@media (min-width: 1024px) {
+  .gradient-bg {
+      width: 100%;
+      height: 100rem;
+      background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
+      position: relative;
+      overflow: hidden;
+      object-fit: contain;
+  }
+
+    /* Additional styling for content within the gradient area */
+  .content {
+    position: relative;
+    z-index: 1;
+    padding: 4rem;
+  }
 
 }
 
 
 
-.gradient-bg {
-  width: 100%;
-  height: 1400px;
-  /* Adjust as needed */
-  background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
-  position: relative;
-  overflow: hidden;
-  object-fit: contain;
 
-}
+
 
 /* First layer of the dusty effect - semi-transparent overlay */
 .gradient-bg::before {
@@ -109,11 +125,4 @@ code {
   opacity: 0.2;
   filter: contrast(120%);
   pointer-events: none;
-}
-
-/* Additional styling for content within the gradient area */
-.content {
-  position: relative;
-  z-index: 1;
-  padding: 20px;
 }

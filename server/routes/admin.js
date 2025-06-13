@@ -1,5 +1,6 @@
 import express from 'express';
 import  {Administrator}  from '../models/administratorsModel.js';
+import {first_name, last_name, username, password, email} from '../config/config.js'
 import bcrypt from 'bcryptjs'; // Use ES6 import for consistency
 import jwt from 'jsonwebtoken'
 
@@ -14,8 +15,8 @@ routerAdmin.get('/', async(req,res) =>{
       if(result.length === 0)
       {
         const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash("password0123@", saltRounds);
-        const newUser = new Administrator({username: "Test", password: hashedPassword, first_name: "Admin", last_name:"Account", email: "test@gmail.com"});
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const newUser = new Administrator({username: username, password: hashedPassword, first_name: first_name, last_name:last_name, email: email});
         await newUser.save();
         res.json({message: "Newly created!"});
       }

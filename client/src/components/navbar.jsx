@@ -8,12 +8,12 @@ const Navbar = () => {
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
         <Link to="/">
         <a
-          className="flex items-center space-x-3 rtl:space-x-reverse"
+          className="flex items-center space-x-2 md:space-x-3 rtl:space-x-reverse"
         >
             
              <img
                 src={icon}
-                className="h-12"
+                className="h-10 lg:h-12"
                 alt="ManageMe Logo"
             />
             <span className="self-center text-blue-700 text-2xl font-semibold whitespace-nowrap">

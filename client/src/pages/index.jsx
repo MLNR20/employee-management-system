@@ -8,11 +8,11 @@ function Home() {
       <Navbar/>
       <div className="background-demo">
         <div className="gradient-bg">
-          <div className="content"></div>
+          <div className="content">
 
           <div className="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12 transform-text-landing">
-            <a
-              href="#"
+            <Link
+              to="/"
               className="inline-flex justify-between items-center py-2.5 px-3  mb-6 text-sm text-blue-700 bg-blue-100 rounded-full"
               role="alert"
             >
@@ -21,12 +21,12 @@ function Home() {
                 Welcome To
               </span>
            
-            </a>
+            </Link>
             <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-blue-700 md:text-5xl lg:text-6xl">
-              Welcome to ManageMe.com
+              Welcome to ManageMe
             </h1>
-            <p className="mb-8 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">
-              You're one and only website in managing your employees<br/>
+            <p className="mb-8 md:text-lg font-normal text-gray-500 lg:text-xl sm:text-md sm:px-16 xl:px-48 dark:text-gray-400">
+              You're one and only website in managing your employees <br className="sm:hidden md:block"/>
               and co-workers through the power of the Internet.
             </p>
             <div className="flex flex-col z-20 mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4">
@@ -62,7 +62,7 @@ function Home() {
                 Get Managin!
               </Link>
             </div>
-           
+           </div>
           </div>
 
           <img src={image} alt="Team" className="team-image" />
