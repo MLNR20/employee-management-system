@@ -172,19 +172,6 @@ export default function View_Employees() {
                           </tr>
                         ))}
                       </tbody>
-                      <tfoot className="bg-gray-100">
-                        <tr>
-                          <th className="px-6 py-3">#</th>
-                          <th className="px-6 py-3">Full Name</th>
-                          <th className="px-6 py-3">Email</th>
-                          <th className="px-6 py-3">Position</th>
-                          <th className="px-6 py-3">Salary</th>
-                          <th className="px-6 py-3">Department</th>
-                          <th className="px-6 py-3">Status</th>
-                          <th className="px-6 py-3">Hire Date</th>
-                          <th className="px-6 py-3">Operations</th>
-                        </tr>
-                      </tfoot>
                     </table>
                   </div>
                 ) : (

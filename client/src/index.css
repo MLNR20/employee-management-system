@@ -96,7 +96,12 @@ code {
   and (orientation: portrait) 
   and (-webkit-min-device-pixel-ratio: 2) {
 
-  
+    
+  .hide-dropdown-md
+  {
+    display: none;
+  }
+
   .content
   {
     transform: scale(0.9);
@@ -132,7 +137,28 @@ code {
   and (orientation: landscape) 
   and (-webkit-min-device-pixel-ratio: 2) {
   
-  /* Styles for iPad Mini in landscape */
+  .gradient-bg {
+    width: 100%;
+    height: 70rem;
+    background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
+    position: relative;
+    overflow: hidden;
+    object-fit: contain;
+
+  }
+
+
+  .team-image {
+      position: relative;
+      margin-top: -160px;
+      overflow: hidden;
+      object-fit: contain;
+      width: 80%;
+      object-fit: cover;
+      z-index: 1;
+      left: 12%;
+    }
+
 }
 
 
@@ -200,13 +226,16 @@ code {
   
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1367px) {
 
   
   .hide-dropdown-md
   {
     display: none;
   }
+
+
+
   .gradient-bg {
       width: 100%;
       height: 100rem;
@@ -219,6 +248,7 @@ code {
     /* Additional styling for content within the gradient area */
   .content {
     position: relative;
+    transform: scale(1.2);
     z-index: 1;
     padding: 4rem;
   }
