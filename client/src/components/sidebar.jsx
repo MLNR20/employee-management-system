@@ -1,16 +1,22 @@
 import { Link, useNavigate } from "react-router-dom";
+import { initFlowbite } from "flowbite";
+import { useEffect } from "react";
 
 const SideBar=()=> {
 
-  const token = sessionStorage.getItem('token'); // Get token from storage
+  const token = sessionStorage.getItem('token'); 
   const navigate = useNavigate();
 
   const logout = ()=>{
     sessionStorage.removeItem('token');
-    navigate("/");
+    navigate("/login");
 
   }
 
+  useEffect(() => {
+    initFlowbite(); 
+    console.log("Flowbite dropdown reinitialized");
+  }, []);
 
   return (
     <div>
@@ -48,7 +54,7 @@ const SideBar=()=> {
                             </Link>
                         </li>
                         <li>
-                            <Link onClick={logout} className="flex items-center p-2 text-gray-500 rounded-lg  hover:bg-blue-700 hover:text-white group">
+                            <Link to="/login/" onClick={logout} className="flex items-center p-2 text-gray-500 rounded-lg  hover:bg-blue-700 hover:text-white group">
                                 <svg className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" 
                                     aria-hidden="true" 
                                     xmlns="http://www.w3.org/2000/svg" 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
+import { initFlowbite } from "flowbite";
 
 
 function Login() {
@@ -18,19 +19,26 @@ function Login() {
 
 
 
-    useEffect(()=>{
-        axios.get('http://localhost:8080/admin/')
-          .then(response => {
-            console.log(response.data);
-          })
-          .catch(err => {
-    
-            if(err.message === "Request failed with status code 403") navigate("/login/")
-            console.error(err);
-          });
-    
-      });
-    
+    useEffect(() => {
+            axios.get('http://localhost:8080/admin/')
+              .then(response => {
+                console.log(response.data);
+                document.body.classList.remove("overflow-hidden");
+                document.querySelector('[drawer-backdrop]').remove();
+              })
+              .catch(err => {
+                if (err.response?.status === 403) {
+                  navigate("/login/");
+                } else {
+                  console.error(err);
+                }
+              });
+          }, []); 
+
+        useEffect(() => {
+          initFlowbite(); 
+        }, []);
+          
 
     const validateForm = () => {
       const newErrors = {};
@@ -203,7 +211,7 @@ function Login() {
             <button
               id="login-button"
               onClick = {handleLogin}
-              className="text-white mt-6  bg-blue-600 hover:bg-blue-700 p-2.5 button-primary  focus:ring-4  font-medium rounded-lg text-sm sm:px-4 lg:px-4 focus:outline-none"
+              className="text-white mt-6  bg-blue-600 hover:bg-blue-700 px-4 py-2.5  button-primary  focus:ring-4  font-medium rounded-lg text-sm sm:px-4 lg:px-4 focus:outline-none"
             >
               Login
             </button>

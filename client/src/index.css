@@ -37,6 +37,21 @@ code {
   margin-top: 12rem;
 }
 
+
+
+
+
+
+.drop-selection
+{
+  display:none;
+}
+
+.dropdown-button
+{
+  display:none;
+}
+
 .side-login-panel
 {
   background-image: url("./pages/assets/Sideasset.png");
@@ -46,7 +61,116 @@ code {
   background-repeat: no-repeat;
 }
 
+@media only screen 
+  and (min-device-width: 360px) 
+  and (max-device-width: 740px) 
+  and (orientation: portrait) 
+  and (-webkit-min-device-pixel-ratio: 4) {
+
+  .dropdown-button
+  {
+    display: block;
+  }
+
+ 
+.drop-selection
+{
+  display:block;
+}
+
+
+  .set-login-and-registration
+  {
+    display: none;
+  }
+  
+ 
+}
+
+
+
+
+@media only screen 
+  and (min-device-width: 768px) 
+  and (max-device-width: 768px) 
+  and (orientation: portrait) 
+  and (-webkit-min-device-pixel-ratio: 2) {
+
+  
+  .content
+  {
+    transform: scale(0.9);
+  }
+  .gradient-bg {
+    width: 100%;
+    height: 68rem;
+    background: linear-gradient(to bottom, white 20%, #a7c7ff 80%, #1D4ED8 100%);
+    position: relative;
+    overflow: hidden;
+    object-fit: contain;
+
+  }
+
+.team-image {
+    position: relative;
+    margin-top: 20px;
+    overflow: hidden;
+    object-fit: contain;
+    transform: scale(1.3);
+    object-fit: cover;
+    z-index: 1;
+    left: 10%;
+}
+
+}
+
+
+
+@media only screen 
+  and (min-device-width: 768px) 
+  and (max-device-width: 1024px) 
+  and (orientation: landscape) 
+  and (-webkit-min-device-pixel-ratio: 2) {
+  
+  /* Styles for iPad Mini in landscape */
+}
+
+
+@media only screen 
+  and (max-device-width: 375px) 
+  and (orientation: portrait) 
+  and (-webkit-min-device-pixel-ratio: 2) {
+
+
+
+  .dropdown-button
+  {
+    display: block;
+  }
+
+
+    .content
+  {
+    padding:3.6rem;
+  }
+
+    .drop-selection
+    {
+      display:none;
+    }
+
+  .set-login-and-registration
+    {
+      display: none;
+    }
+  
+ 
+}
+
+
 @media (max-width: 600px) {
+
+
 
   .team-image {
     position: absolute;
@@ -77,6 +201,12 @@ code {
 }
 
 @media (min-width: 1024px) {
+
+  
+  .hide-dropdown-md
+  {
+    display: none;
+  }
   .gradient-bg {
       width: 100%;
       height: 100rem;

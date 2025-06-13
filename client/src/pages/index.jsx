@@ -2,6 +2,8 @@ import image from "./assets/person.png";
 import Navbar from "../components/navbar";
 import {Link} from "react-router-dom";
 function Home() {
+
+
   return (
     <div>
 
