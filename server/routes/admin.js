@@ -1,6 +1,6 @@
 import express from 'express';
 import  {Administrator}  from '../models/administratorsModel.js';
-import { config } from '../config/config.js'
+import  config  from '../config/config.js'
 import bcrypt from 'bcryptjs'; // Use ES6 import for consistency
 import jwt from 'jsonwebtoken'
 
