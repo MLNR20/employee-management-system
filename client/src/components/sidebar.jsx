@@ -1,20 +1,22 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { initFlowbite } from "flowbite";
 import { useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { resources } from "../resources";
 
 const SideBar=()=> {
 
-  const token = sessionStorage.getItem('token'); 
-  const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const logout = ()=>{
-    sessionStorage.removeItem('token');
-    navigate("/login");
-
-  }
+  // The sidebar is on every signed-in page, so it sets their light gray backdrop on <body>
+  // (the login and landing pages never render it, so they keep their own backgrounds).
+  useEffect(() => {
+    document.body.classList.add("bg-gray-100");
+    return () => document.body.classList.remove("bg-gray-100");
+  }, []);
 
   useEffect(() => {
-    initFlowbite(); 
+    initFlowbite();
     console.log("Flowbite dropdown reinitialized");
   }, []);
 
@@ -53,6 +55,21 @@ const SideBar=()=> {
                                 <span className="flex-1 ms-3 whitespace-nowrap">Add Employees</span>
                             </Link>
                         </li>
+                        {resources.map((resource) => (
+                            <li key={resource.key}>
+                                <Link to={resource.basePath} className="flex items-center p-2 text-gray-500 rounded-lg  hover:bg-blue-700 hover:text-white group">
+                                    <svg className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900"
+                                        aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20">
+                                        <path d="M3 3h6v6H3V3Zm8 0h6v6h-6V3ZM3 11h6v6H3v-6Zm8 0h6v6h-6v-6Z"/>
+                                    </svg>
+
+                                    <span className="flex-1 ms-3 whitespace-nowrap">{resource.title}</span>
+                                </Link>
+                            </li>
+                        ))}
                         <li>
                             <Link to="/login/" onClick={logout} className="flex items-center p-2 text-gray-500 rounded-lg  hover:bg-blue-700 hover:text-white group">
                                 <svg className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" 

@@ -1,30 +1,13 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import icon from './assets/icon.png';
-import { useEffect, useState } from 'react';
-import axios from "axios";
+import { useAuth } from '../context/AuthContext';
 
 const Navbars=() =>{
 
+    const { administrator } = useAuth();
 
-    const [first_name, setFirstName] = useState("");
-    const [last_name, setLastName] =useState("");
-    const token = sessionStorage.getItem('token'); // Get token from storage
-    const navigate = useNavigate();
-
-
-    useEffect(()=>{
-    axios.get('http://localhost:8080/employees/protected', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(response => {
-        setFirstName(response.data.user.first_name);
-        setLastName(response.data.user.last_name);     
-      })
-      .catch(err => {
-        if(err.message === "Request failed with status code 403") navigate("/login/")
-      });
-
-  });
+    const first_name = administrator?.first_name ?? "";
+    const last_name = administrator?.last_name ?? "";
 
   return (
 

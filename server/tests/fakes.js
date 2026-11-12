@@ -1,0 +1,228 @@
+// In-memory implementations of the domain contracts, for tests.
+import { Repository } from "../src/domain/Repository.js";
+import { AdministratorRepository } from "../src/domain/administrator/AdministratorRepository.js";
+import { Administrator } from "../src/domain/administrator/Administrator.js";
+import { Employee } from "../src/domain/employee/Employee.js";
+import { Department } from "../src/domain/department/Department.js";
+import { Role } from "../src/domain/role/Role.js";
+import { RoleAssignment } from "../src/domain/role/RoleAssignment.js";
+import { LeaveType } from "../src/domain/leave/LeaveType.js";
+import { LeaveBalance } from "../src/domain/leave/LeaveBalance.js";
+import { LeaveRequest } from "../src/domain/leave/LeaveRequest.js";
+import { LeaveApproval } from "../src/domain/leave/LeaveApproval.js";
+import {
+  DuplicateAdministratorError,
+  DuplicateDepartmentError,
+  DuplicateEmployeeError,
+  DuplicateLeaveBalanceError,
+  DuplicateLeaveTypeError,
+  DuplicateRoleAssignmentError,
+  DuplicateRoleError,
+} from "../src/domain/errors.js";
+
+let nextId = 1;
+const newId = () => String(nextId++).padStart(24, "0"); // looks like an ObjectId
+
+/** Generic in-memory Repository: mirrors what MongoRepository does for a real collection. */
+export class InMemoryRepository extends Repository {
+  items = new Map();
+
+  /**
+   * @param {(props: object) => import("../src/domain/Entity").Entity} createEntity
+   * @param {string[][]} uniqueKeys each key is a list of fields that must be unique together
+   * @param {() => Error} duplicateError
+   */
+  constructor(createEntity, uniqueKeys, duplicateError) {
+    super();
+    this.createEntity = createEntity;
+    this.uniqueKeys = uniqueKeys;
+    this.duplicateError = duplicateError;
+  }
+
+  #isDuplicate(data, exceptId) {
+    return [...this.items.values()].some(
+      (item) =>
+        item.id !== exceptId &&
+        this.uniqueKeys.some((key) => key.every((field) => item[field] === data[field]))
+    );
+  }
+
+  async findAll() {
+    return [...this.items.values()];
+  }
+
+  async findById(id) {
+    return this.items.get(id) ?? null;
+  }
+
+  async create(data) {
+    if (this.#isDuplicate(data)) throw this.duplicateError();
+    const now = new Date();
+    const item = this.createEntity({ ...data, id: newId(), dateCreated: now, dateUpdated: now });
+    this.items.set(item.id, item);
+    return item;
+  }
+
+  async update(id, data) {
+    const existing = this.items.get(id);
+    if (!existing) return null;
+    if (this.#isDuplicate({ ...existing, ...data }, id)) throw this.duplicateError();
+    const updated = this.createEntity({ ...existing, ...data, dateUpdated: new Date() });
+    this.items.set(id, updated);
+    return updated;
+  }
+
+  async remove(id) {
+    return this.items.delete(id);
+  }
+}
+
+export const createInMemoryEmployeeRepository = () =>
+  new InMemoryRepository((props) => new Employee(props), [["email"]], () => new DuplicateEmployeeError());
+
+export const createInMemoryDepartmentRepository = () =>
+  new InMemoryRepository(
+    (props) => new Department(props),
+    [["name"], ["code"]],
+    () => new DuplicateDepartmentError()
+  );
+
+export const createInMemoryRoleRepository = () =>
+  new InMemoryRepository((props) => new Role(props), [["name"]], () => new DuplicateRoleError());
+
+export const createInMemoryLeaveTypeRepository = () =>
+  new InMemoryRepository((props) => new LeaveType(props), [["name"]], () => new DuplicateLeaveTypeError());
+
+export class InMemoryLeaveBalanceRepository extends InMemoryRepository {
+  constructor() {
+    super(
+      (props) => new LeaveBalance(props),
+      [["employeeId", "leaveTypeId"]],
+      () => new DuplicateLeaveBalanceError()
+    );
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()].filter((b) => b.employeeId === employeeId);
+  }
+
+  async findByEmployeeAndType(employeeId, leaveTypeId) {
+    return (
+      [...this.items.values()].find(
+        (b) => b.employeeId === employeeId && b.leaveTypeId === leaveTypeId
+      ) ?? null
+    );
+  }
+
+  async deductAvailable(id, amount) {
+    const balance = this.items.get(id);
+    if (!balance || balance.availableLeaves < amount) return null;
+    const updated = new LeaveBalance({ ...balance, availableLeaves: balance.availableLeaves - amount });
+    this.items.set(id, updated);
+    return updated;
+  }
+
+  async restoreAvailable(id, amount) {
+    const balance = this.items.get(id);
+    if (balance) {
+      this.items.set(id, new LeaveBalance({ ...balance, availableLeaves: balance.availableLeaves + amount }));
+    }
+  }
+
+  async existsForLeaveType(leaveTypeId) {
+    return [...this.items.values()].some((b) => b.leaveTypeId === leaveTypeId);
+  }
+
+  async removeForEmployee(employeeId) {
+    for (const [id, balance] of this.items) {
+      if (balance.employeeId === employeeId) this.items.delete(id);
+    }
+  }
+}
+
+export class InMemoryLeaveRequestRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new LeaveRequest(props), [], () => new Error("unreachable"));
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()].filter((r) => r.employeeId === employeeId);
+  }
+
+  async transitionStatus(id, from, to) {
+    const request = this.items.get(id);
+    if (!request || request.status !== from) return null;
+    const updated = new LeaveRequest({ ...request, status: to, dateUpdated: new Date() });
+    this.items.set(id, updated);
+    return updated;
+  }
+
+  async existsForLeaveType(leaveTypeId) {
+    return [...this.items.values()].some((r) => r.leaveTypeId === leaveTypeId);
+  }
+}
+
+export class InMemoryLeaveApprovalRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new LeaveApproval(props), [], () => new Error("unreachable"));
+  }
+
+  async findByLeaveRequestId(leaveRequestId) {
+    return [...this.items.values()].filter((a) => a.leaveRequestId === leaveRequestId);
+  }
+}
+
+export class InMemoryRoleAssignmentRepository extends InMemoryRepository {
+  constructor() {
+    super(
+      (props) => new RoleAssignment(props),
+      [["administratorId", "roleId"]], // one assignment per administrator and role
+      () => new DuplicateRoleAssignmentError()
+    );
+  }
+
+  async existsForRole(roleId) {
+    return [...this.items.values()].some((assignment) => assignment.roleId === roleId);
+  }
+}
+
+export class InMemoryAdministratorRepository extends AdministratorRepository {
+  admins = new Map();
+  refreshHashes = new Map();
+
+  async findById(id) {
+    return this.admins.get(id) ?? null;
+  }
+
+  async findByUsername(username) {
+    return [...this.admins.values()].find((a) => a.username === username) ?? null;
+  }
+
+  async findAll() {
+    return [...this.admins.values()];
+  }
+
+  async count() {
+    return this.admins.size;
+  }
+
+  async create(data) {
+    const taken = [...this.admins.values()].some(
+      (a) => a.username === data.username || a.email === data.email
+    );
+    if (taken) throw new DuplicateAdministratorError();
+    const admin = new Administrator({ ...data, id: newId(), dateCreated: new Date() });
+    this.admins.set(admin.id, admin);
+    return admin;
+  }
+
+  async setRefreshTokenHash(id, hash) {
+    this.refreshHashes.set(id, hash);
+  }
+
+  async rotateRefreshTokenHash(id, expectedHash, newHash) {
+    if (this.refreshHashes.get(id) !== expectedHash) return false;
+    this.refreshHashes.set(id, newHash);
+    return true;
+  }
+}

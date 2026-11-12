@@ -1,7 +1,7 @@
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
+import { useCreateEmployee } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
@@ -14,27 +14,9 @@ export default function Add_Employees() {
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState("");
   const navigate = useNavigate();
-
-  const token = sessionStorage.getItem('token'); // Get token from storage
+  const createEmployee = useCreateEmployee();
 
   const [errors, setErrors] = useState({});
-
-
-  useEffect(()=>{
-    axios.get('http://localhost:8080/employees/protected', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(response => {
-        console.log(response.data);
-     
-      })
-      .catch(err => {
-
-        if(err.message === "Request failed with status code 403") navigate("/login/")
-        console.error(err);
-      });
-
-  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -125,14 +107,8 @@ export default function Add_Employees() {
       confirmButtonText: "OK",
     }).then((result) => {
       if (result.isConfirmed) {
-        axios
-          .post("http://localhost:8080/employees/",employees, 
-            {
-              headers:{
-                Authorization: `Bearer ${token}`
-              }
-            }
-          )
+        createEmployee
+          .mutateAsync(employees)
           .then(() => {
             Swal.fire({
               title: "Success!",

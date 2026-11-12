@@ -16,6 +16,8 @@ services:
       FIRST_NAME: admin
       LAST_NAME: admin
       EMAIL: admin@admintest.com
+      JWT_SECRET: secret123
+      REFRESH_TOKEN_SECRET: refresh-secret123
     depends_on:
       - mongodb
     networks:

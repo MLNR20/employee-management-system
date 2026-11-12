@@ -1,7 +1,7 @@
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
 import { useState, useEffect} from "react";
-import axios from "axios";
+import { useEmployee, useUpdateEmployee } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -17,29 +17,22 @@ export default function Edit_Employees() {
 
   const [errors, setErrors] = useState({});
   const {id} = useParams();
-  const token = sessionStorage.getItem('token'); // Get token from storage
 
+  const { data: employee } = useEmployee(id);
+  const updateEmployee = useUpdateEmployee();
 
-    useEffect(()=>{
-        axios.get(`http://localhost:8080/employees/${id}`,{
-          headers:{
-             Authorization: `Bearer ${token}`
-          }
-        }).then((response)=>{
-            setFirstName(response.data.first_name);
-            setLastName(response.data.last_name);
-            setEmail(response.data.email);
-            setSalary(response.data.salary);
-            setDepartment(response.data.department);
-            setPosition(response.data.position);
-            setStatus(response.data.isActive.toString());
-        }).catch((error)=>{
-            if(error.message === "Request failed with status code 403") navigate("/login/")
-            console.log(error);
-
-        });
-
-    },[])
+  // Fill the form once the employee has loaded. An expired session is
+  // already redirected to /login by the API client.
+  useEffect(() => {
+    if (!employee) return;
+    setFirstName(employee.first_name);
+    setLastName(employee.last_name);
+    setEmail(employee.email);
+    setSalary(employee.salary);
+    setDepartment(employee.department);
+    setPosition(employee.position);
+    setStatus(String(employee.isActive));
+  }, [employee]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -117,13 +110,8 @@ export default function Edit_Employees() {
       confirmButtonText: "OK",
     }).then((result) => {
       if (result.isConfirmed) {
-        axios
-          .put(`http://localhost:8080/employees/${id}`,employees,
-          {headers:
-              {
-                Authorization: `Bearer ${token}`
-              }
-          })
+        updateEmployee
+          .mutateAsync({ id, data: employees })
           .then(() => {
             Swal.fire({
               title: "Success!",

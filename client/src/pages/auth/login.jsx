@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import icon from "../assets/icon.png";
 import { useState, useEffect } from "react";
-import axios from 'axios';
+import { authUseCases } from '../../container';
+import { useAuth } from '../../context/AuthContext';
+import { InvalidCredentialsError } from '../../domain/errors';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { initFlowbite } from "flowbite";
@@ -16,24 +18,20 @@ function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const { enqueueSnackbar } = useSnackbar();
+    const { login } = useAuth();
 
 
 
     useEffect(() => {
-            axios.get('http://localhost:8080/admin/')
-              .then(response => {
-                console.log(response.data);
+            authUseCases.ensureAdministratorsExist()
+              .then(() => {
                 document.body.classList.remove("overflow-hidden");
-                document.querySelector('[drawer-backdrop]').remove();
+                document.querySelector('[drawer-backdrop]')?.remove();
               })
               .catch(err => {
-                if (err.response?.status === 403) {
-                  navigate("/login/");
-                } else {
-                  console.error(err);
-                }
+                console.error(err);
               });
-          }, []); 
+          }, []);
 
         useEffect(() => {
           initFlowbite(); 
@@ -63,25 +61,15 @@ function Login() {
         setErrors(validationErrors);
         if (Object.keys(validationErrors).length > 0) return;
 
-        const data = {
-            username,
-            password,
-        };
-
-        axios.post('http://localhost:8080/admin/login', data)
-            .then((response) => {
+        login({ username, password })
+            .then(() => {
                 navigate('/employees/');
-                sessionStorage.setItem('token', response.data.token);
             })
             .catch((error) => {
 
-              if(error.response.data === "User not found")
+              if(error instanceof InvalidCredentialsError)
               {
-                enqueueSnackbar('Incorrect username or password.', { variant: 'error' });
-              }
-              else if(error.response.data === "Invalid password")
-              {
-                enqueueSnackbar("Incorrect username or password.", {variant: "error"});
+                enqueueSnackbar(error.message, { variant: 'error' });
               }
 
                 console.error(error);
