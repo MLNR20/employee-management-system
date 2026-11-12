@@ -136,7 +136,7 @@ export default function Add_Employees() {
       <SideBar />
       <Navbar_DS />
       <div class="p-8 sm:ml-64">
-        <div class="p-4 border-2 shadow-lg  bg-white border-gray-200 border-solid rounded-lg mt-14">
+        <div class="p-4 border-2 bg-white border-gray-200 border-solid rounded-lg mt-14">
           <div class="p-8 mb-4">
             <h1 class="font-bold text-2xl">Add Employees</h1>
             <div class="overflow-auto mt-6 ">

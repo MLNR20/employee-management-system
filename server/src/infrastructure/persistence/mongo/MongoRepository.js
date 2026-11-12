@@ -3,6 +3,8 @@ import { Repository } from "../../../domain/Repository.js";
 
 const DUPLICATE_KEY = 11000;
 
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 /**
  * Generic MongoDB implementation of the Repository contract. A concrete
  * repository only says which model it uses, how a stored document becomes a
@@ -16,17 +18,44 @@ export class MongoRepository extends Repository {
    * @param {import("mongoose").Model} options.model
    * @param {(doc: object) => T} options.toEntity maps a lean document to an entity
    * @param {() => Error} [options.duplicateError] error raised on a unique-index violation
+   * @param {string[]} [options.searchFields] text fields a page search looks in (none: search is ignored)
    */
-  constructor({ model, toEntity, duplicateError }) {
+  constructor({ model, toEntity, duplicateError, searchFields = [] }) {
     super();
     this.model = model;
     this.toEntity = toEntity;
     this.duplicateError = duplicateError;
+    this.searchFields = searchFields;
   }
 
   async findAll() {
     const docs = await this.model.find({}).lean();
     return docs.map(this.toEntity);
+  }
+
+  async findPage({ page, pageSize, search, sortBy, sortDir = 1 }) {
+    const filter = this.#searchFilter(search);
+    // Only real fields of the model can be sorted on; anything else falls back to newest first.
+    const sort = sortBy && this.model.schema.path(sortBy) ? { [sortBy]: sortDir } : { createdAt: -1 };
+
+    const [docs, total] = await Promise.all([
+      this.model
+        .find(filter)
+        .sort({ ...sort, _id: 1 }) // _id keeps the order stable between pages when values tie
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean(),
+      this.model.countDocuments(filter),
+    ]);
+    return { items: docs.map(this.toEntity), total };
+  }
+
+  async summary() {
+    const [total, inactive] = await Promise.all([
+      this.model.countDocuments({}),
+      this.model.countDocuments({ isActive: false }), // documents saved before the flag existed count as active
+    ]);
+    return { total, active: total - inactive, inactive };
   }
 
   async findById(id) {
@@ -59,6 +88,12 @@ export class MongoRepository extends Repository {
   async remove(id) {
     if (!mongoose.isValidObjectId(id)) return false;
     return Boolean(await this.model.findByIdAndDelete(id));
+  }
+
+  #searchFilter(search) {
+    if (!search || this.searchFields.length === 0) return {};
+    const pattern = new RegExp(escapeRegExp(search), "i");
+    return { $or: this.searchFields.map((field) => ({ [field]: pattern })) };
   }
 
   #rethrow(error) {

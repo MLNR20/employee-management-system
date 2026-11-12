@@ -10,6 +10,20 @@ export class Repository {
     throw new Error("Repository.findAll not implemented");
   }
 
+  /**
+   * One page of entities.
+   * @param {{page: number, pageSize: number, search?: string, sortBy?: string, sortDir?: 1 | -1}} query
+   * @returns {Promise<{items: T[], total: number}>} total counts every match, not just this page
+   */
+  async findPage(query) {
+    throw new Error("Repository.findPage not implemented");
+  }
+
+  /** @returns {Promise<{total: number, active: number, inactive: number}>} */
+  async summary() {
+    throw new Error("Repository.summary not implemented");
+  }
+
   /** @returns {Promise<T | null>} */
   async findById(id) {
     throw new Error("Repository.findById not implemented");

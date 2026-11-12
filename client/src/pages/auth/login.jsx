@@ -7,6 +7,7 @@ import { InvalidCredentialsError } from '../../domain/errors';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { initFlowbite } from "flowbite";
+import PasswordInput from "../../components/PasswordInput";
 
 
 function Login() {
@@ -15,7 +16,6 @@ function Login() {
     const [username, setUsername]  = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
-    const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const { enqueueSnackbar } = useSnackbar();
     const { login } = useAuth();
@@ -81,7 +81,7 @@ function Login() {
   return (
     <div>
       <div className="flex h-screen w-100">
-        <div className="flex-2 side-login-panel bg-blue-500 p-8 text-white w-50 hidden sm:block"></div>
+        <div className="flex-2 side-login-panel p-8 text-white w-50 hidden sm:block"></div>
         <div className="flex-1 bg-white my-auto p-8 text-white">
           <header>
             <nav className="bg-white w-full  border-gray-200 text-gray-900 w-100 mb-8 py-4">
@@ -101,7 +101,7 @@ function Login() {
           </header>
 
           <div className="login-section ">
-            <h1 className="text-3xl text-blue-700 font-bold mt-12 lg:text-4xl">
+            <h1 className="text-3xl text-black font-bold mt-12 lg:text-4xl">
               Login
             </h1>
             <p className="font-normal text-gray-500 mt-4 lg:text-xl">
@@ -110,7 +110,7 @@ function Login() {
             <div className="mb-6 mt-8">
               <p
                 htmlFor="default-input"
-                className="block mb-2 mt-6 text-md   font-medium text-gray-900"
+                className="block mb-2 mt-6 text-base font-medium text-gray-900"
               >
                 Username
               </p>
@@ -128,7 +128,7 @@ function Login() {
                       return newErrors;
                     });
                   }}
-                className="   bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg   block w-full   p-3"
+                className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
               />
                 {errors.username && (
                       <label className="text-sm text-red-500">
@@ -139,12 +139,11 @@ function Login() {
             <div className="mb-2">
               <p
                 htmlFor="default-input"
-                className="block mb-2 text-md  font-medium text-gray-900"
+                className="block mb-2 text-base font-medium text-gray-900"
               >
                 Password
               </p>
-              <input
-                type={showPassword ? 'text' : 'password'}
+              <PasswordInput
                 name="password"
                 id="password"
                 value={password}
@@ -157,7 +156,7 @@ function Login() {
                     });
                   }}
                 placeholder="Enter your password..."
-                className="  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full  p-3"
+                className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
               />
                      {errors.password && (
                       <label className="text-sm text-red-500">
@@ -165,33 +164,10 @@ function Login() {
                       </label>
                     )}            
             </div>
-            <div className="flex items-center mt-4 justify-between">
-              <div className="flex items-start">
-                <div className="flex items-center h-5">
-                  <input
-                    id="showPassword"
-                    aria-describedby="remember"
-                    type="checkbox"
-                    checked={showPassword}
-                    onChange={(e) => setShowPassword(e.target.checked)}
-
-                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300"
-                  />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label
-                    htmlFor="showPassword"
-                    className="text-gray-500 text-sm"
-                  >
-                    Show Password
-                  </label>
-                </div>
-              </div>
-            </div>
             <button
               id="login-button"
               onClick = {handleLogin}
-              className="text-white mt-6  bg-blue-600 hover:bg-blue-700 px-4 py-2.5  button-primary  focus:ring-4  font-medium rounded-lg text-sm sm:px-4 lg:px-4 focus:outline-none"
+              className="text-white mt-6 bg-red-700 hover:bg-red-800 px-5 py-3 button-primary focus:ring-4 font-medium rounded-lg text-base focus:outline-none"
             >
               Login
             </button>

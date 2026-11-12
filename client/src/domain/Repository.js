@@ -8,6 +8,15 @@ export class Repository {
     throw new Error("Repository.getAll not implemented");
   }
 
+  /**
+   * One page of entities, with search and sort done by the server.
+   * @param {{page: number, pageSize: number, search?: string, sortBy?: string, sortDir?: "asc" | "desc"}} params
+   * @returns {Promise<{items: import("./Entity").Entity[], total: number, page: number, pageSize: number, totalPages: number}>}
+   */
+  async getPage(params) {
+    throw new Error("Repository.getPage not implemented");
+  }
+
   /** @returns {Promise<import("./Entity").Entity>} */
   async getById(id) {
     throw new Error("Repository.getById not implemented");

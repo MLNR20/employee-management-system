@@ -1,3 +1,6 @@
 import { createCrudUseCases } from "../shared/crudUseCases";
 
-export const createEmployeeUseCases = (employeeRepository) => createCrudUseCases(employeeRepository);
+export const createEmployeeUseCases = (employeeRepository) => ({
+  ...createCrudUseCases(employeeRepository),
+  summary: () => employeeRepository.getSummary(),
+});

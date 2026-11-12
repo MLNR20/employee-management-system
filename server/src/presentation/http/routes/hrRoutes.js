@@ -13,6 +13,7 @@ export const createRoleRouter = ({ roleUseCases, requireAuth }) => {
     entityName: "Role",
     useCases: {
       list: roleUseCases.listRoles,
+      listPage: roleUseCases.listRolesPage,
       get: roleUseCases.getRole,
       add: roleUseCases.addRole,
       update: roleUseCases.updateRole,
@@ -31,6 +32,7 @@ export const createRoleAssignmentRouter = ({ roleAssignmentUseCases, requireAuth
     operations: ["create", "list", "get", "delete"], // assignments are never edited
     useCases: {
       list: roleAssignmentUseCases.listRoleAssignments,
+      listPage: roleAssignmentUseCases.listRoleAssignmentsPage,
       get: roleAssignmentUseCases.getRoleAssignment,
       add: roleAssignmentUseCases.assignRole,
       remove: roleAssignmentUseCases.deleteRoleAssignment,
@@ -47,6 +49,7 @@ export const createLeaveTypeRouter = ({ leaveTypeUseCases, requireAuth }) => {
     entityName: "Leave type",
     useCases: {
       list: leaveTypeUseCases.listLeaveTypes,
+      listPage: leaveTypeUseCases.listLeaveTypesPage,
       get: leaveTypeUseCases.getLeaveType,
       add: leaveTypeUseCases.addLeaveType,
       update: leaveTypeUseCases.updateLeaveType,
@@ -64,6 +67,7 @@ export const createLeaveBalanceRouter = ({ leaveBalanceUseCases, requireAuth }) 
     entityName: "Leave balance",
     useCases: {
       list: leaveBalanceUseCases.listLeaveBalances,
+      listPage: leaveBalanceUseCases.listLeaveBalancesPage,
       get: leaveBalanceUseCases.getLeaveBalance,
       add: leaveBalanceUseCases.addLeaveBalance,
       update: leaveBalanceUseCases.updateLeaveBalance,
@@ -107,6 +111,7 @@ export const createLeaveRequestRouter = ({ leaveRequestUseCases, requireAuth }) 
     operations: ["create", "list", "get"],
     useCases: {
       list: leaveRequestUseCases.listLeaveRequests,
+      listPage: leaveRequestUseCases.listLeaveRequestsPage,
       get: leaveRequestUseCases.getLeaveRequest,
       add: leaveRequestUseCases.fileLeave,
     },

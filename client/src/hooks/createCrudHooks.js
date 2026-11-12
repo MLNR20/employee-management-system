@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 /**
  * Builds the TanStack Query hooks for one entity from its CRUD use cases.
@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
  * items refetch on their own after a change.
  *
  * @param {string} key cache key, e.g. "employees"
- * @param {{list: Function, get: Function, add: Function, update: Function, remove: Function}} crud
+ * @param {{list: Function, listPage: Function, get: Function, add: Function, update: Function, remove: Function}} crud
  */
 export const createCrudHooks = (key, crud) => {
   const useInvalidate = () => {
@@ -16,6 +16,14 @@ export const createCrudHooks = (key, crud) => {
 
   return {
     useList: () => useQuery({ queryKey: [key], queryFn: crud.list }),
+
+    // One page from the server. The previous page stays on screen while the next one loads.
+    usePage: (params) =>
+      useQuery({
+        queryKey: [key, "page", params],
+        queryFn: () => crud.listPage(params),
+        placeholderData: keepPreviousData,
+      }),
 
     useOne: (id) =>
       useQuery({ queryKey: [key, id], queryFn: () => crud.get(id), enabled: Boolean(id) }),

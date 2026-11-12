@@ -26,6 +26,11 @@ export const createEmployeeRouter = ({
     res.json({ message: "Welcome to the protected route!", user: req.user });
   });
 
+  // Headcount for the dashboard cards, so the client never loads every employee just to count.
+  router.get("/summary", async (req, res) => {
+    res.status(200).json(await employeeUseCases.employeeSummary());
+  });
+
   // An employee's leave: what they are entitled to, and what they have filed.
   router.get("/:id/leave-balances", async (req, res) => {
     const balances = await leaveBalanceUseCases.listForEmployee(req.params.id);
@@ -43,6 +48,7 @@ export const createEmployeeRouter = ({
     toInput: toEmployeeInput,
     useCases: {
       list: employeeUseCases.listEmployees,
+      listPage: employeeUseCases.listEmployeesPage,
       get: employeeUseCases.getEmployee,
       add: employeeUseCases.addEmployee,
       update: employeeUseCases.updateEmployee,

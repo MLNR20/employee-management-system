@@ -5,6 +5,7 @@ import { authUseCases } from "../../container";
 import { DuplicateAdministratorError } from "../../domain/errors";
 import Swal from "sweetalert2";
 import { useSnackbar } from "notistack";
+import PasswordInput from "../../components/PasswordInput";
 const Register = () => {
   const [first_name, setFirstName] = useState("");
   const [last_name, setLastName] = useState("");
@@ -14,7 +15,6 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const {enqueueSnackbar} = useSnackbar();
 
 
@@ -146,7 +146,7 @@ const Register = () => {
   return (
   <div>
       <div className="flex h-screen w-100">
-        <div className="flex-2 side-login-panel bg-blue-500 p-8 text-white w-50 hidden sm:block"></div>
+        <div className="flex-2 side-login-panel p-8 text-white w-50 hidden sm:block"></div>
         <div className="flex-1 bg-white my-auto p-8 text-white">
           <header>
             <nav className="bg-white w-full  border-gray-200 text-gray-900 w-100  mb-8 py-4 ">
@@ -166,7 +166,7 @@ const Register = () => {
           </header>
 
           <div className="login-section ">
-            <h1 className="text-3xl text-blue-700 font-bold mt-12 lg:text-4xl">
+            <h1 className="text-3xl text-black font-bold mt-12 lg:text-4xl">
               Register
             </h1>
             <p className="font-normal text-gray-500 mt-4 lg:text-xl">
@@ -176,7 +176,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="first_name"
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-base font-medium text-gray-900"
                 >
                   First Name
                 </label>
@@ -193,7 +193,7 @@ const Register = () => {
                       return newErrors;
                     });
                   }}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                  className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
                   placeholder="Enter your username..."
                   required
                 />
@@ -207,7 +207,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="email"
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-base font-medium text-gray-900"
                 >
                   Last Name
                 </label>
@@ -215,7 +215,7 @@ const Register = () => {
                   type="text"
                   id="last_name"
                   name="last_name"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                  className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
                   placeholder="Enter your last name..."
                   value={last_name}
                   onChange={(e) => {
@@ -237,7 +237,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="username"
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-base font-medium text-gray-900"
                 >
                   Username
                 </label>
@@ -245,7 +245,7 @@ const Register = () => {
                   type="text"
                   id="user_name"
                   name="username"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                  className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
                   placeholder="Enter your username..."
                   value={username}
                   onChange={(e) => {
@@ -267,7 +267,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="website"
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-base font-medium text-gray-900"
                 >
                   Email Address
                 </label>
@@ -275,7 +275,7 @@ const Register = () => {
                   type="email"
                   id="email_address"
                   name="emailaddress"
-                  className="   bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                  className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
                   placeholder="Enter your email address..."
                   value={email}
                   onChange={(e) => {
@@ -297,15 +297,14 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="password"
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-base font-medium text-gray-900"
                 >
                   Password
                 </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
+                <PasswordInput
                   id="password"
                   name="password"
-                  className="  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                  className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => {
@@ -327,14 +326,13 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="password"
-                  className="block mb-2 text-sm font-medium text-gray-900"
+                  className="block mb-2 text-base font-medium text-gray-900"
                 >
                   Confirm Password
                 </label>
-                <input
-                  type={showPassword ? 'text' : 'password'}
+                <PasswordInput
                   id="confirm_password"
-                  className="  bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-3"
+                  className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
                   placeholder="Enter your password..."
                    value={confirmPassword}
                   onChange={(e) => {
@@ -355,29 +353,10 @@ const Register = () => {
               </div>
             </div>
 
-            <div className="flex items-center mt-4 justify-between">
-              <div className="flex items-start">
-                <div className="flex items-center h-5">
-                  <input
-                    id="showPassword"
-                    aria-describedby="remember"
-                    checked={showPassword}
-                    onChange={(e) => setShowPassword(e.target.checked)}
-                    type="checkbox"
-                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300"
-                  />
-                </div>
-                <div className="ml-3 text-sm">
-                  <label htmlFor="showPassword" className="text-gray-500 text-sm">
-                    Show Password
-                  </label>
-                </div>
-              </div>
-            </div>
             <button
               id="htmlForgot-button"
               onClick={registerHandle}
-              className="text-white mt-6 bg-blue-600 p-2.5 hover:bg-blue-700 login-button button-primary  focus:ring-4  font-medium rounded-lg text-sm sm:px-4 lg:px-4 focus:outline-none"
+              className="text-white mt-6 bg-red-700 hover:bg-red-800 px-5 py-3 button-primary focus:ring-4 font-medium rounded-lg text-base focus:outline-none"
             >
               Sign Up
             </button>

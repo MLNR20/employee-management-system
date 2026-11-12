@@ -17,6 +17,7 @@ export const createRoleUseCases = ({ roleRepository, roleAssignmentRepository })
 
   return {
     listRoles: crud.list,
+    listRolesPage: crud.listPage,
     getRole: crud.get,
     addRole: crud.add,
     updateRole: crud.update,
@@ -47,6 +48,7 @@ export const createRoleAssignmentUseCases = ({
 
   return {
     listRoleAssignments: crud.list,
+    listRoleAssignmentsPage: crud.listPage,
     getRoleAssignment: crud.get,
     deleteRoleAssignment: crud.remove,
 

@@ -1,4 +1,5 @@
 import { NotFoundError } from "../../domain/errors.js";
+import { normalizePageQuery, toPage } from "../../domain/pagination.js";
 
 /**
  * The CRUD use cases shared by every entity. Per-entity use cases supply the
@@ -12,6 +13,12 @@ import { NotFoundError } from "../../domain/errors.js";
  */
 export const createCrudUseCases = ({ repository, entityName, validate, pickFields }) => ({
   list: () => repository.findAll(),
+
+  /** One page of the list: pass the raw query (page, pageSize, search, sortBy, sortDir). */
+  listPage: async (query) => {
+    const request = normalizePageQuery(query);
+    return toPage(await repository.findPage(request), request);
+  },
 
   async get(id) {
     const entity = await repository.findById(id);

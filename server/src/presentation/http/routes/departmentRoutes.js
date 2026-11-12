@@ -11,6 +11,7 @@ export const createDepartmentRouter = ({ departmentUseCases, requireAuth }) => {
     entityName: "Department",
     useCases: {
       list: departmentUseCases.listDepartments,
+      listPage: departmentUseCases.listDepartmentsPage,
       get: departmentUseCases.getDepartment,
       add: departmentUseCases.addDepartment,
       update: departmentUseCases.updateDepartment,

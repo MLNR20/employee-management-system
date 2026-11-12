@@ -139,7 +139,7 @@ export default function Edit_Employees() {
       <SideBar />
       <Navbar_DS />
       <div className="p-8 sm:ml-64">
-        <div className="p-4 border-2 shadow-lg  bg-white border-gray-200 border-solid rounded-lg mt-14">
+        <div className="p-4 border-2 bg-white border-gray-200 border-solid rounded-lg mt-14">
           <div className="p-8 mb-4">
             <h1 className="font-bold text-2xl">Edit Employees</h1>
             <div className="overflow-auto mt-6 ">

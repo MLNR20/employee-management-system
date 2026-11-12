@@ -1,10 +1,12 @@
 import {
   useRoles,
+  useRolesPage,
   useRole,
   useCreateRole,
   useUpdateRole,
   useRemoveRole,
   useRoleAssignments,
+  useRoleAssignmentsPage,
   useRoleAssignment,
   useCreateRoleAssignment,
   useRemoveRoleAssignment,
@@ -19,14 +21,15 @@ export const roleResource = {
   basePath: "/roles",
   hooks: {
     useList: useRoles,
+    usePage: useRolesPage,
     useOne: useRole,
     useCreate: useCreateRole,
     useUpdate: useUpdateRole,
     useRemove: useRemoveRole,
   },
   columns: () => [
-    { key: "name", header: "Name" },
-    { key: "description", header: "Description" },
+    { key: "name", header: "Name", sortKey: "name" },
+    { key: "description", header: "Description", sortKey: "description" },
     statusColumn(),
     dateColumn("dateCreated", "Created"),
   ],
@@ -45,6 +48,7 @@ export const roleAssignmentResource = {
   basePath: "/role-assignments",
   hooks: {
     useList: useRoleAssignments,
+    usePage: useRoleAssignmentsPage,
     useOne: useRoleAssignment,
     useCreate: useCreateRoleAssignment,
     useRemove: useRemoveRoleAssignment,

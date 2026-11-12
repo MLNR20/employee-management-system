@@ -15,6 +15,7 @@ export class MongoLeaveTypeRepository extends MongoRepository {
   constructor() {
     super({
       model: LeaveTypeModel,
+      searchFields: ["name"],
       toEntity: toLeaveType,
       duplicateError: () => new DuplicateLeaveTypeError(),
     });

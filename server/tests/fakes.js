@@ -51,6 +51,26 @@ export class InMemoryRepository extends Repository {
     return [...this.items.values()];
   }
 
+  async findPage({ page, pageSize, search, sortBy, sortDir = 1 }) {
+    let matches = [...this.items.values()];
+    const needle = search?.toLowerCase();
+    if (needle) {
+      matches = matches.filter((item) =>
+        Object.values(item).some((value) => typeof value === "string" && value.toLowerCase().includes(needle))
+      );
+    }
+    if (sortBy) {
+      matches.sort((x, y) => sortDir * String(x[sortBy] ?? "").localeCompare(String(y[sortBy] ?? ""), undefined, { numeric: true }));
+    }
+    return { items: matches.slice((page - 1) * pageSize, page * pageSize), total: matches.length };
+  }
+
+  async summary() {
+    const all = [...this.items.values()];
+    const inactive = all.filter((item) => item.isActive === false).length;
+    return { total: all.length, active: all.length - inactive, inactive };
+  }
+
   async findById(id) {
     return this.items.get(id) ?? null;
   }

@@ -13,6 +13,7 @@ import {
 
 export const {
   useList: useEmployees,
+  usePage: useEmployeesPage,
   useOne: useEmployee,
   useCreate: useCreateEmployee,
   useUpdate: useUpdateEmployee,
@@ -21,6 +22,7 @@ export const {
 
 export const {
   useList: useDepartments,
+  usePage: useDepartmentsPage,
   useOne: useDepartment,
   useCreate: useCreateDepartment,
   useUpdate: useUpdateDepartment,
@@ -29,6 +31,7 @@ export const {
 
 export const {
   useList: useRoles,
+  usePage: useRolesPage,
   useOne: useRole,
   useCreate: useCreateRole,
   useUpdate: useUpdateRole,
@@ -37,6 +40,7 @@ export const {
 
 export const {
   useList: useRoleAssignments,
+  usePage: useRoleAssignmentsPage,
   useOne: useRoleAssignment,
   useCreate: useCreateRoleAssignment,
   useRemove: useRemoveRoleAssignment,
@@ -44,6 +48,7 @@ export const {
 
 export const {
   useList: useLeaveTypes,
+  usePage: useLeaveTypesPage,
   useOne: useLeaveType,
   useCreate: useCreateLeaveType,
   useUpdate: useUpdateLeaveType,
@@ -52,6 +57,7 @@ export const {
 
 export const {
   useList: useLeaveBalances,
+  usePage: useLeaveBalancesPage,
   useOne: useLeaveBalance,
   useCreate: useCreateLeaveBalance,
   useUpdate: useUpdateLeaveBalance,
@@ -61,9 +67,14 @@ export const {
 // Leave requests are filed and decided; they have no update or remove.
 export const {
   useList: useLeaveRequests,
+  usePage: useLeaveRequestsPage,
   useOne: useLeaveRequest,
   useCreate: useCreateLeaveRequest,
 } = createCrudHooks("leave-requests", leaveRequestUseCases);
+
+/** Headcount for the employee cards: { total, active, inactive }. */
+export const useEmployeeSummary = () =>
+  useQuery({ queryKey: ["employees", "summary"], queryFn: employeeUseCases.summary });
 
 // Administrators are only listed (to pick one).
 export const { useList: useAdministrators } = createCrudHooks("administrators", administratorUseCases);

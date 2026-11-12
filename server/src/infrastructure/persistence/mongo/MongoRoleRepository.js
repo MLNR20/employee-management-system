@@ -24,6 +24,7 @@ export class MongoRoleRepository extends MongoRepository {
   constructor() {
     super({
       model: RoleModel,
+      searchFields: ["name", "description"],
       toEntity: toRole,
       duplicateError: () => new DuplicateRoleError(),
     });

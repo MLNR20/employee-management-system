@@ -25,6 +25,7 @@ export const createLeaveTypeUseCases = ({
 
   return {
     listLeaveTypes: crud.list,
+    listLeaveTypesPage: crud.listPage,
     getLeaveType: crud.get,
     addLeaveType: crud.add,
     updateLeaveType: crud.update,

@@ -1,5 +1,6 @@
 import { NotFoundError, ValidationError } from "../../domain/errors.js";
 import { pickFields } from "../../domain/pickFields.js";
+import { normalizePageQuery, toPage } from "../../domain/pagination.js";
 import {
   assertValidAmounts,
   assertValidLeaveBalanceReferences,
@@ -24,6 +25,11 @@ export const createLeaveBalanceUseCases = ({
 
   return {
     listLeaveBalances: () => leaveBalanceRepository.findAll(),
+
+    async listLeaveBalancesPage(query) {
+      const request = normalizePageQuery(query);
+      return toPage(await leaveBalanceRepository.findPage(request), request);
+    },
 
     getLeaveBalance: getOrThrow,
 

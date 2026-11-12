@@ -20,6 +20,7 @@ export class MongoEmployeeRepository extends MongoRepository {
   constructor() {
     super({
       model: EmployeeModel,
+      searchFields: ["first_name", "last_name", "email", "position", "department"],
       toEntity: toEmployee,
       duplicateError: () => new DuplicateEmployeeError(),
     });

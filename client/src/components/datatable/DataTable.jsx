@@ -1,16 +1,21 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /**
- * Reusable table with search, sorting and pagination, all client-side.
+ * Reusable table with search, sorting and pagination.
+ *
+ * Client mode (default): pass every row in `data`; search, sort and paging happen in the browser.
+ * Server mode: pass `server` (from useServerTable) and `total`. `data` is then just the current
+ * page, and search, sort and paging are asked of the server through server.params.
  *
  * columns: [{
  *   key:        property name on the row (also the column id)
  *   header:     heading text
- *   accessor?:  (row) => value used for sorting and searching (default row[key])
+ *   accessor?:  (row) => value used for sorting and searching in client mode (default row[key])
  *   render?:    (row, index) => node to show instead of the raw value;
- *               index is the row's position in the filtered, sorted list
- *   sortable?:  default true when the column has a value to sort on
- *   searchable?: default true when the column has a value to search
+ *               index is the row's position in the whole (filtered, sorted) list
+ *   sortKey?:   server mode: the field the server sorts on. A column without one is not sortable.
+ *   sortable?:  client mode: default true when the column has a value to sort on
+ *   searchable?: client mode: default true when the column has a value to search
  * }]
  */
 export default function DataTable({
@@ -18,21 +23,37 @@ export default function DataTable({
   data = [],
   getRowId = (row) => row.id,
   isLoading = false,
+  isFetching = false,
   error = null,
   emptyMessage = "No records found.",
   searchable = true,
   pageSizeOptions = [5, 10, 25],
   initialPageSize = 10,
+  server = null,
+  total = 0,
 }) {
+  const isServer = Boolean(server);
+
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState({ key: null, direction: "asc" });
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(initialPageSize);
+  const [clientSort, setClientSort] = useState({ key: null, direction: "asc" });
+  const [clientPage, setClientPage] = useState(0);
+  const [clientPageSize, setClientPageSize] = useState(initialPageSize);
+
+  // Server mode: wait for a pause in typing before asking the server.
+  const setServerSearch = server?.setSearch;
+  useEffect(() => {
+    if (!setServerSearch) return undefined;
+    const timer = setTimeout(() => setServerSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search, setServerSearch]);
 
   const valueOf = (row, column) => (column.accessor ? column.accessor(row) : row[column.key]);
   const hasValue = (column) => Boolean(column.accessor) || data.some((row) => column.key in row);
 
+  // Client mode only: filter and sort every row in the browser.
   const rows = useMemo(() => {
+    if (isServer) return data;
+
     const needle = search.toLowerCase().replace(/\s+/g, " ").trim();
 
     let result = data;
@@ -49,27 +70,52 @@ export default function DataTable({
       );
     }
 
-    if (sort.key) {
-      const column = columns.find((c) => c.key === sort.key);
-      const factor = sort.direction === "asc" ? 1 : -1;
+    if (clientSort.key) {
+      const column = columns.find((c) => c.key === clientSort.key);
+      const factor = clientSort.direction === "asc" ? 1 : -1;
       result = [...result].sort((a, b) => factor * compare(valueOf(a, column), valueOf(b, column)));
     }
 
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, columns, search, sort]);
+  }, [isServer, data, columns, search, clientSort]);
 
-  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
-  const currentPage = Math.min(page, pageCount - 1);
+  const pageSize = isServer ? server.pageSize : clientPageSize;
+  const totalRows = isServer ? total : rows.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / pageSize));
+  const currentPage = Math.min(isServer ? server.page - 1 : clientPage, pageCount - 1); // zero-based
   const start = currentPage * pageSize;
-  const visibleRows = rows.slice(start, start + pageSize);
+  const visibleRows = isServer ? rows : rows.slice(start, start + pageSize);
 
-  const toggleSort = (key) =>
-    setSort((previous) => {
-      if (previous.key !== key) return { key, direction: "asc" };
-      if (previous.direction === "asc") return { key, direction: "desc" };
-      return { key: null, direction: "asc" };
-    });
+  // Server mode: if the last page disappears (e.g. its only row was deleted), step back.
+  const serverPage = server?.page;
+  const setServerPage = server?.setPage;
+  useEffect(() => {
+    if (isServer && !isLoading && serverPage > pageCount) setServerPage(pageCount);
+  }, [isServer, isLoading, serverPage, pageCount, setServerPage]);
+
+  const sort = isServer ? server.sort : clientSort;
+  const setSort = isServer ? server.setSort : setClientSort;
+  const sortKeyOf = (column) => (isServer ? column.sortKey : column.key);
+  const isSortable = (column) =>
+    isServer ? Boolean(column.sortKey) && column.sortable !== false : column.sortable ?? hasValue(column);
+
+  const goToPage = (zeroBased) => (isServer ? server.setPage(zeroBased + 1) : setClientPage(zeroBased));
+
+  const changePageSize = (size) => {
+    if (isServer) {
+      server.setPageSize(size);
+    } else {
+      setClientPageSize(size);
+      setClientPage(0);
+    }
+  };
+
+  const toggleSort = (key) => {
+    if (sort.key !== key) return setSort({ key, direction: "asc" });
+    if (sort.direction === "asc") return setSort({ key, direction: "desc" });
+    return setSort({ key: null, direction: "asc" });
+  };
 
   if (isLoading) return <p className="text-sm text-gray-500 p-4">Loading...</p>;
   if (error) return <p className="text-sm text-red-600 p-4">Something went wrong loading the data.</p>;
@@ -88,18 +134,23 @@ export default function DataTable({
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
-              setPage(0);
+              setClientPage(0);
             }}
           />
         </div>
       )}
 
-      <table className="text-sm w-full text-left text-gray-500">
+      <table
+        className="text-sm w-full text-left text-gray-500"
+        style={{ opacity: isFetching ? 0.6 : 1 }}
+        aria-busy={isFetching}
+      >
         <thead className="bg-gray-100">
           <tr>
             {columns.map((column) => {
-              const sortable = column.sortable ?? hasValue(column);
-              const active = sort.key === column.key;
+              const sortable = isSortable(column);
+              const sortKey = sortKeyOf(column);
+              const active = sortable && sort.key === sortKey;
               return (
                 <th
                   key={column.key}
@@ -112,7 +163,7 @@ export default function DataTable({
                     <button
                       type="button"
                       className="font-bold flex items-center gap-1"
-                      onClick={() => toggleSort(column.key)}
+                      onClick={() => toggleSort(sortKey)}
                     >
                       {column.header}
                       <span aria-hidden="true" className="text-xs text-gray-400">
@@ -155,10 +206,7 @@ export default function DataTable({
             id="datatable-page-size"
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5"
             value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPage(0);
-            }}
+            onChange={(e) => changePageSize(Number(e.target.value))}
           >
             {pageSizeOptions.map((option) => (
               <option key={option} value={option}>
@@ -167,29 +215,31 @@ export default function DataTable({
             ))}
           </select>
         </div>
-        <span>
-          {rows.length === 0 ? 0 : start + 1}-{Math.min(start + pageSize, rows.length)} of{" "}
-          {rows.length}
-        </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="px-3 py-1.5 border border-gray-300 rounded-lg"
-            style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
-            disabled={currentPage === 0}
-            onClick={() => setPage(currentPage - 1)}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            className="px-3 py-1.5 border border-gray-300 rounded-lg"
-            style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
-            disabled={currentPage >= pageCount - 1}
-            onClick={() => setPage(currentPage + 1)}
-          >
-            Next
-          </button>
+        <div className="flex items-center gap-4">
+          <span>
+            Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
+            {totalRows} rows
+          </span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg"
+              style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
+              disabled={currentPage === 0}
+              onClick={() => goToPage(currentPage - 1)}
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg"
+              style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
+              disabled={currentPage >= pageCount - 1}
+              onClick={() => goToPage(currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>

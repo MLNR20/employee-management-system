@@ -3,6 +3,7 @@
 export const statusColumn = () => ({
   key: "isActive",
   header: "Status",
+  sortKey: "isActive",
   accessor: (row) => (row.isActive ? "Active" : "Inactive"),
   render: (row) => (
     <span
@@ -15,9 +16,13 @@ export const statusColumn = () => ({
   ),
 });
 
+// The server stores the audit dates as createdAt / updatedAt.
+const serverDateField = { dateCreated: "createdAt", dateUpdated: "updatedAt" };
+
 export const dateColumn = (key, header) => ({
   key,
   header,
+  sortKey: serverDateField[key] ?? key,
   accessor: (row) => row[key],
   render: (row) => (row[key] ? row[key].toLocaleDateString() : ""),
 });

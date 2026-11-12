@@ -2,19 +2,21 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import PageLayout from "../PageLayout";
 import DataTable from "../datatable/DataTable";
+import { useServerTable } from "../../hooks/useServerTable";
 
 const noExtras = () => ({});
 const noHook = () => null;
 
 /**
- * List page for any resource config (see src/resources): a DataTable with an
+ * List page for any resource config (see src/resources): a server-paginated DataTable with an
  * Add button, plus Edit and Delete per row when the resource supports them
  * (it has a useUpdate / useRemove hook). A resource can add its own row buttons
  * with rowActions(row), e.g. Approve/Reject for leave requests.
  */
 export default function ResourceListPage({ resource }) {
   const { title, singular, basePath, hooks } = resource;
-  const { data = [], isLoading, error } = hooks.useList();
+  const table = useServerTable();
+  const { data: page, isLoading, isFetching, error } = hooks.usePage(table.params);
   const remove = (hooks.useRemove ?? noHook)();
   const extras = (resource.useExtras ?? noExtras)(); // e.g. lookup lists for readable columns
   const canEdit = Boolean(hooks.useUpdate);
@@ -88,8 +90,11 @@ export default function ResourceListPage({ resource }) {
     >
       <DataTable
         columns={columns}
-        data={data}
+        data={page?.items ?? []}
+        total={page?.total ?? 0}
+        server={table}
         isLoading={isLoading}
+        isFetching={isFetching}
         error={error}
         emptyMessage="No records found."
       />

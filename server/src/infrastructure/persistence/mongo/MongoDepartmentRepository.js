@@ -16,6 +16,7 @@ export class MongoDepartmentRepository extends MongoRepository {
   constructor() {
     super({
       model: DepartmentModel,
+      searchFields: ["name", "code", "description"],
       toEntity: toDepartment,
       duplicateError: () => new DuplicateDepartmentError(),
     });

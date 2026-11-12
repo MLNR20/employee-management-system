@@ -89,7 +89,7 @@ export class MongoLeaveBalanceRepository extends MongoRepository {
 
 export class MongoLeaveRequestRepository extends MongoRepository {
   constructor() {
-    super({ model: LeaveRequestModel, toEntity: toLeaveRequest });
+    super({ model: LeaveRequestModel, toEntity: toLeaveRequest, searchFields: ["reason", "status"] });
   }
 
   async findByEmployeeId(employeeId) {

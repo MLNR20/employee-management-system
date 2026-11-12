@@ -25,6 +25,21 @@ export class HttpRepository extends Repository {
     return data.data.map(this.fromApi);
   }
 
+  async getPage(params = {}) {
+    // Empty values (no search text, no sort column) are left off the query string.
+    const query = Object.fromEntries(
+      Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== "")
+    );
+    const { data } = await this.client.get(`/${this.resource}/`, { params: query });
+    return {
+      items: data.data.map(this.fromApi),
+      total: data.count,
+      page: data.page,
+      pageSize: data.pageSize,
+      totalPages: data.totalPages,
+    };
+  }
+
   async getById(id) {
     const { data } = await this.client.get(`/${this.resource}/${id}`);
     return this.fromApi(data);

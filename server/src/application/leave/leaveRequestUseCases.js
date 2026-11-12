@@ -2,6 +2,7 @@ import { InvalidStateError, NotFoundError, ValidationError } from "../../domain/
 import { LeaveStatus } from "../../domain/leave/LeaveRequest.js";
 import { ApprovalDecision } from "../../domain/leave/LeaveApproval.js";
 import { validateLeaveRequest } from "../../domain/leave/leaveRequestRules.js";
+import { normalizePageQuery, toPage } from "../../domain/pagination.js";
 
 /**
  * Filing and deciding leave. A request starts pending; an administrator then
@@ -50,6 +51,11 @@ export const createLeaveRequestUseCases = ({
 
   return {
     listLeaveRequests: () => leaveRequestRepository.findAll(),
+
+    async listLeaveRequestsPage(query) {
+      const request = normalizePageQuery(query);
+      return toPage(await leaveRequestRepository.findPage(request), request);
+    },
 
     getLeaveRequest: getOrThrow,
 

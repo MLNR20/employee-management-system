@@ -8,7 +8,7 @@ export const toDto = ({ id, ...rest }) => ({ _id: id, ...rest });
  *
  * @param {Object} options
  * @param {string} options.entityName used in response messages
- * @param {{list: Function, get: Function, add: Function, update: Function, remove: Function}} options.useCases
+ * @param {{list: Function, listPage?: Function, get: Function, add: Function, update: Function, remove: Function}} options.useCases
  * @param {(body: object) => object} [options.toInput] reshapes a request body before it reaches the use case
  * @param {express.Router} [options.router] reuse a router that already has extra routes registered
  * @param {Array<"create"|"list"|"get"|"update"|"delete">} [options.operations] routes to expose (default: all)
@@ -31,6 +31,13 @@ export const createCrudRouter = ({
 
   if (has("list")) {
     router.get("/", async (req, res) => {
+      // ?page= or ?pageSize= asks for one page; with neither, the whole list comes back as before.
+      const paged = req.query.page !== undefined || req.query.pageSize !== undefined;
+      if (paged && useCases.listPage) {
+        const { items, total, page, pageSize, totalPages } = await useCases.listPage(req.query);
+        return res.status(200).json({ count: total, data: items.map(toDto), page, pageSize, totalPages });
+      }
+
       const entities = await useCases.list();
       res.status(200).json({ count: entities.length, data: entities.map(toDto) });
     });

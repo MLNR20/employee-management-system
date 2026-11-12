@@ -1,16 +1,19 @@
 import Swal from "sweetalert2";
 import {
   useLeaveTypes,
+  useLeaveTypesPage,
   useLeaveType,
   useCreateLeaveType,
   useUpdateLeaveType,
   useRemoveLeaveType,
   useLeaveBalances,
+  useLeaveBalancesPage,
   useLeaveBalance,
   useCreateLeaveBalance,
   useUpdateLeaveBalance,
   useRemoveLeaveBalance,
   useLeaveRequests,
+  useLeaveRequestsPage,
   useLeaveRequest,
   useCreateLeaveRequest,
   useDecideLeaveRequest,
@@ -37,16 +40,18 @@ export const leaveTypeResource = {
   basePath: "/leave-types",
   hooks: {
     useList: useLeaveTypes,
+    usePage: useLeaveTypesPage,
     useOne: useLeaveType,
     useCreate: useCreateLeaveType,
     useUpdate: useUpdateLeaveType,
     useRemove: useRemoveLeaveType,
   },
   columns: () => [
-    { key: "name", header: "Leave" },
+    { key: "name", header: "Leave", sortKey: "name" },
     {
       key: "isPaid",
       header: "Paid",
+      sortKey: "isPaid",
       accessor: (t) => (t.isPaid ? "Paid" : "Unpaid"),
       render: (t) => (
         <Badge value={t.isPaid ? "paid" : "unpaid"} tones={{ paid: "bg-blue-100 text-blue-700", unpaid: "bg-gray-100 text-gray-700" }} />
@@ -70,6 +75,7 @@ export const leaveBalanceResource = {
   basePath: "/leave-balances",
   hooks: {
     useList: useLeaveBalances,
+    usePage: useLeaveBalancesPage,
     useOne: useLeaveBalance,
     useCreate: useCreateLeaveBalance,
     useUpdate: useUpdateLeaveBalance,
@@ -79,9 +85,9 @@ export const leaveBalanceResource = {
   columns: ({ employees, leaveTypes }) => [
     { key: "employee", header: "Employee", accessor: (b) => nameOf(employees, b.employeeId, (e) => e.fullName) },
     { key: "leaveType", header: "Leave type", accessor: (b) => nameOf(leaveTypes, b.leaveTypeId, (t) => t.name) },
-    { key: "maxLeaves", header: "Maximum" },
+    { key: "maxLeaves", header: "Maximum", sortKey: "maxLeaves" },
     { key: "usedLeaves", header: "Used", accessor: (b) => b.usedLeaves },
-    { key: "availableLeaves", header: "Available" },
+    { key: "availableLeaves", header: "Available", sortKey: "availableLeaves" },
     statusColumn(),
   ],
   fields: [
@@ -182,6 +188,7 @@ export const leaveRequestResource = {
   addLabel: "File Leave",
   hooks: {
     useList: useLeaveRequests,
+    usePage: useLeaveRequestsPage,
     useOne: useLeaveRequest,
     useCreate: useCreateLeaveRequest,
   },
@@ -189,11 +196,11 @@ export const leaveRequestResource = {
   columns: ({ employees, leaveTypes }) => [
     { key: "employee", header: "Employee", accessor: (r) => nameOf(employees, r.employeeId, (e) => e.fullName) },
     { key: "leaveType", header: "Leave type", accessor: (r) => nameOf(leaveTypes, r.leaveTypeId, (t) => t.name) },
-    { key: "startDate", header: "From", accessor: (r) => dateOnly(r.startDate), render: (r) => dateOnly(r.startDate) },
-    { key: "endDate", header: "To", accessor: (r) => dateOnly(r.endDate), render: (r) => dateOnly(r.endDate) },
-    { key: "days", header: "Days" },
-    { key: "status", header: "Status", render: (r) => <Badge value={r.status} tones={statusTones} /> },
-    { key: "reason", header: "Reason" },
+    { key: "startDate", header: "From", sortKey: "startDate", accessor: (r) => dateOnly(r.startDate), render: (r) => dateOnly(r.startDate) },
+    { key: "endDate", header: "To", sortKey: "endDate", accessor: (r) => dateOnly(r.endDate), render: (r) => dateOnly(r.endDate) },
+    { key: "days", header: "Days", sortKey: "days" },
+    { key: "status", header: "Status", sortKey: "status", render: (r) => <Badge value={r.status} tones={statusTones} /> },
+    { key: "reason", header: "Reason", sortKey: "reason" },
     { key: "decidedBy", header: "Decided by", sortable: false, searchable: false, render: (r) => <DecidedBy row={r} /> },
     dateColumn("dateCreated", "Filed"),
   ],

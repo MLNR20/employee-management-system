@@ -52,13 +52,13 @@ code {
   display:none;
 }
 
+/* The page gets its utility classes from the prebuilt flowbite stylesheet, which has no black text. */
+.text-black { color: #000; }
+
 .side-login-panel
 {
-  background-image: url("./pages/assets/Sideasset.png");
+  background-image: linear-gradient(to bottom, #7f1d1d, #b91c1c);
    width:200px;
-  background-size: cover;
-  background-position:bottom ;
-  background-repeat: no-repeat;
 }
 
 @media only screen 

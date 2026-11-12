@@ -22,6 +22,8 @@ export const createEmployeeUseCases = ({
 
   return {
     listEmployees: crud.list,
+    listEmployeesPage: crud.listPage,
+    employeeSummary: () => employeeRepository.summary(),
     getEmployee: crud.get,
     addEmployee: crud.add,
     updateEmployee: crud.update,

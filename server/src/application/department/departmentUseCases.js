@@ -15,6 +15,7 @@ export const createDepartmentUseCases = ({ departmentRepository }) => {
 
   return {
     listDepartments: crud.list,
+    listDepartmentsPage: crud.listPage,
     getDepartment: crud.get,
     addDepartment: crud.add,
     updateDepartment: crud.update,

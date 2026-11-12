@@ -1,20 +1,26 @@
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
+import Card from "../../components/Card";
+import StatCard from "../../components/StatCard";
+import ExportButtons from "../../components/ExportButtons";
 import DataTable from "../../components/datatable/DataTable";
-import { useEmployees, useRemoveEmployee } from "../../hooks/useEntities";
+import { useEmployeesPage, useEmployeeSummary, useRemoveEmployee } from "../../hooks/useEntities";
+import { useServerTable } from "../../hooks/useServerTable";
+import { employeeUseCases } from "../../container";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 
 const columns = [
   { key: "index", header: "#", sortable: false, searchable: false, render: (_, index) => index + 1 },
-  { key: "fullName", header: "Full Name", accessor: (e) => e.fullName },
-  { key: "email", header: "Email" },
-  { key: "position", header: "Position" },
-  { key: "salary", header: "Salary" },
-  { key: "department", header: "Department" },
+  { key: "fullName", header: "Full Name", sortKey: "first_name", accessor: (e) => e.fullName },
+  { key: "email", header: "Email", sortKey: "email" },
+  { key: "position", header: "Position", sortKey: "position" },
+  { key: "salary", header: "Salary", sortKey: "salary" },
+  { key: "department", header: "Department", sortKey: "department" },
   {
     key: "isActive",
     header: "Status",
+    sortKey: "isActive",
     accessor: (e) => (e.isActive ? "Active" : "Inactive"),
     render: (e) => (
       <span
@@ -29,14 +35,34 @@ const columns = [
   {
     key: "hireDate",
     header: "Hire Date",
+    sortKey: "hireDate",
     accessor: (e) => (e.hireDate ? new Date(e.hireDate) : undefined),
     render: (e) => (e.hireDate ? new Date(e.hireDate).toLocaleDateString() : ""),
   },
 ];
 
+const exportTable = (employees) => ({
+  filename: "employees",
+  title: "Employees",
+  headers: ["Full Name", "Email", "Position", "Salary", "Department", "Status", "Hire Date"],
+  rows: employees.map((e) => [
+    e.fullName,
+    e.email,
+    e.position,
+    e.salary,
+    e.department,
+    e.isActive ? "Active" : "Inactive",
+    e.hireDate ? new Date(e.hireDate).toLocaleDateString() : "",
+  ]),
+});
+
 export default function View_Employees() {
-  const { data: employees = [], isLoading, error } = useEmployees();
+  const table = useServerTable();
+  const { data: page, isLoading, isFetching, error } = useEmployeesPage(table.params);
+  const { data: summary } = useEmployeeSummary();
   const removeEmployee = useRemoveEmployee();
+
+  const counts = { total: summary?.total ?? 0, active: summary?.active ?? 0, inactive: summary?.inactive ?? 0 };
 
   const confirmDelete = (id) => {
     Swal.fire({
@@ -87,22 +113,37 @@ export default function View_Employees() {
       <SideBar />
       <Navbar_DS />
       <div className="p-8 sm:ml-64">
-        <div className="p-4 border-2 shadow-lg  bg-white border-gray-200 border-solid rounded-lg mt-14">
-          <div className="p-8 mb-4">
-            <h1 className="font-bold text-2xl">Employees Management</h1>
-            <div className="overflow-auto mt-6 ">
-              <div className="relative p-2 overflow-x-auto" id="LogsTableHere">
-                <DataTable
-                  columns={tableColumns}
-                  data={employees}
-                  isLoading={isLoading}
-                  error={error}
-                  emptyMessage="No records found."
-                />
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-3">
+          <StatCard label="Total Employees" value={counts.total} icon="users" />
+          <StatCard label="Active" value={counts.active} icon="checkCircle" accent="green" />
+          <StatCard label="Inactive" value={counts.inactive} icon="xCircle" accent="red" />
         </div>
+        <Card
+          title="Employees Management"
+          actions={
+            <div className="flex flex-row gap-2">
+              <Link
+                to="/employees/add"
+                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5"
+              >
+                Create Employee
+              </Link>
+              <ExportButtons getTable={async () => exportTable(await employeeUseCases.list())} />
+            </div>
+          }
+          className="mt-6"
+        >
+          <DataTable
+            columns={tableColumns}
+            data={page?.items ?? []}
+            total={page?.total ?? 0}
+            server={table}
+            isLoading={isLoading}
+            isFetching={isFetching}
+            error={error}
+            emptyMessage="No records found."
+          />
+        </Card>
       </div>
     </div>
   );
