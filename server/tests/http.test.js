@@ -16,8 +16,12 @@ import {
 } from "../src/application/role/roleUseCases.js";
 import { createLeaveBalanceUseCases } from "../src/application/leave/leaveBalanceUseCases.js";
 import { createLeaveRequestUseCases } from "../src/application/leave/leaveRequestUseCases.js";
+import { createAuditLogUseCases } from "../src/application/audit/auditLogUseCases.js";
+import { createInventoryUseCases } from "../src/application/inventory/inventoryUseCases.js";
 import {
   InMemoryAdministratorRepository,
+  InMemoryAuditLogRepository,
+  InMemoryInventoryRepository,
   InMemoryLeaveApprovalRepository,
   InMemoryLeaveBalanceRepository,
   InMemoryLeaveRequestRepository,
@@ -51,10 +55,12 @@ before(async () => {
   const leaveBalanceRepository = new InMemoryLeaveBalanceRepository();
   const leaveRequestRepository = new InMemoryLeaveRequestRepository();
 
+  const itemRepository = new InMemoryInventoryRepository();
   const employeeUseCases = createEmployeeUseCases({
     employeeRepository,
     leaveBalanceRepository,
     leaveRequestRepository,
+    itemRepository,
   });
   const departmentUseCases = createDepartmentUseCases({
     departmentRepository: createInMemoryDepartmentRepository(),
@@ -96,6 +102,8 @@ before(async () => {
     leaveBalanceUseCases,
     leaveRequestUseCases,
     administratorUseCases,
+    inventoryUseCases: createInventoryUseCases({ itemRepository, employeeRepository }),
+    auditLogUseCases: createAuditLogUseCases({ auditLogRepository: new InMemoryAuditLogRepository() }),
   });
   await new Promise((resolve) => {
     server = app.listen(0, resolve);
@@ -652,4 +660,152 @@ test("deleting an employee without leave history also deletes their balances", a
   assert.equal((await call("GET", `/leave-balances/${balance._id}`, { token })).status, 404);
   // ...which also frees the leave type for deletion
   assert.equal((await call("DELETE", `/leave-types/${type._id}`, { token })).status, 200);
+});
+
+// --- audit logs ---------------------------------------------------------------------------------
+
+const settle = () => new Promise((resolve) => setTimeout(resolve, 100)); // entries are written just after the response
+
+test("changes are recorded in the audit log, with who did them and never what was submitted", async () => {
+  const token = await signIn();
+  const created = (await call("POST", "/employees/", { token, body: newEmployee("audit@example.com") })).body;
+  await call("PUT", `/employees/${created._id}`, { token, body: { ...newEmployee("audit@example.com"), position: "Lead" } });
+  await call("GET", `/employees/${created._id}`, { token }); // reads are not audited
+  await call("DELETE", `/employees/${created._id}`, { token });
+  await call("POST", "/employees/", { token, body: {} }); // fails validation: not audited
+  await settle();
+
+  const { status, body } = await call("GET", "/audit-logs/?page=1&pageSize=100&search=" + created._id, { token });
+  assert.equal(status, 200);
+  assert.deepEqual(body.data.map((entry) => entry.action).sort(), ["delete", "update"]);
+
+  const entry = body.data[0];
+  assert.equal(entry.resource, "employees");
+  assert.equal(entry.resourceId, created._id);
+  assert.equal(entry.actorName, "alice");
+  assert.ok(entry.actorId);
+  assert.ok(entry._id);
+  assert.ok(entry.dateCreated);
+  assert.equal(JSON.stringify(body).includes("pass-word1!"), false);
+
+  const everything = (await call("GET", "/audit-logs/?page=1&pageSize=100", { token })).body.data;
+  assert.ok(everything.some((e) => e.action === "create" && e.resource === "employees"));
+  assert.ok(everything.some((e) => e.action === "login" && e.actorName === "alice"));
+  assert.equal(everything.some((e) => e.method === "GET"), false);
+  assert.equal(everything.some((e) => e.resource === "admin" && e.path.includes("refresh")), false);
+});
+
+test("a failed login is audited under the name that was typed", async () => {
+  const token = await signIn();
+  const wrong = await call("POST", "/admin/login", { body: { username: "mallory", password: "nope-nope-1!" } });
+  assert.ok(wrong.status >= 400);
+  await settle();
+
+  const { body } = await call("GET", "/audit-logs/?page=1&pageSize=100&search=mallory", { token });
+  assert.equal(body.count, 1);
+  assert.equal(body.data[0].action, "login_failed");
+  assert.equal(body.data[0].actorId, undefined);
+  assert.equal(JSON.stringify(body).includes("nope-nope-1!"), false);
+});
+
+test("audit logs are read-only over HTTP and need a signed-in administrator", async () => {
+  assert.equal((await call("GET", "/audit-logs/")).status, 401);
+
+  const token = await signIn();
+  const first = (await call("GET", "/audit-logs/?page=1&pageSize=1", { token })).body;
+  assert.equal(first.data.length, 1);
+  assert.ok(first.totalPages >= 1);
+  const id = first.data[0]._id;
+
+  assert.equal((await call("GET", `/audit-logs/${id}`, { token })).status, 200);
+  assert.equal((await call("POST", "/audit-logs/", { token, body: { action: "forged" } })).status, 404);
+  assert.equal((await call("PUT", `/audit-logs/${id}`, { token, body: { action: "edited" } })).status, 404);
+  assert.equal((await call("DELETE", `/audit-logs/${id}`, { token })).status, 404);
+  assert.equal((await call("GET", `/audit-logs/${id}`, { token })).body.action, first.data[0].action);
+});
+
+// --- inventory ----------------------------------------------------------------------------------
+
+const newItem = (serialNumber, extra = {}) => ({
+  name: "ThinkPad T14",
+  serialNumber,
+  category: "Laptop",
+  status: "available",
+  location: "HQ store room",
+  purchaseDate: "2025-01-15",
+  purchaseCost: 1200,
+  ...extra,
+});
+
+test("inventory items can be created, listed in pages, searched, updated and deleted", async () => {
+  const token = await signIn();
+  const created = await call("POST", "/inventory/", { token, body: newItem("SN-0001") });
+  assert.equal(created.status, 200);
+  assert.ok(created.body._id);
+  assert.equal(created.body.status, "available");
+
+  await call("POST", "/inventory/", { token, body: newItem("SN-0002", { name: "Dell U2723", category: "Monitor" }) });
+
+  const page = await call("GET", "/inventory/?page=1&pageSize=1&sortBy=serialNumber", { token });
+  assert.equal(page.body.count, 2);
+  assert.equal(page.body.data.length, 1);
+  assert.equal(page.body.data[0].serialNumber, "SN-0001");
+
+  const found = await call("GET", "/inventory/?page=1&pageSize=10&search=monitor", { token });
+  assert.equal(found.body.count, 1);
+  assert.equal(found.body.data[0].serialNumber, "SN-0002");
+
+  const updated = await call("PUT", `/inventory/${created.body._id}`, {
+    token,
+    body: newItem("SN-0001", { status: "maintenance", location: "Repair desk" }),
+  });
+  assert.equal(updated.status, 200);
+  assert.equal((await call("GET", `/inventory/${created.body._id}`, { token })).body.status, "maintenance");
+
+  assert.equal((await call("DELETE", `/inventory/${created.body._id}`, { token })).status, 200);
+  assert.equal((await call("GET", `/inventory/${created.body._id}`, { token })).status, 404);
+});
+
+test("inventory rejects bad input and duplicate serial numbers", async () => {
+  const token = await signIn();
+  assert.equal((await call("POST", "/inventory/", { token, body: { name: "No serial" } })).status, 400);
+  assert.equal((await call("POST", "/inventory/", { token, body: newItem("SN-BAD", { status: "lost" }) })).status, 400);
+  assert.equal((await call("POST", "/inventory/", { token, body: newItem("SN-BAD", { purchaseCost: -5 }) })).status, 400);
+
+  assert.equal((await call("POST", "/inventory/", { token, body: newItem("SN-DUP") })).status, 200);
+  assert.equal((await call("POST", "/inventory/", { token, body: newItem("SN-DUP") })).status, 409);
+  assert.equal((await call("GET", "/inventory/")).status, 401);
+});
+
+test("only an item in use is assigned, to an employee who exists, and that employee cannot be deleted while holding it", async () => {
+  const token = await signIn();
+  const holder = (await call("POST", "/employees/", { token, body: newEmployee("holder@example.com") })).body;
+
+  // in use needs an assignee; an assignee needs "in use"; the employee must exist
+  assert.equal((await call("POST", "/inventory/", { token, body: newItem("SN-A1", { status: "in_use" }) })).status, 400);
+  assert.equal(
+    (await call("POST", "/inventory/", { token, body: newItem("SN-A2", { assignedEmployeeId: holder._id }) })).status,
+    400
+  );
+  assert.equal(
+    (await call("POST", "/inventory/", { token, body: newItem("SN-A3", { status: "in_use", assignedEmployeeId: "0".repeat(24) }) })).status,
+    400
+  );
+
+  const item = await call("POST", "/inventory/", {
+    token,
+    body: newItem("SN-A4", { status: "in_use", assignedEmployeeId: holder._id }),
+  });
+  assert.equal(item.status, 200);
+  assert.equal(item.body.assignedEmployeeId, holder._id);
+
+  assert.equal((await call("DELETE", `/employees/${holder._id}`, { token })).status, 409);
+
+  // returned: back to available and unassigned, so the employee can go
+  const returned = await call("PUT", `/inventory/${item.body._id}`, {
+    token,
+    body: newItem("SN-A4", { status: "available", assignedEmployeeId: "" }),
+  });
+  assert.equal(returned.status, 200);
+  assert.equal((await call("DELETE", `/employees/${holder._id}`, { token })).status, 200);
 });

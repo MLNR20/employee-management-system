@@ -8,10 +8,6 @@ export class AuthRepository {
     throw new Error("AuthRepository.login not implemented");
   }
 
-  async register(administrator) {
-    throw new Error("AuthRepository.register not implemented");
-  }
-
   /** Revokes the session on the server (best effort) and clears it locally. */
   async logout() {
     throw new Error("AuthRepository.logout not implemented");

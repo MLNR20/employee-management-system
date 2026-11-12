@@ -16,6 +16,8 @@ const resourceLink = (resource) => ({
 const sectionKeys = [
   { label: "Organization", keys: ["departments", "roles", "role-assignments"] },
   { label: "Leave Management", keys: ["leave-requests", "leave-balances", "leave-types"] },
+  { label: "Assets", keys: ["inventory"] },
+  { label: "Administration", keys: ["audit-logs"] },
 ];
 
 const sections = [

@@ -1,9 +1,6 @@
 import { AuthRepository } from "../../domain/auth/AuthRepository";
 import { createAdministrator } from "../../domain/auth/Administrator";
-import {
-  InvalidCredentialsError,
-  DuplicateAdministratorError,
-} from "../../domain/errors";
+import { InvalidCredentialsError } from "../../domain/errors";
 import { apiClient, publicClient } from "../http/apiClient";
 import { tokenStorage } from "../storage/tokenStorage";
 
@@ -20,17 +17,6 @@ export class HttpAuthRepository extends AuthRepository {
       });
     } catch (error) {
       if (error.response?.status === 400) throw new InvalidCredentialsError();
-      throw error;
-    }
-  }
-
-  async register(administrator) {
-    try {
-      await publicClient.post("/admin/register", administrator);
-    } catch (error) {
-      if (error.response?.data?.code === 11000) {
-        throw new DuplicateAdministratorError();
-      }
       throw error;
     }
   }

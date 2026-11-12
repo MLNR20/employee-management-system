@@ -10,10 +10,13 @@ import { LeaveType } from "../src/domain/leave/LeaveType.js";
 import { LeaveBalance } from "../src/domain/leave/LeaveBalance.js";
 import { LeaveRequest } from "../src/domain/leave/LeaveRequest.js";
 import { LeaveApproval } from "../src/domain/leave/LeaveApproval.js";
+import { AuditLog } from "../src/domain/audit/AuditLog.js";
+import { Item } from "../src/domain/inventory/Item.js";
 import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
   DuplicateEmployeeError,
+  DuplicateItemError,
   DuplicateLeaveBalanceError,
   DuplicateLeaveTypeError,
   DuplicateRoleAssignmentError,
@@ -244,5 +247,30 @@ export class InMemoryAdministratorRepository extends AdministratorRepository {
     if (this.refreshHashes.get(id) !== expectedHash) return false;
     this.refreshHashes.set(id, newHash);
     return true;
+  }
+}
+
+/** Append-only like the real one: entries can be created and read, never changed or removed. */
+export class InMemoryAuditLogRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new AuditLog(props), [], () => new Error("duplicate"));
+  }
+
+  async update() {
+    throw new Error("Audit logs are append-only and cannot be updated");
+  }
+
+  async remove() {
+    throw new Error("Audit logs are append-only and cannot be removed");
+  }
+}
+
+export class InMemoryInventoryRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Item(props), [["serialNumber"]], () => new DuplicateItemError());
+  }
+
+  async existsForEmployee(employeeId) {
+    return [...this.items.values()].some((item) => item.assignedEmployeeId === employeeId);
   }
 }

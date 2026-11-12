@@ -9,6 +9,8 @@ import {
   leaveBalanceUseCases,
   leaveRequestUseCases,
   administratorUseCases,
+  inventoryUseCases,
+  auditLogUseCases,
 } from "../container";
 
 export const {
@@ -71,6 +73,18 @@ export const {
   useOne: useLeaveRequest,
   useCreate: useCreateLeaveRequest,
 } = createCrudHooks("leave-requests", leaveRequestUseCases);
+
+export const {
+  useList: useInventory,
+  usePage: useInventoryPage,
+  useOne: useInventoryItem,
+  useCreate: useCreateInventoryItem,
+  useUpdate: useUpdateInventoryItem,
+  useRemove: useRemoveInventoryItem,
+} = createCrudHooks("inventory", inventoryUseCases);
+
+// The audit trail is read-only: pages and single entries only.
+export const { usePage: useAuditLogsPage, useOne: useAuditLog } = createCrudHooks("audit-logs", auditLogUseCases);
 
 /** Headcount for the employee cards: { total, active, inactive }. */
 export const useEmployeeSummary = () =>

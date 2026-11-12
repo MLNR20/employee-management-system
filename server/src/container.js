@@ -7,6 +7,8 @@ import {
   MongoRoleRepository,
   MongoRoleAssignmentRepository,
 } from "./infrastructure/persistence/mongo/MongoRoleRepository.js";
+import { MongoInventoryRepository } from "./infrastructure/persistence/mongo/MongoInventoryRepository.js";
+import { MongoAuditLogRepository } from "./infrastructure/persistence/mongo/MongoAuditLogRepository.js";
 import { MongoLeaveTypeRepository } from "./infrastructure/persistence/mongo/MongoLeaveTypeRepository.js";
 import {
   MongoLeaveBalanceRepository,
@@ -26,6 +28,8 @@ import {
 import { createLeaveTypeUseCases } from "./application/leave/leaveTypeUseCases.js";
 import { createLeaveBalanceUseCases } from "./application/leave/leaveBalanceUseCases.js";
 import { createLeaveRequestUseCases } from "./application/leave/leaveRequestUseCases.js";
+import { createInventoryUseCases } from "./application/inventory/inventoryUseCases.js";
+import { createAuditLogUseCases } from "./application/audit/auditLogUseCases.js";
 
 const administratorRepository = new MongoAdministratorRepository();
 const employeeRepository = new MongoEmployeeRepository();
@@ -35,6 +39,7 @@ const leaveTypeRepository = new MongoLeaveTypeRepository();
 const leaveBalanceRepository = new MongoLeaveBalanceRepository();
 const leaveRequestRepository = new MongoLeaveRequestRepository();
 const leaveApprovalRepository = new MongoLeaveApprovalRepository();
+const itemRepository = new MongoInventoryRepository();
 
 export const authUseCases = createAuthUseCases({
   administratorRepository,
@@ -54,6 +59,7 @@ export const employeeUseCases = createEmployeeUseCases({
   employeeRepository,
   leaveBalanceRepository,
   leaveRequestRepository,
+  itemRepository,
 });
 
 export const departmentUseCases = createDepartmentUseCases({
@@ -88,3 +94,9 @@ export const leaveRequestUseCases = createLeaveRequestUseCases({
   leaveTypeRepository,
   administratorRepository,
 });
+
+export const auditLogUseCases = createAuditLogUseCases({
+  auditLogRepository: new MongoAuditLogRepository(),
+});
+
+export const inventoryUseCases = createInventoryUseCases({ itemRepository, employeeRepository });

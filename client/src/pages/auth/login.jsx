@@ -82,7 +82,7 @@ function Login() {
     <div>
       <div className="flex h-screen w-100">
         <div className="flex-2 side-login-panel p-8 text-white w-50 hidden sm:block"></div>
-        <div className="flex-1 bg-white my-auto p-8 text-white">
+        <div className="flex-1 bg-white my-auto p-4 text-white">
           <header>
             <nav className="bg-white w-full  border-gray-200 text-gray-900 w-100 mb-8 py-4">
               <div className="flex flex-wrap justify-between items-left mx-auto max-w-full">
@@ -171,12 +171,6 @@ function Login() {
             >
               Login
             </button>
-            <p className="text-gray-900 mt-4 font-normal">
-              Don't have an account?{" "}
-              <Link to="/register" className="font-semibold">
-                Sign Up!
-              </Link>
-            </p>
           </div>
         </div>
       </div>

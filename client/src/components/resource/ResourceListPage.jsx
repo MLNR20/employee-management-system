@@ -80,12 +80,14 @@ export default function ResourceListPage({ resource }) {
     <PageLayout
       title={title}
       actions={
-        <Link
-          to={`${basePath}/add`}
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"
-        >
-          {resource.addLabel ?? `Add ${singular}`}
-        </Link>
+        hooks.useCreate && (
+          <Link
+            to={`${basePath}/add`}
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"
+          >
+            {resource.addLabel ?? `Add ${singular}`}
+          </Link>
+        )
       }
     >
       <DataTable

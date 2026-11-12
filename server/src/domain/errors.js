@@ -58,6 +58,12 @@ export class DuplicateLeaveTypeError extends DomainError {
   }
 }
 
+export class DuplicateItemError extends DomainError {
+  constructor(message = "An inventory item with this serial number already exists") {
+    super(message);
+  }
+}
+
 /** The action does not fit the current state, e.g. deciding a request that is already decided. */
 export class InvalidStateError extends DomainError {
   constructor(message = "This action is not allowed in the current state") {
