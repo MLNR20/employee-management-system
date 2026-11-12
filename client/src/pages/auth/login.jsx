@@ -86,24 +86,16 @@ function Login() {
           <header>
             <nav className="bg-white w-full  border-gray-200 text-gray-900 w-100 mb-8 py-4">
               <div className="flex flex-wrap justify-between items-left mx-auto max-w-full">
-                <Link to="/" className="flex items-center">
+                <Link to="/login" className="flex items-center">
                   <img
                     src={icon}
                     className="mr-3 h-10 sm:h-9"
-                    alt="Flowbite Logo"
+                    alt="Gallium31 logo"
                   />
-                  <span className="self-center text-2xl object-cover font-semibold whitespace-nowrap text-blue-700">
-                    Manageme
+                  <span className="self-center text-xl object-cover font-semibold whitespace-nowrap text-gray-500">
+                    Gallium31 Employee Management System
                   </span>
                 </Link>
-                <div className="flex items-center lg:order-2">
-                  <Link
-                    to="/"
-                    className="text-gray-800 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-md px-4 lg:px-5 py-2 lg:py-2.5 mr-2"
-                  >
-                    Back
-                  </Link>
-                </div>
               </div>
             </nav>
           </header>

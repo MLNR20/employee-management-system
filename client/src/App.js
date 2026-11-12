@@ -1,8 +1,7 @@
 import './index.css'; // or './App.css'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/login';
 import Register from './pages/auth/register';
-import Home from './pages/index';
 import ViewEmployees from "./pages/crud/view_employees";
 import AddEmployees from "./pages/crud/add_employees";
 import EditEmployees from "./pages/crud/edit_employees";
@@ -22,7 +21,8 @@ function App() {
        <Router>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Home />} />
+            {/* No landing page: signed-in users go to the employee list, everyone else to login. */}
+            <Route path="/" element={<Navigate to="/employees" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
