@@ -1,7 +1,10 @@
 import { describeRequest } from "../../../domain/audit/auditRules.js";
 
-const typedUsername = (body) =>
-  typeof body?.username === "string" ? body.username.trim().slice(0, 100) || undefined : undefined;
+// The name typed into a sign-in form: an administrator's username or an employee's email.
+const typedUsername = (body) => {
+  const typed = typeof body?.username === "string" ? body.username : body?.email;
+  return typeof typed === "string" ? typed.trim().slice(0, 100) || undefined : undefined;
+};
 
 /**
  * Records every audited request once it has finished. It never delays a response and a

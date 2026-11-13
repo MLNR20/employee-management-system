@@ -8,7 +8,7 @@ export default function PageLayout({ title, actions, children }) {
     <div>
       <SideBar />
       <Navbar_DS />
-      <div className="p-8 sm:ml-64">
+      <div className="p-8 main-content">
         <Card title={title} actions={actions} className="mt-14">
           {children}
         </Card>

@@ -27,7 +27,7 @@ export default function Dashboard() {
     <div>
       <SideBar />
       <Navbar_DS />
-      <div className="p-8 sm:ml-64">
+      <div className="p-8 main-content">
         <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-3">
           <StatCard label="Total Employees" value={summary?.total ?? "-"} icon="users" />
           <StatCard label="Present Today" value={summary?.present ?? "-"} icon="checkCircle" accent="green" />

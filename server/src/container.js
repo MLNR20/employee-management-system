@@ -30,6 +30,7 @@ import { createLeaveBalanceUseCases } from "./application/leave/leaveBalanceUseC
 import { createLeaveRequestUseCases } from "./application/leave/leaveRequestUseCases.js";
 import { createInventoryUseCases } from "./application/inventory/inventoryUseCases.js";
 import { createDashboardUseCases } from "./application/dashboard/dashboardUseCases.js";
+import { createEmployeeAuthUseCases } from "./application/employee/employeeAuthUseCases.js";
 import { createAuditLogUseCases } from "./application/audit/auditLogUseCases.js";
 
 const administratorRepository = new MongoAdministratorRepository();
@@ -41,10 +42,11 @@ const leaveBalanceRepository = new MongoLeaveBalanceRepository();
 const leaveRequestRepository = new MongoLeaveRequestRepository();
 const leaveApprovalRepository = new MongoLeaveApprovalRepository();
 const itemRepository = new MongoInventoryRepository();
+const passwordHasher = new BcryptPasswordHasher();
 
 export const authUseCases = createAuthUseCases({
   administratorRepository,
-  passwordHasher: new BcryptPasswordHasher(),
+  passwordHasher,
   tokenService: new JwtTokenService({
     accessSecret: config.JWT_SECRET,
     refreshSecret: config.REFRESH_TOKEN_SECRET,
@@ -61,6 +63,7 @@ export const employeeUseCases = createEmployeeUseCases({
   leaveBalanceRepository,
   leaveRequestRepository,
   itemRepository,
+  passwordHasher,
 });
 
 export const departmentUseCases = createDepartmentUseCases({
@@ -103,3 +106,14 @@ export const auditLogUseCases = createAuditLogUseCases({
 export const inventoryUseCases = createInventoryUseCases({ itemRepository, employeeRepository });
 
 export const dashboardUseCases = createDashboardUseCases({ employeeRepository, leaveRequestRepository });
+
+export const employeeAuthUseCases = createEmployeeAuthUseCases({
+  employeeRepository,
+  passwordHasher,
+  tokenService: new JwtTokenService({
+    accessSecret: config.EMPLOYEE_JWT_SECRET,
+    refreshSecret: config.EMPLOYEE_JWT_SECRET, // unused: the portal has no refresh tokens
+    accessTtl: config.EMPLOYEE_TOKEN_TTL,
+    refreshTtl: config.EMPLOYEE_TOKEN_TTL,
+  }),
+});

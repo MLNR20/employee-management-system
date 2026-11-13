@@ -15,6 +15,7 @@ import { LeaveType, LeaveBalance } from "./domain/leave/Leave";
 import { AdministratorAccount } from "./domain/auth/AdministratorAccount";
 import { Item } from "./domain/inventory/Item";
 import { HttpDashboardRepository } from "./infrastructure/repositories/HttpDashboardRepository";
+import { HttpEmployeePortalRepository } from "./infrastructure/repositories/HttpEmployeePortalRepository";
 import { AuditLog } from "./domain/audit/AuditLog";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
@@ -32,6 +33,9 @@ export const leaveTypeUseCases = restCrud("leave-types", LeaveType.fromApi);
 export const leaveBalanceUseCases = restCrud("leave-balances", LeaveBalance.fromApi);
 export const administratorUseCases = restCrud("administrators", AdministratorAccount.fromApi);
 export const inventoryUseCases = restCrud("inventory", Item.fromApi);
+
+// The employee portal has its own sign-in and token, separate from the administrators'.
+export const employeePortal = new HttpEmployeePortalRepository();
 
 const dashboardRepository = new HttpDashboardRepository();
 export const dashboardUseCases = {

@@ -36,6 +36,8 @@ const employeesSchema = createEntitySchema({
     type: Date,
     default: Date.now
   },
+  // Hash of the employee portal password. Never returned unless a query asks for it with select("+passwordHash").
+  passwordHash: { type: String, select: false },
   // Government ID numbers, digits only. Optional.
   sssNumber: { type: String, trim: true, default: "" },
   tinNumber: { type: String, trim: true, default: "" },

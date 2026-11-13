@@ -16,6 +16,9 @@ export const config = {
     // Auth tokens: short-lived access token + long-lived, rotating refresh token.
     JWT_SECRET: process.env.JWT_SECRET || 'secret123',
     REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || 'refresh-secret123',
+    // Employee portal tokens use their own secret so they can never be used as administrator tokens.
+    EMPLOYEE_JWT_SECRET: process.env.EMPLOYEE_JWT_SECRET || 'employee-secret123',
+    EMPLOYEE_TOKEN_TTL: process.env.EMPLOYEE_TOKEN_TTL || '8h',
     ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || '15m',
     REFRESH_TOKEN_TTL: process.env.REFRESH_TOKEN_TTL || '7d'
 }

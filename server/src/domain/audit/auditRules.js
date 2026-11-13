@@ -22,6 +22,11 @@ export const describeRequest = ({ method, url, status }) => {
   const succeeded = status < 400;
   const base = { method: verb, path };
 
+  if (resource === "employee-auth") {
+    if (second !== "login") return null;
+    return { ...base, resource, action: succeeded ? "login" : "login_failed" };
+  }
+
   if (resource === "admin") {
     if (second === "login") return { ...base, resource, action: succeeded ? "login" : "login_failed" };
     if (!succeeded) return null;

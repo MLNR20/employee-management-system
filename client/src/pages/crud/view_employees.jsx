@@ -112,7 +112,7 @@ export default function View_Employees() {
     <div>
       <SideBar />
       <Navbar_DS />
-      <div className="p-8 sm:ml-64">
+      <div className="p-8 main-content">
         <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-3">
           <StatCard label="Total Employees" value={counts.total} icon="users" />
           <StatCard label="Active" value={counts.active} icon="checkCircle" accent="green" />

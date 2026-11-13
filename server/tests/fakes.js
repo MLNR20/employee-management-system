@@ -100,8 +100,32 @@ export class InMemoryRepository extends Repository {
   }
 }
 
-export const createInMemoryEmployeeRepository = () =>
-  new InMemoryRepository((props) => new Employee(props), [["email"]], () => new DuplicateEmployeeError());
+export class InMemoryEmployeeRepository extends InMemoryRepository {
+  passwords = new Map();
+
+  constructor() {
+    super((props) => new Employee(props), [["email"]], () => new DuplicateEmployeeError());
+  }
+
+  async setPassword(id, passwordHash) {
+    this.passwords.set(id, passwordHash);
+  }
+
+  async findCredentialsByEmail(email) {
+    const employee = [...this.items.values()].find((e) => e.email === String(email).trim().toLowerCase());
+    if (!employee) return null;
+    return {
+      id: employee.id,
+      email: employee.email,
+      first_name: employee.first_name,
+      last_name: employee.last_name,
+      isActive: employee.isActive !== false,
+      passwordHash: this.passwords.get(employee.id) ?? "",
+    };
+  }
+}
+
+export const createInMemoryEmployeeRepository = () => new InMemoryEmployeeRepository();
 
 export const createInMemoryDepartmentRepository = () =>
   new InMemoryRepository(

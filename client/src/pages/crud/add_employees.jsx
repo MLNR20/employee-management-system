@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCreateEmployee } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import GovernmentIdFields from "../../components/GovernmentIdFields";
+import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate } from "react-router-dom";
 
@@ -16,6 +17,7 @@ export default function Add_Employees() {
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState("");
   const [ids, setIds] = useState({});
+  const [portalPassword, setPortalPassword] = useState("");
   const navigate = useNavigate();
   const createEmployee = useCreateEmployee();
 
@@ -82,6 +84,8 @@ export default function Add_Employees() {
     }
 
     Object.assign(newErrors, validateGovernmentIds(ids));
+    const passwordError = validatePortalPassword(portalPassword);
+    if (passwordError) newErrors.portalPassword = passwordError;
 
     return newErrors;
   };
@@ -101,6 +105,7 @@ export default function Add_Employees() {
       position,
       status,
       ...ids,
+      ...(portalPassword ? { portalPassword } : {}),
     };
 
     Swal.fire({
@@ -141,7 +146,7 @@ export default function Add_Employees() {
     <div>
       <SideBar />
       <Navbar_DS />
-      <div class="p-8 sm:ml-64">
+      <div class="p-8 main-content">
         <div class="p-4 border-2 bg-white border-gray-200 border-solid rounded-lg mt-14">
           <div class="p-8 mb-4">
             <h1 class="font-bold text-2xl">Add Employee</h1>
@@ -407,6 +412,15 @@ export default function Add_Employees() {
                   onChange={(name, value) => {
                     setIds((previous) => ({ ...previous, [name]: value }));
                     setErrors((previous) => ({ ...previous, [name]: undefined }));
+                  }}
+                />
+                <PortalPasswordField
+                  value={portalPassword}
+                  error={errors.portalPassword}
+                  hint="Optional. Lets this employee sign in to the employee portal with their email."
+                  onChange={(value) => {
+                    setPortalPassword(value);
+                    setErrors((previous) => ({ ...previous, portalPassword: undefined }));
                   }}
                 />
                 <div>

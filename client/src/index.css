@@ -286,3 +286,21 @@ code {
   filter: contrast(120%);
   pointer-events: none;
 }
+
+
+/* Collapsible sidebar: body.sidebar-collapsed (set by the navbar toggle) shrinks the sidebar to icons
+   and widens the page content to match. Phones keep the full-width drawer. */
+.app-sidebar { width: 16rem; transition: width 0.2s ease, transform 0.15s ease; }
+.main-content { transition: margin-left 0.2s ease; }
+.sidebar-toggle { display: none; }
+
+@media (min-width: 640px) {
+  .main-content { margin-left: 16rem; }
+  .sidebar-toggle { display: inline-flex; }
+
+  .sidebar-collapsed .app-sidebar { width: 4.5rem; }
+  .sidebar-collapsed .main-content { margin-left: 4.5rem; }
+  .sidebar-collapsed .sidebar-label,
+  .sidebar-collapsed .sidebar-heading { display: none; }
+  .sidebar-collapsed .sidebar-link { justify-content: center; }
+}

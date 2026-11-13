@@ -1,5 +1,5 @@
 import { createCrudUseCases } from "../shared/crudUseCases.js";
-import { EmployeeInUseError } from "../../domain/errors.js";
+import { EmployeeInUseError, ValidationError } from "../../domain/errors.js";
 import { assertValidEmployee, pickEmployeeFields } from "../../domain/employee/employeeRules.js";
 
 /**
@@ -7,6 +7,7 @@ import { assertValidEmployee, pickEmployeeFields } from "../../domain/employee/e
  * @param {import("../../domain/employee/EmployeeRepository").EmployeeRepository} deps.employeeRepository
  * @param {import("../../domain/leave/LeaveBalanceRepository").LeaveBalanceRepository} deps.leaveBalanceRepository
  * @param {import("../../domain/leave/LeaveRequestRepository").LeaveRequestRepository} deps.leaveRequestRepository
+ * @param {import("../ports/PasswordHasher").PasswordHasher} [deps.passwordHasher] hashes portal passwords; without it they are refused
  * @param {import("../../domain/inventory/ItemRepository").ItemRepository} [deps.itemRepository] when given, an employee holding items cannot be deleted
  */
 export const createEmployeeUseCases = ({
@@ -14,6 +15,7 @@ export const createEmployeeUseCases = ({
   leaveBalanceRepository,
   leaveRequestRepository,
   itemRepository,
+  passwordHasher,
 }) => {
   const crud = createCrudUseCases({
     repository: employeeRepository,
@@ -22,13 +24,30 @@ export const createEmployeeUseCases = ({
     pickFields: pickEmployeeFields,
   });
 
+  /** Sets the portal password when one was sent. Blank or missing leaves the current one alone. */
+  const storePortalPassword = async (id, portalPassword) => {
+    if (portalPassword === undefined || portalPassword === null || portalPassword === "") return;
+    if (!passwordHasher) throw new ValidationError("Portal passwords are not enabled");
+    await employeeRepository.setPassword(id, await passwordHasher.hash(portalPassword));
+  };
+
   return {
     listEmployees: crud.list,
     listEmployeesPage: crud.listPage,
     employeeSummary: () => employeeRepository.summary(),
     getEmployee: crud.get,
-    addEmployee: crud.add,
-    updateEmployee: crud.update,
+
+    async addEmployee(input = {}) {
+      const employee = await crud.add(input);
+      await storePortalPassword(employee.id, input.portalPassword);
+      return employee;
+    },
+
+    async updateEmployee(id, input = {}) {
+      const employee = await crud.update(id, input);
+      await storePortalPassword(id, input.portalPassword);
+      return employee;
+    },
 
     /**
      * An employee with filed leave keeps that history, and one who still holds inventory items

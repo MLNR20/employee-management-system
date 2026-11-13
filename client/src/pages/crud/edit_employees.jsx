@@ -4,6 +4,7 @@ import { useState, useEffect} from "react";
 import { useEmployee, useUpdateEmployee } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import GovernmentIdFields from "../../components/GovernmentIdFields";
+import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { governmentIdValues, validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -16,6 +17,7 @@ export default function Edit_Employees() {
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState("");
   const [ids, setIds] = useState({});
+  const [portalPassword, setPortalPassword] = useState("");
   const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
@@ -86,6 +88,8 @@ export default function Edit_Employees() {
     }
 
     Object.assign(newErrors, validateGovernmentIds(ids));
+    const passwordError = validatePortalPassword(portalPassword);
+    if (passwordError) newErrors.portalPassword = passwordError;
 
     return newErrors;
   };
@@ -105,6 +109,7 @@ export default function Edit_Employees() {
       position,
       status,
       ...ids,
+      ...(portalPassword ? { portalPassword } : {}),
     };
 
     Swal.fire({
@@ -145,7 +150,7 @@ export default function Edit_Employees() {
     <div>
       <SideBar />
       <Navbar_DS />
-      <div className="p-8 sm:ml-64">
+      <div className="p-8 main-content">
         <div className="p-4 border-2 bg-white border-gray-200 border-solid rounded-lg mt-14">
           <div className="p-8 mb-4">
             <h1 className="font-bold text-2xl">Edit Employees</h1>
@@ -411,6 +416,15 @@ export default function Edit_Employees() {
                   onChange={(name, value) => {
                     setIds((previous) => ({ ...previous, [name]: value }));
                     setErrors((previous) => ({ ...previous, [name]: undefined }));
+                  }}
+                />
+                <PortalPasswordField
+                  value={portalPassword}
+                  error={errors.portalPassword}
+                  hint="Leave blank to keep the current password. Enter a new one to replace it."
+                  onChange={(value) => {
+                    setPortalPassword(value);
+                    setErrors((previous) => ({ ...previous, portalPassword: undefined }));
                   }}
                 />
                 <div>

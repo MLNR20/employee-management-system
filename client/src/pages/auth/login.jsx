@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import icon from "../assets/icon.png";
 import { useState, useEffect } from "react";
 import { authUseCases } from '../../container';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { initFlowbite } from "flowbite";
 import PasswordInput from "../../components/PasswordInput";
+import AuthLayout from "../../components/AuthLayout";
 
 
 function Login() {
@@ -79,28 +79,7 @@ function Login() {
   
     
   return (
-    <div>
-      <div className="flex h-screen w-100">
-        <div className="flex-2 side-login-panel p-8 text-white w-50 hidden sm:block"></div>
-        <div className="flex-1 bg-white my-auto p-4 text-white">
-          <header>
-            <nav className="bg-white w-full  border-gray-200 text-gray-900 w-100 mb-8 py-4">
-              <div className="flex flex-wrap justify-between items-left mx-auto max-w-full">
-                <Link to="/login" className="flex items-center">
-                  <img
-                    src={icon}
-                    className="mr-3 h-10 sm:h-9"
-                    alt="Gallium31 logo"
-                  />
-                  <span className="self-center text-xl object-cover font-semibold whitespace-nowrap text-gray-500">
-                    Gallium31 Employee Management System
-                  </span>
-                </Link>
-              </div>
-            </nav>
-          </header>
-
-          <div className="login-section ">
+    <AuthLayout>
             <h1 className="text-3xl text-black font-bold mt-12 lg:text-4xl">
               Login
             </h1>
@@ -164,6 +143,11 @@ function Login() {
                       </label>
                     )}            
             </div>
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-base font-medium text-red-700 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <button
               id="login-button"
               onClick = {handleLogin}
@@ -171,10 +155,13 @@ function Login() {
             >
               Login
             </button>
-          </div>
-        </div>
-      </div>
-    </div>
+            <p className="text-gray-900 mt-6 text-base">
+              Not an administrator?{" "}
+              <Link to="/employee/login" className="font-semibold text-red-700 hover:underline">
+                Login as employee
+              </Link>
+            </p>
+    </AuthLayout>
   );
 }
 

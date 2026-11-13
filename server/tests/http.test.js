@@ -19,6 +19,7 @@ import { createLeaveRequestUseCases } from "../src/application/leave/leaveReques
 import { createAuditLogUseCases } from "../src/application/audit/auditLogUseCases.js";
 import { createInventoryUseCases } from "../src/application/inventory/inventoryUseCases.js";
 import { createDashboardUseCases } from "../src/application/dashboard/dashboardUseCases.js";
+import { createEmployeeAuthUseCases } from "../src/application/employee/employeeAuthUseCases.js";
 import {
   InMemoryAdministratorRepository,
   InMemoryAuditLogRepository,
@@ -62,6 +63,7 @@ before(async () => {
     leaveBalanceRepository,
     leaveRequestRepository,
     itemRepository,
+    passwordHasher: new BcryptPasswordHasher(4),
   });
   const departmentUseCases = createDepartmentUseCases({
     departmentRepository: createInMemoryDepartmentRepository(),
@@ -105,6 +107,16 @@ before(async () => {
     administratorUseCases,
     inventoryUseCases: createInventoryUseCases({ itemRepository, employeeRepository }),
     dashboardUseCases: createDashboardUseCases({ employeeRepository, leaveRequestRepository }),
+    employeeAuthUseCases: createEmployeeAuthUseCases({
+      employeeRepository,
+      passwordHasher: new BcryptPasswordHasher(4),
+      tokenService: new JwtTokenService({
+        accessSecret: "employee-a",
+        refreshSecret: "employee-a",
+        accessTtl: "15m",
+        refreshTtl: "15m",
+      }),
+    }),
     auditLogUseCases: createAuditLogUseCases({ auditLogRepository: new InMemoryAuditLogRepository() }),
   });
   await new Promise((resolve) => {
@@ -869,4 +881,88 @@ test("the dashboard endpoints need sign-in and return today's headcount and a pr
   const attendance = (await call("GET", "/dashboard/attendance?days=7", { token })).body;
   assert.ok(attendance.count >= 1 && attendance.count <= 5);
   assert.deepEqual(Object.keys(attendance.data[0]).sort(), ["absent", "date", "present"]);
+});
+
+// --- employee portal ----------------------------------------------------------------------------
+
+const employeeLogin = (email, password) => call("POST", "/employee-auth/login", { body: { email, password } });
+
+test("an employee signs in with the portal password an administrator set, and sees only the portal", async () => {
+  const admin = await signIn();
+  const created = await call("POST", "/employees/", {
+    token: admin,
+    body: { ...newEmployee("portal@example.com"), portalPassword: "portal-pass-1" },
+  });
+  assert.equal(created.status, 200);
+  // neither the password nor a hash of it ever comes back
+  assert.equal(JSON.stringify(created.body).includes("portal-pass-1"), false);
+  assert.equal("passwordHash" in created.body, false);
+  assert.equal("portalPassword" in created.body, false);
+  assert.equal(JSON.stringify((await call("GET", `/employees/${created.body._id}`, { token: admin })).body).includes("passwordHash"), false);
+
+  const login = await employeeLogin("Portal@Example.com", "portal-pass-1"); // email is not case sensitive
+  assert.equal(login.status, 200);
+  assert.ok(login.body.token);
+
+  const me = await call("GET", "/employee-portal/me", { token: login.body.token });
+  assert.equal(me.status, 200);
+  assert.equal(me.body.email, "portal@example.com");
+  assert.equal(me.body.salary, undefined); // only name, email, position and department
+
+  // the two kinds of token are not interchangeable
+  assert.equal((await call("GET", "/employees/", { token: login.body.token })).status, 401);
+  assert.equal((await call("GET", "/audit-logs/", { token: login.body.token })).status, 401);
+  assert.equal((await call("GET", "/employee-portal/me", { token: admin })).status, 401);
+  assert.equal((await call("GET", "/employee-portal/me")).status, 401);
+});
+
+test("employee sign-in rejects a wrong password, an unknown email, no password and an inactive employee alike", async () => {
+  const admin = await signIn();
+  await call("POST", "/employees/", { token: admin, body: { ...newEmployee("known@example.com"), portalPassword: "known-pass-1" } });
+  await call("POST", "/employees/", { token: admin, body: newEmployee("nopass@example.com") });
+  await call("POST", "/employees/", {
+    token: admin,
+    body: { ...newEmployee("gone@example.com"), portalPassword: "gone-pass-12", status: "false" },
+  });
+
+  const wrong = await employeeLogin("known@example.com", "not-the-password");
+  const unknown = await employeeLogin("nobody@example.com", "known-pass-1");
+  const none = await employeeLogin("nopass@example.com", "anything-at-all");
+  const inactive = await employeeLogin("gone@example.com", "gone-pass-12");
+  for (const attempt of [wrong, unknown, none, inactive]) assert.equal(attempt.status, 400);
+  assert.equal(new Set([wrong, unknown, none, inactive].map((a) => a.body.message)).size, 1); // no hint which case it was
+
+  assert.equal((await employeeLogin({ $ne: null }, "x")).status, 400);
+  assert.equal((await call("POST", "/employee-auth/login", { body: { email: "known@example.com" } })).status, 400);
+});
+
+test("a portal password is length checked, replaced when sent again and kept when left blank", async () => {
+  const admin = await signIn();
+  const tooShort = await call("POST", "/employees/", { token: admin, body: { ...newEmployee("short@example.com"), portalPassword: "short" } });
+  assert.equal(tooShort.status, 400);
+
+  const created = (await call("POST", "/employees/", { token: admin, body: { ...newEmployee("change@example.com"), portalPassword: "first-pass-12" } })).body;
+  assert.equal((await employeeLogin("change@example.com", "first-pass-12")).status, 200);
+
+  // editing without a password keeps the current one
+  await call("PUT", `/employees/${created._id}`, { token: admin, body: { ...newEmployee("change@example.com"), position: "Lead", portalPassword: "" } });
+  assert.equal((await employeeLogin("change@example.com", "first-pass-12")).status, 200);
+
+  // sending a new one replaces it
+  await call("PUT", `/employees/${created._id}`, { token: admin, body: { ...newEmployee("change@example.com"), portalPassword: "second-pass-12" } });
+  assert.equal((await employeeLogin("change@example.com", "first-pass-12")).status, 400);
+  assert.equal((await employeeLogin("change@example.com", "second-pass-12")).status, 200);
+});
+
+test("employee sign-ins are audited, without the password", async () => {
+  const admin = await signIn();
+  await employeeLogin("known@example.com", "known-pass-1");
+  await employeeLogin("known@example.com", "wrong-pass-123");
+  await settle();
+
+  const { body } = await call("GET", "/audit-logs/?page=1&pageSize=100&search=employee-auth", { token: admin });
+  assert.ok(body.data.some((e) => e.action === "login" && e.resource === "employee-auth"));
+  assert.ok(body.data.some((e) => e.action === "login_failed" && e.actorName === "known@example.com"));
+  assert.equal(JSON.stringify(body).includes("known-pass-1"), false);
+  assert.equal(JSON.stringify(body).includes("wrong-pass-123"), false);
 });

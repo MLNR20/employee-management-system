@@ -122,23 +122,41 @@ export default function DataTable({
 
   return (
     <div>
-      {searchable && (
-        <div className="mb-6 flex flex-row">
-          <label htmlFor="datatable-search" className="block mb-2 mt-4 text-sm mr-2 text-gray-500">
-            Search:
-          </label>
-          <input
-            type="text"
-            id="datatable-search"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-72 p-2.5 h-10 mt-2"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setClientPage(0);
-            }}
-          />
+      <div className="mb-6 flex flex-row flex-wrap items-center gap-6">
+        {searchable && (
+          <div className="flex flex-row items-center">
+            <label htmlFor="datatable-search" className="block text-sm mr-2 text-gray-500">
+              Search:
+            </label>
+            <input
+              type="text"
+              id="datatable-search"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-72 p-2.5 h-10"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setClientPage(0);
+              }}
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <label htmlFor="datatable-page-size">Rows per page:</label>
+          <select
+            id="datatable-page-size"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5 h-10"
+            style={{ minWidth: "4.5rem" }}
+            value={pageSize}
+            onChange={(e) => changePageSize(Number(e.target.value))}
+          >
+            {pageSizeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+      </div>
 
       <table
         className="text-sm w-full text-left text-gray-500"
@@ -199,22 +217,7 @@ export default function DataTable({
         </tbody>
       </table>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 mt-4 text-sm text-gray-500">
-        <div className="flex items-center gap-2">
-          <label htmlFor="datatable-page-size">Rows per page:</label>
-          <select
-            id="datatable-page-size"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5"
-            value={pageSize}
-            onChange={(e) => changePageSize(Number(e.target.value))}
-          >
-            {pageSizeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-4 mt-4 text-sm text-gray-500">
         <div className="flex items-center gap-4">
           <span>
             Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}

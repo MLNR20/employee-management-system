@@ -1,6 +1,9 @@
 import './index.css'; // or './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/login';
+import ForgotPassword from './pages/auth/forgot_password';
+import EmployeeLogin from './pages/employee/login';
+import EmployeePortal from './pages/employee/portal';
 import Dashboard from './pages/dashboard';
 import ViewEmployees from "./pages/crud/view_employees";
 import AddEmployees from "./pages/crud/add_employees";
@@ -24,6 +27,9 @@ function App() {
             {/* No landing page: signed-in users go to the dashboard, everyone else to login. */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/employee/login" element={<EmployeeLogin />} />
+            <Route path="/employee" element={<EmployeePortal />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
             <Route path="/employees/add" element={<ProtectedRoute><AddEmployees /></ProtectedRoute>} />
