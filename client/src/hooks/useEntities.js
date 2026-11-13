@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCrudHooks } from "./createCrudHooks";
 import {
   employeeUseCases,
@@ -11,6 +11,7 @@ import {
   administratorUseCases,
   inventoryUseCases,
   auditLogUseCases,
+  dashboardUseCases,
 } from "../container";
 
 export const {
@@ -86,6 +87,18 @@ export const {
 // The audit trail is read-only: pages and single entries only.
 export const { usePage: useAuditLogsPage, useOne: useAuditLog } = createCrudHooks("audit-logs", auditLogUseCases);
 
+/** Today's headcount for the dashboard: total, present and absent (on approved leave). */
+export const useDashboardSummary = () =>
+  useQuery({ queryKey: ["dashboard", "summary"], queryFn: dashboardUseCases.summary });
+
+/** Present versus absent per working day over the last `days` days. */
+export const useDashboardAttendance = (days) =>
+  useQuery({
+    queryKey: ["dashboard", "attendance", days],
+    queryFn: () => dashboardUseCases.attendance(days),
+    placeholderData: keepPreviousData,
+  });
+
 /** Headcount for the employee cards: { total, active, inactive }. */
 export const useEmployeeSummary = () =>
   useQuery({ queryKey: ["employees", "summary"], queryFn: employeeUseCases.summary });
@@ -103,6 +116,7 @@ export const useDecideLeaveRequest = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leave-requests"] });
       queryClient.invalidateQueries({ queryKey: ["leave-balances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] }); // approved leave changes who is absent
     },
   });
 };

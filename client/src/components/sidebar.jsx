@@ -24,8 +24,9 @@ const sections = [
   {
     label: "Employees",
     items: [
-      { to: "/employees", label: "Dashboard", icon: "home" },
-      { to: "/employees/add", label: "Add Employees", icon: "userPlus" },
+      { to: "/dashboard", label: "Dashboard", icon: "home" },
+      { to: "/employees", label: "Employees", icon: "users" },
+      { to: "/employees/add", label: "Add Employee", icon: "userPlus" },
     ],
   },
   ...sectionKeys.map(({ label, keys }) => ({
@@ -78,7 +79,7 @@ const SideBar=()=> {
                         </div>
                         <ul className="pt-4 mt-4 border-t border-gray-200 font-medium">
                         <li>
-                            <Link to="/login/" onClick={logout} className="flex items-center p-2 text-red-600 rounded-lg hover:bg-red-700 hover:text-white group">
+                            <Link to="/login/" onClick={logout} className="flex items-center p-2 text-red-600 rounded-lg hover:bg-gray-100 group">
                                 <SidebarIcon name="logout" />
 
                                 <span className="flex-1 ms-3 whitespace-nowrap">Logout</span>

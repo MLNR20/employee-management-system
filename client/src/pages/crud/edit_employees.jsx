@@ -3,6 +3,8 @@ import SideBar from "../../components/sidebar";
 import { useState, useEffect} from "react";
 import { useEmployee, useUpdateEmployee } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
+import GovernmentIdFields from "../../components/GovernmentIdFields";
+import { governmentIdValues, validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function Edit_Employees() {
@@ -13,6 +15,7 @@ export default function Edit_Employees() {
   const [department, setDepartment] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState("");
+  const [ids, setIds] = useState({});
   const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
@@ -32,6 +35,7 @@ export default function Edit_Employees() {
     setDepartment(employee.department);
     setPosition(employee.position);
     setStatus(String(employee.isActive));
+    setIds(governmentIdValues(employee));
   }, [employee]);
 
   const validateForm = () => {
@@ -81,6 +85,8 @@ export default function Edit_Employees() {
       newErrors.status = "Please select a status.";
     }
 
+    Object.assign(newErrors, validateGovernmentIds(ids));
+
     return newErrors;
   };
 
@@ -98,6 +104,7 @@ export default function Edit_Employees() {
       department,
       position,
       status,
+      ...ids,
     };
 
     Swal.fire({
@@ -170,7 +177,7 @@ export default function Edit_Employees() {
                       required
                     />
                     {errors.first_name && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.first_name}
                       </label>
                     )}
@@ -199,7 +206,7 @@ export default function Edit_Employees() {
                       required
                     />
                      {errors.last_name && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.last_name}
                       </label>
                     )}
@@ -228,7 +235,7 @@ export default function Edit_Employees() {
                       required
                     />
                     {errors.email && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.email}
                       </label>
                     )}
@@ -257,7 +264,7 @@ export default function Edit_Employees() {
                       required
                     />
                     {errors.salary && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.salary}
                       </label>
                     )}
@@ -293,7 +300,7 @@ export default function Edit_Employees() {
                       <option value="Management">Management</option>
                     </select>
                       {errors.department && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.department}
                       </label>
                     )}
@@ -360,7 +367,7 @@ export default function Edit_Employees() {
                       </optgroup>
                     </select>
                      {errors.position && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.position}
                       </label>
                     )}
@@ -394,10 +401,18 @@ export default function Edit_Employees() {
                   <option value="false">No</option>
                 </select>
                    {errors.status && (
-                      <label classNameName="text-sm text-red-500">
+                      <label className="text-sm text-red-500">
                         {errors.status}
                       </label>
                     )}
+                <GovernmentIdFields
+                  values={ids}
+                  errors={errors}
+                  onChange={(name, value) => {
+                    setIds((previous) => ({ ...previous, [name]: value }));
+                    setErrors((previous) => ({ ...previous, [name]: undefined }));
+                  }}
+                />
                 <div>
                     <button
                       type="button"

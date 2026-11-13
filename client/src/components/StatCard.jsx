@@ -8,7 +8,7 @@ const accents = {
 };
 
 /**
- * A small icon Card showing one number under a label:
+ * A small icon Card showing one number under a label, with the icon in a square badge:
  * <StatCard label="Active" value={12} icon="checkCircle" accent="green" />
  * icon is a name from SidebarIcon.
  */
@@ -19,7 +19,7 @@ export default function StatCard({ label, value, icon, accent = "default" }) {
     <Card compact>
       <div className="flex items-center gap-4">
         {icon && (
-          <span className={`flex items-center justify-center w-12 h-12 rounded-full ${colors.badge}`}>
+          <span className={`flex items-center justify-center w-12 h-12 ${colors.badge}`}>
             <SidebarIcon name={icon} />
           </span>
         )}

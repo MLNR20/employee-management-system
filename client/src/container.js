@@ -14,6 +14,7 @@ import { Role, RoleAssignment } from "./domain/role/Role";
 import { LeaveType, LeaveBalance } from "./domain/leave/Leave";
 import { AdministratorAccount } from "./domain/auth/AdministratorAccount";
 import { Item } from "./domain/inventory/Item";
+import { HttpDashboardRepository } from "./infrastructure/repositories/HttpDashboardRepository";
 import { AuditLog } from "./domain/audit/AuditLog";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
@@ -31,6 +32,12 @@ export const leaveTypeUseCases = restCrud("leave-types", LeaveType.fromApi);
 export const leaveBalanceUseCases = restCrud("leave-balances", LeaveBalance.fromApi);
 export const administratorUseCases = restCrud("administrators", AdministratorAccount.fromApi);
 export const inventoryUseCases = restCrud("inventory", Item.fromApi);
+
+const dashboardRepository = new HttpDashboardRepository();
+export const dashboardUseCases = {
+  summary: () => dashboardRepository.getSummary(),
+  attendance: (days) => dashboardRepository.getAttendance(days),
+};
 export const auditLogUseCases = restCrud("audit-logs", AuditLog.fromApi);
 
 export const leaveRequestUseCases = createLeaveRequestUseCases(new HttpLeaveRequestRepository());

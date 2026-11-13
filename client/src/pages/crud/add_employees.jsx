@@ -3,6 +3,8 @@ import SideBar from "../../components/sidebar";
 import { useState } from "react";
 import { useCreateEmployee } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
+import GovernmentIdFields from "../../components/GovernmentIdFields";
+import { validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate } from "react-router-dom";
 
 export default function Add_Employees() {
@@ -13,6 +15,7 @@ export default function Add_Employees() {
   const [department, setDepartment] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState("");
+  const [ids, setIds] = useState({});
   const navigate = useNavigate();
   const createEmployee = useCreateEmployee();
 
@@ -78,6 +81,8 @@ export default function Add_Employees() {
       newErrors.status = "Please select a status.";
     }
 
+    Object.assign(newErrors, validateGovernmentIds(ids));
+
     return newErrors;
   };
 
@@ -95,6 +100,7 @@ export default function Add_Employees() {
       department,
       position,
       status,
+      ...ids,
     };
 
     Swal.fire({
@@ -138,7 +144,7 @@ export default function Add_Employees() {
       <div class="p-8 sm:ml-64">
         <div class="p-4 border-2 bg-white border-gray-200 border-solid rounded-lg mt-14">
           <div class="p-8 mb-4">
-            <h1 class="font-bold text-2xl">Add Employees</h1>
+            <h1 class="font-bold text-2xl">Add Employee</h1>
             <div class="overflow-auto mt-6 ">
               <div class="relative p-2 overflow-x-auto" id="LogsTableHere">
                 <div class="grid gap-6 mb-6 md:grid-cols-2">
@@ -395,6 +401,14 @@ export default function Add_Employees() {
                         {errors.status}
                       </label>
                     )}
+                <GovernmentIdFields
+                  values={ids}
+                  errors={errors}
+                  onChange={(name, value) => {
+                    setIds((previous) => ({ ...previous, [name]: value }));
+                    setErrors((previous) => ({ ...previous, [name]: undefined }));
+                  }}
+                />
                 <div>
                     <button
                       type="button"

@@ -35,7 +35,12 @@ const employeesSchema = createEntitySchema({
   hireDate: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Government ID numbers, digits only. Optional.
+  sssNumber: { type: String, trim: true, default: "" },
+  tinNumber: { type: String, trim: true, default: "" },
+  philhealthNumber: { type: String, trim: true, default: "" },
+  pagibigNumber: { type: String, trim: true, default: "" }
 });
 
 export const EmployeeModel = mongoose.model("employees", employeesSchema);

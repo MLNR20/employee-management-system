@@ -98,6 +98,15 @@ export class MongoLeaveRequestRepository extends MongoRepository {
     return docs.map(toLeaveRequest);
   }
 
+  async findApprovedBetween(fromDay, toDay) {
+    const docs = await LeaveRequestModel.find({
+      status: "approved",
+      startDate: { $lte: new Date(`${toDay}T23:59:59.999Z`) },
+      endDate: { $gte: new Date(`${fromDay}T00:00:00.000Z`) },
+    }).lean();
+    return docs.map(toLeaveRequest);
+  }
+
   async transitionStatus(id, from, to) {
     if (!isValid(id)) return null;
     // Matching on the current status makes the change atomic: only one caller can win.

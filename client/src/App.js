@@ -1,6 +1,7 @@
 import './index.css'; // or './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/login';
+import Dashboard from './pages/dashboard';
 import ViewEmployees from "./pages/crud/view_employees";
 import AddEmployees from "./pages/crud/add_employees";
 import EditEmployees from "./pages/crud/edit_employees";
@@ -20,9 +21,10 @@ function App() {
        <Router>
         <AuthProvider>
           <Routes>
-            {/* No landing page: signed-in users go to the employee list, everyone else to login. */}
-            <Route path="/" element={<Navigate to="/employees" replace />} />
+            {/* No landing page: signed-in users go to the dashboard, everyone else to login. */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
             <Route path="/employees/add" element={<ProtectedRoute><AddEmployees /></ProtectedRoute>} />
             <Route path="/employees/edit/:id" element={<ProtectedRoute><EditEmployees /></ProtectedRoute>} />

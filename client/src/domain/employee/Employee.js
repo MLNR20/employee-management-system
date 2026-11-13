@@ -9,6 +9,10 @@ export class Employee extends Entity {
     department,
     salary,
     hireDate,
+    sssNumber,
+    tinNumber,
+    philhealthNumber,
+    pagibigNumber,
     ...base
   } = {}) {
     super(base);
@@ -19,6 +23,10 @@ export class Employee extends Entity {
     this.department = department;
     this.salary = salary;
     this.hireDate = hireDate;
+    this.sssNumber = sssNumber;
+    this.tinNumber = tinNumber;
+    this.philhealthNumber = philhealthNumber;
+    this.pagibigNumber = pagibigNumber;
   }
 
   get fullName() {
@@ -36,6 +44,10 @@ export class Employee extends Entity {
       department: raw.department,
       salary: raw.salary,
       hireDate: raw.hireDate,
+      sssNumber: raw.sssNumber,
+      tinNumber: raw.tinNumber,
+      philhealthNumber: raw.philhealthNumber,
+      pagibigNumber: raw.pagibigNumber,
     });
   }
 }

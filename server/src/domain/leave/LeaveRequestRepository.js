@@ -16,6 +16,14 @@ export class LeaveRequestRepository extends Repository {
     throw new Error("LeaveRequestRepository.transitionStatus not implemented");
   }
 
+  /**
+   * Approved requests that overlap the days from `fromDay` to `toDay` (both "YYYY-MM-DD", inclusive).
+   * @returns {Promise<import("./LeaveRequest").LeaveRequest[]>}
+   */
+  async findApprovedBetween(fromDay, toDay) {
+    throw new Error("LeaveRequestRepository.findApprovedBetween not implemented");
+  }
+
   /** @returns {Promise<boolean>} whether any request refers to this leave type */
   async existsForLeaveType(leaveTypeId) {
     throw new Error("LeaveRequestRepository.existsForLeaveType not implemented");

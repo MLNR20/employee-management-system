@@ -63,7 +63,7 @@ function Login() {
 
         login({ username, password })
             .then(() => {
-                navigate('/employees/');
+                navigate('/dashboard');
             })
             .catch((error) => {
 

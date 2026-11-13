@@ -13,6 +13,7 @@ import {
 } from "./routes/hrRoutes.js";
 import { createAuditLogRouter } from "./routes/auditLogRoutes.js";
 import { createInventoryRouter } from "./routes/inventoryRoutes.js";
+import { createDashboardRouter } from "./routes/dashboardRoutes.js";
 import { createAuthMiddleware } from "./middleware/authMiddleware.js";
 import { createAuditMiddleware } from "./middleware/auditMiddleware.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -29,6 +30,7 @@ export const createApp = ({
   leaveRequestUseCases,
   administratorUseCases,
   inventoryUseCases,
+  dashboardUseCases,
   auditLogUseCases, // optional: without it nothing is recorded and /audit-logs is not served
 }) => {
   const app = express();
@@ -51,6 +53,7 @@ export const createApp = ({
   app.use("/leave-requests", createLeaveRequestRouter({ leaveRequestUseCases, requireAuth }));
   app.use("/administrators", createAdministratorListRouter({ administratorUseCases, requireAuth }));
   app.use("/inventory", createInventoryRouter({ inventoryUseCases, requireAuth }));
+  app.use("/dashboard", createDashboardRouter({ dashboardUseCases, requireAuth }));
   if (auditLogUseCases) app.use("/audit-logs", createAuditLogRouter({ auditLogUseCases, requireAuth }));
 
   app.use(errorHandler);

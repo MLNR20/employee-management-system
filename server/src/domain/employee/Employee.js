@@ -9,6 +9,10 @@ export class Employee extends Entity {
     department,
     salary,
     hireDate,
+    sssNumber,
+    tinNumber,
+    philhealthNumber,
+    pagibigNumber,
     ...base
   } = {}) {
     super(base);
@@ -19,5 +23,9 @@ export class Employee extends Entity {
     this.department = department;
     this.salary = salary;
     this.hireDate = hireDate;
+    this.sssNumber = sssNumber;
+    this.tinNumber = tinNumber;
+    this.philhealthNumber = philhealthNumber;
+    this.pagibigNumber = pagibigNumber;
   }
 }

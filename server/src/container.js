@@ -29,6 +29,7 @@ import { createLeaveTypeUseCases } from "./application/leave/leaveTypeUseCases.j
 import { createLeaveBalanceUseCases } from "./application/leave/leaveBalanceUseCases.js";
 import { createLeaveRequestUseCases } from "./application/leave/leaveRequestUseCases.js";
 import { createInventoryUseCases } from "./application/inventory/inventoryUseCases.js";
+import { createDashboardUseCases } from "./application/dashboard/dashboardUseCases.js";
 import { createAuditLogUseCases } from "./application/audit/auditLogUseCases.js";
 
 const administratorRepository = new MongoAdministratorRepository();
@@ -100,3 +101,5 @@ export const auditLogUseCases = createAuditLogUseCases({
 });
 
 export const inventoryUseCases = createInventoryUseCases({ itemRepository, employeeRepository });
+
+export const dashboardUseCases = createDashboardUseCases({ employeeRepository, leaveRequestRepository });

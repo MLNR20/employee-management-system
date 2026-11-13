@@ -14,6 +14,10 @@ const toEmployee = (doc) =>
     department: doc.department,
     salary: doc.salary,
     hireDate: doc.hireDate,
+    sssNumber: doc.sssNumber,
+    tinNumber: doc.tinNumber,
+    philhealthNumber: doc.philhealthNumber,
+    pagibigNumber: doc.pagibigNumber,
   });
 
 export class MongoEmployeeRepository extends MongoRepository {

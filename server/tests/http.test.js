@@ -18,6 +18,7 @@ import { createLeaveBalanceUseCases } from "../src/application/leave/leaveBalanc
 import { createLeaveRequestUseCases } from "../src/application/leave/leaveRequestUseCases.js";
 import { createAuditLogUseCases } from "../src/application/audit/auditLogUseCases.js";
 import { createInventoryUseCases } from "../src/application/inventory/inventoryUseCases.js";
+import { createDashboardUseCases } from "../src/application/dashboard/dashboardUseCases.js";
 import {
   InMemoryAdministratorRepository,
   InMemoryAuditLogRepository,
@@ -103,6 +104,7 @@ before(async () => {
     leaveRequestUseCases,
     administratorUseCases,
     inventoryUseCases: createInventoryUseCases({ itemRepository, employeeRepository }),
+    dashboardUseCases: createDashboardUseCases({ employeeRepository, leaveRequestRepository }),
     auditLogUseCases: createAuditLogUseCases({ auditLogRepository: new InMemoryAuditLogRepository() }),
   });
   await new Promise((resolve) => {
@@ -808,4 +810,63 @@ test("only an item in use is assigned, to an employee who exists, and that emplo
   });
   assert.equal(returned.status, 200);
   assert.equal((await call("DELETE", `/employees/${holder._id}`, { token })).status, 200);
+});
+
+// --- government IDs -----------------------------------------------------------------------------
+
+test("employees can carry SSS, TIN, PhilHealth and Pag-IBIG numbers, stored as digits", async () => {
+  const token = await signIn();
+  const created = await call("POST", "/employees/", {
+    token,
+    body: {
+      ...newEmployee("ids@example.com"),
+      sssNumber: "12-3456789-0",
+      tinNumber: "123-456-789-000",
+      philhealthNumber: "12-345678901-2",
+      pagibigNumber: "1234-5678-9012",
+    },
+  });
+  assert.equal(created.status, 200);
+  assert.equal(created.body.sssNumber, "1234567890");
+  assert.equal(created.body.tinNumber, "123456789000");
+  assert.equal(created.body.philhealthNumber, "123456789012");
+  assert.equal(created.body.pagibigNumber, "123456789012");
+
+  // a 9-digit TIN is valid too; blank clears an ID
+  const updated = await call("PUT", `/employees/${created.body._id}`, {
+    token,
+    body: { ...newEmployee("ids@example.com"), tinNumber: "123-456-789", sssNumber: "" },
+  });
+  assert.equal(updated.status, 200);
+  const one = (await call("GET", `/employees/${created.body._id}`, { token })).body;
+  assert.equal(one.tinNumber, "123456789");
+  assert.equal(one.sssNumber, "");
+});
+
+test("employee ID numbers with the wrong length or characters are rejected", async () => {
+  const token = await signIn();
+  const bad = (extra) => call("POST", "/employees/", { token, body: { ...newEmployee("badids@example.com"), ...extra } });
+  assert.equal((await bad({ sssNumber: "12345" })).status, 400);
+  assert.equal((await bad({ tinNumber: "1234567890" })).status, 400);
+  assert.equal((await bad({ philhealthNumber: "12-34-56" })).status, 400);
+  assert.equal((await bad({ pagibigNumber: "ABCD-EFGH-IJKL" })).status, 400);
+  // none of those attempts created the employee
+  assert.equal((await call("POST", "/employees/", { token, body: newEmployee("badids@example.com") })).status, 200);
+});
+
+// --- dashboard ----------------------------------------------------------------------------------
+
+test("the dashboard endpoints need sign-in and return today's headcount and a present/absent series", async () => {
+  assert.equal((await call("GET", "/dashboard/summary")).status, 401);
+  assert.equal((await call("GET", "/dashboard/attendance")).status, 401);
+
+  const token = await signIn();
+  const summary = (await call("GET", "/dashboard/summary", { token })).body;
+  assert.equal(summary.total, summary.active + summary.inactive);
+  assert.equal(summary.present + summary.absent, summary.active);
+  assert.match(summary.date, /^\d{4}-\d{2}-\d{2}$/);
+
+  const attendance = (await call("GET", "/dashboard/attendance?days=7", { token })).body;
+  assert.ok(attendance.count >= 1 && attendance.count <= 5);
+  assert.deepEqual(Object.keys(attendance.data[0]).sort(), ["absent", "date", "present"]);
 });

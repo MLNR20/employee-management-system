@@ -172,6 +172,13 @@ export class InMemoryLeaveRequestRepository extends InMemoryRepository {
     return [...this.items.values()].filter((r) => r.employeeId === employeeId);
   }
 
+  async findApprovedBetween(fromDay, toDay) {
+    const day = (value) => new Date(value).toISOString().slice(0, 10);
+    return [...this.items.values()].filter(
+      (r) => r.status === "approved" && day(r.startDate) <= toDay && day(r.endDate) >= fromDay
+    );
+  }
+
   async transitionStatus(id, from, to) {
     const request = this.items.get(id);
     if (!request || request.status !== from) return null;
