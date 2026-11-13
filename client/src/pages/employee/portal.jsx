@@ -1,52 +1,58 @@
-import { useQuery } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "react-router-dom";
-import icon from "../assets/icon.png";
-import { employeePortal } from "../../container";
+import PortalLayout, { useEmployeeMe } from "../../components/employee/PortalLayout";
+
+const greeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+};
+
+const details = (me) => [
+  { label: "Email", value: me.email },
+  { label: "Position", value: me.position },
+  { label: "Department", value: me.department },
+];
 
 /**
- * The employee view, for now an empty page. Only the top bar is here: the logo, the signed-in
- * employee's name and Logout. Anyone without an employee sign-in is sent to /employee/login.
+ * The employee home page: a red gradient welcome card (the same gradient as the login side panel)
+ * and the employee's details in the left column, updates on the right (7/5).
  */
 export default function EmployeePortal() {
-  const navigate = useNavigate();
-  const { data: me, isError } = useQuery({
-    queryKey: ["employee-portal", "me"],
-    queryFn: employeePortal.getMe,
-    enabled: employeePortal.isSignedIn(),
-    retry: false,
-  });
-
-  // No token, or the server turned it down (expired, wrong kind): back to the login.
-  if (!employeePortal.isSignedIn() || isError) return <Navigate to="/employee/login" replace />;
-
-  const signOut = () => {
-    employeePortal.logout();
-    navigate("/employee/login", { replace: true });
-  };
+  const { data: me } = useEmployeeMe();
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4f6" }}>
-      <nav className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex flex-wrap justify-between items-center">
-          <div className="flex items-center">
-            <img src={icon} className="mr-3 ml-3 h-10" alt="Gallium31 logo" />
-            <span className="self-center text-xl font-semibold text-gray-500 whitespace-nowrap">
-              Gallium31 Employee Portal
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="font-semibold">{me ? `${me.first_name} ${me.last_name}` : ""}</span>
-            <button
-              type="button"
-              onClick={signOut}
-              className="text-red-600 hover:bg-gray-100 font-medium rounded-lg text-sm px-4 py-2"
-            >
-              Logout
-            </button>
-          </div>
+    <PortalLayout>
+      <div className="portal-columns">
+        <div className="portal-column">
+          <section className="portal-welcome">
+            <p className="portal-welcome-kicker">{greeting()}</p>
+            <h1 className="portal-welcome-title">{me ? `Welcome, ${me.first_name}!` : "Welcome!"}</h1>
+            <p className="portal-welcome-text">Glad to have you here. Your details are on this page.</p>
+          </section>
+
+          <section className="portal-panel" aria-labelledby="portal-details-heading">
+            <h2 id="portal-details-heading" className="portal-panel-title">
+              My details
+            </h2>
+            <dl className="portal-details">
+              {me &&
+                details(me).map(({ label, value }) => (
+                  <div key={label} className="portal-detail-row">
+                    <dt>{label}</dt>
+                    <dd>{value || "—"}</dd>
+                  </div>
+                ))}
+            </dl>
+          </section>
         </div>
-      </nav>
-      <main aria-label="Employee portal" />
-    </div>
+
+        <section className="portal-panel portal-updates" aria-labelledby="portal-updates-heading">
+          <h2 id="portal-updates-heading" className="portal-panel-title">
+            Updates
+          </h2>
+          <p className="portal-empty">Nothing here yet.</p>
+        </section>
+      </div>
+    </PortalLayout>
   );
 }

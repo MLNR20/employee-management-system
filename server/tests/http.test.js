@@ -19,10 +19,12 @@ import { createLeaveRequestUseCases } from "../src/application/leave/leaveReques
 import { createAuditLogUseCases } from "../src/application/audit/auditLogUseCases.js";
 import { createInventoryUseCases } from "../src/application/inventory/inventoryUseCases.js";
 import { createDashboardUseCases } from "../src/application/dashboard/dashboardUseCases.js";
+import { createBorrowingUseCases } from "../src/application/inventory/borrowingUseCases.js";
 import { createEmployeeAuthUseCases } from "../src/application/employee/employeeAuthUseCases.js";
 import {
   InMemoryAdministratorRepository,
   InMemoryAuditLogRepository,
+  InMemoryBorrowingRepository,
   InMemoryInventoryRepository,
   InMemoryLeaveApprovalRepository,
   InMemoryLeaveBalanceRepository,
@@ -107,6 +109,11 @@ before(async () => {
     administratorUseCases,
     inventoryUseCases: createInventoryUseCases({ itemRepository, employeeRepository }),
     dashboardUseCases: createDashboardUseCases({ employeeRepository, leaveRequestRepository }),
+    borrowingUseCases: createBorrowingUseCases({
+      itemRepository,
+      borrowingRepository: new InMemoryBorrowingRepository(),
+      employeeRepository,
+    }),
     employeeAuthUseCases: createEmployeeAuthUseCases({
       employeeRepository,
       passwordHasher: new BcryptPasswordHasher(4),
@@ -965,4 +972,129 @@ test("employee sign-ins are audited, without the password", async () => {
   assert.ok(body.data.some((e) => e.action === "login_failed" && e.actorName === "known@example.com"));
   assert.equal(JSON.stringify(body).includes("known-pass-1"), false);
   assert.equal(JSON.stringify(body).includes("wrong-pass-123"), false);
+});
+
+// --- employee portal: leave and equipment -------------------------------------------------------
+
+/** Creates an employee with a portal password and returns their id and employee token. */
+const portalEmployee = async (admin, email) => {
+  const created = (await call("POST", "/employees/", {
+    token: admin,
+    body: { ...newEmployee(email), portalPassword: "portal-pass-1" },
+  })).body;
+  const login = await employeeLogin(email, "portal-pass-1");
+  return { id: created._id, token: login.body.token };
+};
+
+test("an employee files leave for themselves, sees only their own leave and can cancel a pending request", async () => {
+  const admin = await signIn();
+  const ann = await portalEmployee(admin, "leave-ann@example.com");
+  const bob = await portalEmployee(admin, "leave-bob@example.com");
+  const type = (await call("POST", "/leave-types/", { token: admin, body: { name: "Portal Annual", isPaid: true } })).body;
+  await call("POST", "/leave-balances/", { token: admin, body: { employeeId: ann.id, leaveTypeId: type._id, maxLeaves: 5 } });
+
+  assert.equal((await call("GET", "/employee-portal/leave-types")).status, 401);
+  assert.equal((await call("GET", "/employee-portal/leave-types", { token: admin })).status, 401);
+  assert.ok((await call("GET", "/employee-portal/leave-types", { token: ann.token })).body.data.some((t) => t._id === type._id));
+
+  const balances = (await call("GET", "/employee-portal/leave-balances", { token: ann.token })).body;
+  assert.equal(balances.count, 1);
+  assert.equal((await call("GET", "/employee-portal/leave-balances", { token: bob.token })).body.count, 0);
+
+  // the employee comes from the sign-in: an employeeId in the body is ignored
+  const filed = await call("POST", "/employee-portal/leave-requests", {
+    token: ann.token,
+    body: { employeeId: bob.id, leaveTypeId: type._id, startDate: "2030-03-04", endDate: "2030-03-06", reason: "Trip" },
+  });
+  assert.equal(filed.status, 200);
+  assert.equal(filed.body.employeeId, ann.id);
+  assert.equal(filed.body.status, "pending");
+  assert.equal(filed.body.days, 3);
+
+  assert.equal((await call("GET", "/employee-portal/leave-requests", { token: ann.token })).body.count, 1);
+  assert.equal((await call("GET", "/employee-portal/leave-requests", { token: bob.token })).body.count, 0);
+
+  // more days than the balance allows, bad dates, and a leave type with no balance are all refused
+  const tooMany = await call("POST", "/employee-portal/leave-requests", {
+    token: ann.token,
+    body: { leaveTypeId: type._id, startDate: "2030-04-01", endDate: "2030-04-30" },
+  });
+  assert.equal(tooMany.status, 400);
+  const badDates = await call("POST", "/employee-portal/leave-requests", {
+    token: ann.token,
+    body: { leaveTypeId: type._id, startDate: "2030-04-05", endDate: "2030-04-01" },
+  });
+  assert.equal(badDates.status, 400);
+  const noBalance = await call("POST", "/employee-portal/leave-requests", {
+    token: bob.token,
+    body: { leaveTypeId: type._id, startDate: "2030-04-01", endDate: "2030-04-02" },
+  });
+  assert.equal(noBalance.status, 400);
+
+  // someone else's request looks like it does not exist; their own pending one can be withdrawn
+  assert.equal((await call("POST", `/employee-portal/leave-requests/${filed.body._id}/cancel`, { token: bob.token })).status, 404);
+  const cancelled = await call("POST", `/employee-portal/leave-requests/${filed.body._id}/cancel`, { token: ann.token });
+  assert.equal(cancelled.status, 200);
+  assert.equal(cancelled.body.status, "cancelled");
+});
+
+test("an employee borrows equipment and it disappears from everyone else's list until it is returned", async () => {
+  const admin = await signIn();
+  const ann = await portalEmployee(admin, "borrow-ann@example.com");
+  const bob = await portalEmployee(admin, "borrow-bob@example.com");
+  const item = (await call("POST", "/inventory/", {
+    token: admin,
+    body: { name: "Borrow Laptop", serialNumber: "BORROW-1", category: "Laptop", purchaseCost: 1200, notes: "private" },
+  })).body;
+
+  assert.equal((await call("GET", "/employee-portal/equipment")).status, 401);
+  assert.equal((await call("GET", "/employee-portal/equipment", { token: admin })).status, 401);
+
+  const before = (await call("GET", "/employee-portal/equipment", { token: bob.token })).body;
+  const listed = before.available.find((i) => i._id === item._id);
+  assert.ok(listed);
+  assert.equal(listed.purchaseCost, undefined); // only the fields an employee needs
+  assert.equal(listed.notes, undefined);
+
+  const borrowed = await call("POST", `/employee-portal/equipment/${item._id}/borrow`, { token: ann.token });
+  assert.equal(borrowed.status, 200);
+  assert.equal(borrowed.body.status, "in_use");
+
+  // hidden from Bob, shown to Ann as hers
+  const bobsView = (await call("GET", "/employee-portal/equipment", { token: bob.token })).body;
+  assert.equal(bobsView.available.some((i) => i._id === item._id), false);
+  assert.equal(bobsView.borrowed.some((i) => i._id === item._id), false);
+  const annsView = (await call("GET", "/employee-portal/equipment", { token: ann.token })).body;
+  assert.equal(annsView.available.some((i) => i._id === item._id), false);
+  assert.ok(annsView.borrowed.some((i) => i._id === item._id));
+
+  // Bob cannot take it, return it, or learn who has it
+  assert.equal((await call("POST", `/employee-portal/equipment/${item._id}/borrow`, { token: bob.token })).status, 409);
+  assert.equal((await call("POST", `/employee-portal/equipment/${item._id}/return`, { token: bob.token })).status, 404);
+  assert.equal((await call("GET", `/inventory/${item._id}`, { token: admin })).body.assignedEmployeeId, ann.id);
+
+  const history = (await call("GET", "/employee-portal/borrowings", { token: ann.token })).body;
+  assert.equal(history.count, 1);
+  assert.equal(history.data[0].returnedAt, null);
+  assert.equal((await call("GET", "/employee-portal/borrowings", { token: bob.token })).body.count, 0);
+
+  // once Ann returns it, it is back on the list for everyone
+  assert.equal((await call("POST", `/employee-portal/equipment/${item._id}/return`, { token: ann.token })).status, 200);
+  assert.ok((await call("GET", "/employee-portal/equipment", { token: bob.token })).body.available.some((i) => i._id === item._id));
+  assert.ok((await call("GET", "/employee-portal/borrowings", { token: ann.token })).body.data[0].returnedAt);
+  assert.equal((await call("POST", `/employee-portal/equipment/${item._id}/borrow`, { token: bob.token })).status, 200);
+});
+
+test("equipment that is under maintenance, retired, inactive or unknown cannot be borrowed", async () => {
+  const admin = await signIn();
+  const ann = await portalEmployee(admin, "borrow-cat@example.com");
+  const maintenance = (await call("POST", "/inventory/", {
+    token: admin,
+    body: { name: "Borrow Printer", serialNumber: "BORROW-2", status: "maintenance" },
+  })).body;
+
+  const view = (await call("GET", "/employee-portal/equipment", { token: ann.token })).body;
+  assert.equal(view.available.some((i) => i._id === maintenance._id), false);
+  assert.equal((await call("POST", `/employee-portal/equipment/${maintenance._id}/borrow`, { token: ann.token })).status, 409);
+  assert.equal((await call("POST", "/employee-portal/equipment/000000000000000000000999/borrow", { token: ann.token })).status, 404);
 });

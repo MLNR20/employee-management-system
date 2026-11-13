@@ -12,6 +12,7 @@ import { LeaveRequest } from "../src/domain/leave/LeaveRequest.js";
 import { LeaveApproval } from "../src/domain/leave/LeaveApproval.js";
 import { AuditLog } from "../src/domain/audit/AuditLog.js";
 import { Item } from "../src/domain/inventory/Item.js";
+import { Borrowing } from "../src/domain/inventory/Borrowing.js";
 import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
@@ -303,5 +304,44 @@ export class InMemoryInventoryRepository extends InMemoryRepository {
 
   async existsForEmployee(employeeId) {
     return [...this.items.values()].some((item) => item.assignedEmployeeId === employeeId);
+  }
+
+  async findAvailable() {
+    return [...this.items.values()].filter((item) => item.status === "available" && item.isActive !== false);
+  }
+
+  async findHeldBy(employeeId) {
+    return [...this.items.values()].filter(
+      (item) => item.status === "in_use" && item.assignedEmployeeId === employeeId
+    );
+  }
+
+  async claim(itemId, employeeId) {
+    const item = this.items.get(itemId);
+    if (!item || item.status !== "available" || item.isActive === false) return null;
+    return this.update(itemId, { status: "in_use", assignedEmployeeId: employeeId });
+  }
+
+  async release(itemId, employeeId) {
+    const item = this.items.get(itemId);
+    if (!item || item.status !== "in_use" || item.assignedEmployeeId !== employeeId) return null;
+    return this.update(itemId, { status: "available", assignedEmployeeId: undefined });
+  }
+}
+
+export class InMemoryBorrowingRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Borrowing(props), [], () => new Error("duplicate"));
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()].filter((b) => b.employeeId === employeeId).reverse();
+  }
+
+  async markReturned(itemId, employeeId) {
+    const open = [...this.items.values()]
+      .reverse()
+      .find((b) => b.itemId === itemId && b.employeeId === employeeId && !b.returnedAt);
+    return open ? this.update(open.id, { returnedAt: new Date() }) : null;
   }
 }

@@ -44,4 +44,49 @@ export class HttpEmployeePortalRepository {
     const { data } = await client.get("/employee-portal/me");
     return data;
   }
+
+  /** Leave types an employee can apply for: [{ _id, name, isPaid }] */
+  async getLeaveTypes() {
+    const { data } = await client.get("/employee-portal/leave-types");
+    return data.data;
+  }
+
+  /** The employee's own balances: [{ _id, leaveTypeId, maxLeaves, availableLeaves }] */
+  async getLeaveBalances() {
+    const { data } = await client.get("/employee-portal/leave-balances");
+    return data.data;
+  }
+
+  /** The employee's own leave: [{ _id, leaveTypeId, startDate, endDate, days, reason, status }] */
+  async getLeaveRequests() {
+    const { data } = await client.get("/employee-portal/leave-requests");
+    return data.data;
+  }
+
+  /** Files leave for the signed-in employee. Dates are "YYYY-MM-DD". */
+  async applyForLeave({ leaveTypeId, startDate, endDate, reason }) {
+    const { data } = await client.post("/employee-portal/leave-requests", { leaveTypeId, startDate, endDate, reason });
+    return data;
+  }
+
+  async cancelLeave(id) {
+    const { data } = await client.post(`/employee-portal/leave-requests/${id}/cancel`);
+    return data;
+  }
+
+  /** { available: [...], borrowed: [...] }: what can be borrowed, and what this employee holds. */
+  async getEquipment() {
+    const { data } = await client.get("/employee-portal/equipment");
+    return data;
+  }
+
+  async borrowEquipment(id) {
+    const { data } = await client.post(`/employee-portal/equipment/${id}/borrow`);
+    return data;
+  }
+
+  async returnEquipment(id) {
+    const { data } = await client.post(`/employee-portal/equipment/${id}/return`);
+    return data;
+  }
 }

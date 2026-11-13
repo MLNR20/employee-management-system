@@ -29,6 +29,8 @@ import { createLeaveTypeUseCases } from "./application/leave/leaveTypeUseCases.j
 import { createLeaveBalanceUseCases } from "./application/leave/leaveBalanceUseCases.js";
 import { createLeaveRequestUseCases } from "./application/leave/leaveRequestUseCases.js";
 import { createInventoryUseCases } from "./application/inventory/inventoryUseCases.js";
+import { createBorrowingUseCases } from "./application/inventory/borrowingUseCases.js";
+import { MongoBorrowingRepository } from "./infrastructure/persistence/mongo/MongoBorrowingRepository.js";
 import { createDashboardUseCases } from "./application/dashboard/dashboardUseCases.js";
 import { createEmployeeAuthUseCases } from "./application/employee/employeeAuthUseCases.js";
 import { createAuditLogUseCases } from "./application/audit/auditLogUseCases.js";
@@ -106,6 +108,12 @@ export const auditLogUseCases = createAuditLogUseCases({
 export const inventoryUseCases = createInventoryUseCases({ itemRepository, employeeRepository });
 
 export const dashboardUseCases = createDashboardUseCases({ employeeRepository, leaveRequestRepository });
+
+export const borrowingUseCases = createBorrowingUseCases({
+  itemRepository,
+  borrowingRepository: new MongoBorrowingRepository(),
+  employeeRepository,
+});
 
 export const employeeAuthUseCases = createEmployeeAuthUseCases({
   employeeRepository,

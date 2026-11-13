@@ -32,6 +32,7 @@ export const createApp = ({
   administratorUseCases,
   inventoryUseCases,
   dashboardUseCases,
+  borrowingUseCases, // used by the employee portal
   employeeAuthUseCases, // optional: without it the employee portal is not served
   auditLogUseCases, // optional: without it nothing is recorded and /audit-logs is not served
 }) => {
@@ -57,7 +58,17 @@ export const createApp = ({
   if (employeeAuthUseCases) {
     const requireEmployeeAuth = createAuthMiddleware(employeeAuthUseCases);
     app.use("/employee-auth", createEmployeeAuthRouter({ employeeAuthUseCases }));
-    app.use("/employee-portal", createEmployeePortalRouter({ employeeUseCases, requireEmployeeAuth }));
+    app.use(
+      "/employee-portal",
+      createEmployeePortalRouter({
+        employeeUseCases,
+        leaveTypeUseCases,
+        leaveBalanceUseCases,
+        leaveRequestUseCases,
+        borrowingUseCases,
+        requireEmployeeAuth,
+      })
+    );
   }
   app.use("/inventory", createInventoryRouter({ inventoryUseCases, requireAuth }));
   app.use("/dashboard", createDashboardRouter({ dashboardUseCases, requireAuth }));

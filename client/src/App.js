@@ -4,6 +4,8 @@ import Login from './pages/auth/login';
 import ForgotPassword from './pages/auth/forgot_password';
 import EmployeeLogin from './pages/employee/login';
 import EmployeePortal from './pages/employee/portal';
+import EmployeeLeave from './pages/employee/leave';
+import EmployeeEquipment from './pages/employee/equipment';
 import Dashboard from './pages/dashboard';
 import ViewEmployees from "./pages/crud/view_employees";
 import AddEmployees from "./pages/crud/add_employees";
@@ -30,6 +32,8 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/employee/login" element={<EmployeeLogin />} />
             <Route path="/employee" element={<EmployeePortal />} />
+            <Route path="/employee/leave" element={<EmployeeLeave />} />
+            <Route path="/employee/equipment" element={<EmployeeEquipment />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
             <Route path="/employees/add" element={<ProtectedRoute><AddEmployees /></ProtectedRoute>} />

@@ -175,6 +175,18 @@ export const createLeaveRequestUseCases = ({
       return cancelled;
     },
 
+    /**
+     * An employee withdraws their own pending request. Someone else's request is reported as not
+     * found, so an employee cannot learn which request ids exist.
+     */
+    async cancelOwnLeave(id, employeeId) {
+      const request = await getOrThrow(id);
+      if (String(request.employeeId) !== String(employeeId)) {
+        throw new NotFoundError("Leave request not found");
+      }
+      return this.cancelLeave(id);
+    },
+
     /** The decisions made on a request: who, when and why. */
     async listApprovals(id) {
       await getOrThrow(id);
