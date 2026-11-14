@@ -6,4 +6,9 @@ export class RoleAssignmentRepository extends Repository {
   async existsForRole(roleId) {
     throw new Error("RoleAssignmentRepository.existsForRole not implemented");
   }
+
+  /** @returns {Promise<import("./RoleAssignment").RoleAssignment[]>} the roles this administrator holds */
+  async findByAdministratorId(administratorId) {
+    throw new Error("RoleAssignmentRepository.findByAdministratorId not implemented");
+  }
 }

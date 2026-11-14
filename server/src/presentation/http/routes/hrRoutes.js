@@ -1,5 +1,6 @@
 import express from "express";
 import { createCrudRouter, toDto } from "./crudRouter.js";
+import { PERMISSION_MODULES } from "../../../domain/role/permissions.js";
 
 // Routers for roles, role assignments, leave types and the administrator list.
 // All require a signed-in administrator.
@@ -7,6 +8,11 @@ import { createCrudRouter, toDto } from "./crudRouter.js";
 export const createRoleRouter = ({ roleUseCases, requireAuth }) => {
   const router = express.Router();
   router.use(requireAuth);
+
+  // Registered before the CRUD routes so "permissions" is not read as a role id.
+  router.get("/permissions", (req, res) => {
+    res.status(200).json({ data: PERMISSION_MODULES });
+  });
 
   return createCrudRouter({
     router,

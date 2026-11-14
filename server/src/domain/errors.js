@@ -95,6 +95,13 @@ export class RoleInUseError extends DomainError {
   }
 }
 
+/** The signed-in administrator is known but their roles do not allow this action. */
+export class ForbiddenError extends DomainError {
+  constructor(message = "You do not have permission to do this") {
+    super(message);
+  }
+}
+
 export class InvalidTokenError extends DomainError {
   constructor(message = "Invalid token") {
     super(message);

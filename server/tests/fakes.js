@@ -13,6 +13,8 @@ import { LeaveApproval } from "../src/domain/leave/LeaveApproval.js";
 import { AuditLog } from "../src/domain/audit/AuditLog.js";
 import { Item } from "../src/domain/inventory/Item.js";
 import { Borrowing } from "../src/domain/inventory/Borrowing.js";
+import { Attendance } from "../src/domain/attendance/Attendance.js";
+import { SalaryRate } from "../src/domain/salary/SalaryRate.js";
 import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
@@ -239,6 +241,10 @@ export class InMemoryRoleAssignmentRepository extends InMemoryRepository {
   async existsForRole(roleId) {
     return [...this.items.values()].some((assignment) => assignment.roleId === roleId);
   }
+
+  async findByAdministratorId(administratorId) {
+    return [...this.items.values()].filter((assignment) => assignment.administratorId === administratorId);
+  }
 }
 
 export class InMemoryAdministratorRepository extends AdministratorRepository {
@@ -343,5 +349,41 @@ export class InMemoryBorrowingRepository extends InMemoryRepository {
       .reverse()
       .find((b) => b.itemId === itemId && b.employeeId === employeeId && !b.returnedAt);
     return open ? this.update(open.id, { returnedAt: new Date() }) : null;
+  }
+}
+
+export class InMemoryAttendanceRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Attendance(props), [["employeeId", "date"]], () => new Error("duplicate"));
+  }
+
+  async findByEmployeeAndDate(employeeId, date) {
+    return [...this.items.values()].find((a) => a.employeeId === employeeId && a.date === date) ?? null;
+  }
+
+  async findOpenByEmployeeId(employeeId) {
+    return [...this.items.values()].reverse().find((a) => a.employeeId === employeeId && !a.timeOut) ?? null;
+  }
+}
+
+export class InMemorySalaryRateRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new SalaryRate(props), [], () => new Error("duplicate"));
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()]
+      .filter((r) => r.employeeId === employeeId)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom));
+  }
+
+  async findEffective(employeeId, day) {
+    // Ties go to the newest assignment, which is the last one stored.
+    return (
+      [...this.items.values()]
+        .filter((r) => r.employeeId === employeeId && r.effectiveFrom <= day)
+        .reverse()
+        .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null
+    );
   }
 }

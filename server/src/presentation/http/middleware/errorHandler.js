@@ -8,6 +8,7 @@ import {
   DuplicateRoleAssignmentError,
   DuplicateRoleError,
   EmployeeInUseError,
+  ForbiddenError,
   InvalidCredentialsError,
   InvalidStateError,
   LeaveTypeInUseError,
@@ -23,6 +24,7 @@ import {
 const MAPPINGS = [
   [TokenExpiredError, () => ({ status: 401, body: { code: "TOKEN_EXPIRED" } })],
   [InvalidTokenError, () => ({ status: 401, body: { code: "TOKEN_INVALID" } })],
+  [ForbiddenError, () => ({ status: 403, body: {} })],
   [ValidationError, () => ({ status: 400, body: {} })],
   [InvalidCredentialsError, () => ({ status: 400, body: {} })],
   // The client recognises a duplicate administrator by this code.

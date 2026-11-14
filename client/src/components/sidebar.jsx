@@ -34,6 +34,11 @@ const sections = [
   })),
 ];
 
+// The permission matrix is a page of its own (not a resource list), so it is added by hand,
+// straight after Roles and Role Assignments.
+const organization = sections.find((section) => section.label === "Organization");
+organization?.items.push({ to: "/permissions", label: "Permissions", icon: "lock" });
+
 const placed = new Set(sectionKeys.flatMap(({ keys }) => keys));
 const unplaced = resources.filter((r) => !placed.has(r.key));
 if (unplaced.length) sections.push({ label: "More", items: unplaced.map(resourceLink) });

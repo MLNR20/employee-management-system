@@ -34,6 +34,11 @@ import { MongoBorrowingRepository } from "./infrastructure/persistence/mongo/Mon
 import { createDashboardUseCases } from "./application/dashboard/dashboardUseCases.js";
 import { createEmployeeAuthUseCases } from "./application/employee/employeeAuthUseCases.js";
 import { createAuditLogUseCases } from "./application/audit/auditLogUseCases.js";
+import { createAttendanceUseCases } from "./application/attendance/attendanceUseCases.js";
+import { MongoAttendanceRepository } from "./infrastructure/persistence/mongo/MongoAttendanceRepository.js";
+import { createSalaryRateUseCases } from "./application/salary/salaryRateUseCases.js";
+import { MongoSalaryRateRepository } from "./infrastructure/persistence/mongo/MongoSalaryRateRepository.js";
+import { createAuthorizationUseCases } from "./application/role/authorizationUseCases.js";
 
 const administratorRepository = new MongoAdministratorRepository();
 const employeeRepository = new MongoEmployeeRepository();
@@ -60,6 +65,16 @@ export const authUseCases = createAuthUseCases({
 
 export const administratorUseCases = createAdministratorUseCases({ administratorRepository });
 
+const salaryRateRepository = new MongoSalaryRateRepository();
+
+export const salaryRateUseCases = createSalaryRateUseCases({ salaryRateRepository, employeeRepository });
+
+export const attendanceUseCases = createAttendanceUseCases({
+  attendanceRepository: new MongoAttendanceRepository(),
+  employeeRepository,
+  salaryRateRepository,
+});
+
 export const employeeUseCases = createEmployeeUseCases({
   employeeRepository,
   leaveBalanceRepository,
@@ -73,6 +88,8 @@ export const departmentUseCases = createDepartmentUseCases({
 });
 
 export const roleUseCases = createRoleUseCases({ roleRepository, roleAssignmentRepository });
+
+export const authorizationUseCases = createAuthorizationUseCases({ roleAssignmentRepository, roleRepository });
 
 export const roleAssignmentUseCases = createRoleAssignmentUseCases({
   roleAssignmentRepository,

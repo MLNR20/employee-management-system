@@ -12,6 +12,7 @@ import {
   inventoryUseCases,
   auditLogUseCases,
   dashboardUseCases,
+  permissionUseCases,
 } from "../container";
 
 export const {
@@ -40,6 +41,10 @@ export const {
   useUpdate: useUpdateRole,
   useRemove: useRemoveRole,
 } = createCrudHooks("roles", roleUseCases);
+
+/** The modules and actions a role can be granted. Fixed by the server, so it never goes stale. */
+export const usePermissionCatalog = () =>
+  useQuery({ queryKey: ["permission-catalog"], queryFn: permissionUseCases.catalog, staleTime: Infinity });
 
 export const {
   useList: useRoleAssignments,

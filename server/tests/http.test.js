@@ -414,6 +414,42 @@ test("roles and role assignments", async () => {
   assert.equal((await call("GET", `/roles/${role.body._id}`, { token })).status, 404);
 });
 
+test("role permissions", async () => {
+  assert.equal((await call("GET", "/roles/permissions")).status, 401);
+
+  const { body: login } = await call("POST", "/admin/login", {
+    body: { username: "alice", password: "pass-word1!" },
+  });
+  const token = login.token;
+
+  // The catalog is served ahead of /roles/:id
+  const catalog = await call("GET", "/roles/permissions", { token });
+  assert.equal(catalog.status, 200);
+  const employees = catalog.body.data.find((m) => m.key === "employees");
+  assert.deepEqual(employees.actions, ["view", "create", "edit", "delete"]);
+
+  // A new role starts with nothing; permissions are saved, de-duplicated and validated
+  const role = await call("POST", "/roles/", { token, body: { name: "Auditor" } });
+  assert.deepEqual(role.body.permissions, []);
+
+  const save = (permissions) =>
+    call("PUT", `/roles/${role.body._id}`, { token, body: { name: "Auditor", permissions } });
+
+  assert.equal((await save(["audit-logs:view", "audit-logs:view", "employees:view"])).status, 200);
+  const stored = await call("GET", `/roles/${role.body._id}`, { token });
+  assert.deepEqual(stored.body.permissions, ["audit-logs:view", "employees:view"]);
+
+  assert.equal((await save(["employees:fly"])).status, 400);
+  assert.equal((await save("employees:view")).status, 400);
+
+  // Editing the role without sending permissions leaves them alone
+  await call("PUT", `/roles/${role.body._id}`, { token, body: { name: "Auditor", description: "Reads" } });
+  const after = await call("GET", `/roles/${role.body._id}`, { token });
+  assert.deepEqual(after.body.permissions, ["audit-logs:view", "employees:view"]);
+
+  await call("DELETE", `/roles/${role.body._id}`, { token });
+});
+
 const signIn = async () => {
   const { body } = await call("POST", "/admin/login", {
     body: { username: "alice", password: "pass-word1!" },

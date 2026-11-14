@@ -12,6 +12,11 @@ const rolesSchema = createEntitySchema({
     type: String,
     trim: true,
     default: ""
+  },
+  // "<module>:<action>" keys from domain/role/permissions.js
+  permissions: {
+    type: [String],
+    default: []
   }
 });
 

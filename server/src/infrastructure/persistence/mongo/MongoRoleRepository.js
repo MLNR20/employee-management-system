@@ -11,6 +11,7 @@ const toRole = (doc) =>
     ...toBaseProps(doc),
     name: doc.name,
     description: doc.description,
+    permissions: [...(doc.permissions ?? [])],
   });
 
 const toRoleAssignment = (doc) =>
@@ -38,6 +39,12 @@ export class MongoRoleAssignmentRepository extends MongoRepository {
       toEntity: toRoleAssignment,
       duplicateError: () => new DuplicateRoleAssignmentError(),
     });
+  }
+
+  async findByAdministratorId(administratorId) {
+    if (!mongoose.isValidObjectId(administratorId)) return [];
+    const docs = await RoleAssignmentModel.find({ administratorId }).lean();
+    return docs.map(toRoleAssignment);
   }
 
   async existsForRole(roleId) {

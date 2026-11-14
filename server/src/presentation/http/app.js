@@ -3,6 +3,9 @@ import cors from "cors";
 import { createAdminRouter } from "./routes/adminRoutes.js";
 import { createEmployeeRouter } from "./routes/employeeRoutes.js";
 import { createDepartmentRouter } from "./routes/departmentRoutes.js";
+import { createAttendanceRouter } from "./routes/attendanceRoutes.js";
+import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
+import { createRequirePermission } from "./middleware/permissionMiddleware.js";
 import {
   createAdministratorListRouter,
   createLeaveBalanceRouter,
@@ -35,6 +38,9 @@ export const createApp = ({
   borrowingUseCases, // used by the employee portal
   employeeAuthUseCases, // optional: without it the employee portal is not served
   auditLogUseCases, // optional: without it nothing is recorded and /audit-logs is not served
+  attendanceUseCases, // optional: without it /attendance is not served
+  salaryRateUseCases, // optional, with authorizationUseCases: without both /salary-rates is not served
+  authorizationUseCases,
 }) => {
   const app = express();
   const requireAuth = createAuthMiddleware(authUseCases);
@@ -48,6 +54,11 @@ export const createApp = ({
     "/employees",
     createEmployeeRouter({ employeeUseCases, leaveBalanceUseCases, leaveRequestUseCases, requireAuth })
   );
+  if (attendanceUseCases) app.use("/attendance", createAttendanceRouter({ attendanceUseCases, requireAuth }));
+  if (salaryRateUseCases && authorizationUseCases) {
+    const requirePermission = createRequirePermission(authorizationUseCases);
+    app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));
+  }
   app.use("/departments", createDepartmentRouter({ departmentUseCases, requireAuth }));
   app.use("/roles", createRoleRouter({ roleUseCases, requireAuth }));
   app.use("/role-assignments", createRoleAssignmentRouter({ roleAssignmentUseCases, requireAuth }));

@@ -10,6 +10,7 @@ import Dashboard from './pages/dashboard';
 import ViewEmployees from "./pages/crud/view_employees";
 import AddEmployees from "./pages/crud/add_employees";
 import EditEmployees from "./pages/crud/edit_employees";
+import RolePermissions from './pages/roles/permissions';
 import ProtectedRoute from './components/protectedroute';
 import ResourceListPage from './components/resource/ResourceListPage';
 import ResourceFormPage from './components/resource/ResourceFormPage';
@@ -35,6 +36,7 @@ function App() {
             <Route path="/employee/leave" element={<EmployeeLeave />} />
             <Route path="/employee/equipment" element={<EmployeeEquipment />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/permissions" element={<ProtectedRoute><RolePermissions /></ProtectedRoute>} />
             <Route path="/employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
             <Route path="/employees/add" element={<ProtectedRoute><AddEmployees /></ProtectedRoute>} />
             <Route path="/employees/edit/:id" element={<ProtectedRoute><EditEmployees /></ProtectedRoute>} />
