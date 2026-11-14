@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import { createAdminRouter } from "./routes/adminRoutes.js";
 import { createEmployeeRouter } from "./routes/employeeRoutes.js";
 import { createDepartmentRouter } from "./routes/departmentRoutes.js";
@@ -23,6 +22,7 @@ import { createEmployeeAuthRouter, createEmployeePortalRouter } from "./routes/e
 import { createAuthMiddleware } from "./middleware/authMiddleware.js";
 import { createAuditMiddleware } from "./middleware/auditMiddleware.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { createCorsMiddleware } from "./middleware/corsMiddleware.js";
 
 /** Builds the Express app from use cases. It owns no state, so tests can pass fakes. */
 export const createApp = ({
@@ -47,11 +47,12 @@ export const createApp = ({
   shiftAssignmentUseCases, // optional: without it /shift-assignments is not served
   documentRequirementUseCases, // optional: without it /document-requirements is not served
   employeeDocumentUseCases, // optional: without it /employee-documents is not served
+  corsOrigins = [], // origins browsers may call from; empty allows any (see middleware/corsMiddleware.js)
 }) => {
   const app = express();
   const requireAuth = createAuthMiddleware(authUseCases);
 
-  app.use(cors());
+  app.use(createCorsMiddleware(corsOrigins));
   app.use(express.json());
   if (auditLogUseCases) app.use(createAuditMiddleware(auditLogUseCases));
 

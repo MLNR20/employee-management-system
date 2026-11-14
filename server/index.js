@@ -3,7 +3,7 @@ import config from './src/infrastructure/config/config.js';
 import * as useCases from './src/container.js';
 import { createApp } from './src/presentation/http/app.js';
 
-const app = createApp(useCases);
+const app = createApp({ ...useCases, corsOrigins: config.CORS_ORIGINS });
 
 app.listen(config.PORT, () =>{
     console.log('SERVER RUNNING PERFECTLY');

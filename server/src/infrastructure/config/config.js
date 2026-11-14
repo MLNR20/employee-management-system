@@ -32,7 +32,11 @@ export const config = {
 
     // The workplace clock for shifts, lateness and the working day: UTC plus this many minutes.
     // Default 480 = UTC+8 (Philippines, no daylight saving).
-    WORK_UTC_OFFSET_MINUTES: Number(process.env.WORK_UTC_OFFSET_MINUTES ?? 480)
+    WORK_UTC_OFFSET_MINUTES: Number(process.env.WORK_UTC_OFFSET_MINUTES ?? 480),
+
+    // Web addresses allowed to call the API from a browser, comma-separated, e.g.
+    // CORS_ORIGINS=https://hr.example.com,http://localhost:3000. Empty allows every origin.
+    CORS_ORIGINS: (process.env.CORS_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean)
 }
 
 export default config;
