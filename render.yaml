@@ -22,6 +22,9 @@ services:
         generateValue: true
       - key: EMPLOYEE_JWT_SECRET
         generateValue: true
+      # Browser origins allowed to call the API (comma-separated). Must match the public URL of ems-client.
+      - key: CORS_ORIGINS
+        value: https://ems-client-f6s8.onrender.com
       # First administrator, created on a fresh database (see ensureAdministratorsExist).
       - key: USERNAME
         sync: false
@@ -47,7 +50,7 @@ services:
       # CRA inlines this at build time. Must be the public URL of ems-api (no trailing slash);
       # if Render gave the API a different hostname, change it and redeploy the client.
       - key: REACT_APP_API_URL
-        value: https://ems-api.onrender.com
+        value: https://ems-api-uqww.onrender.com
       - key: CI # stop CRA from failing the build on lint warnings
         value: "false"
     routes:
