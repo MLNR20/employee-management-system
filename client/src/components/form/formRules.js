@@ -2,7 +2,7 @@
 //
 // field: {
 //   name, label,
-//   type?:      "text" (default) | "email" | "number" | "password" | "textarea" | "checkbox" | "select"
+//   type?:      "text" (default) | "email" | "number" | "password" | "date" | "textarea" | "checkbox" | "checkboxes" | "select"
 //   required?:  boolean
 //   minLength?, maxLength?, min?, max?
 //   pattern?:   RegExp, with patternMessage? for the error text
@@ -10,14 +10,15 @@
 //   validate?:  (value, allValues) => string | undefined   custom rule, returns the error message
 //   default?:   starting value
 //   hint?:      small help text under the input
-//   options?:   [{ value, label }]                 for "select"
+//   options?:   [{ value, label }]                 for "select" and "checkboxes" (which holds an array of the chosen values)
 //   optionsFrom?: { useList, value(item), label(item) }   for "select", loaded from another resource
 //   wide?:      span both columns
 // }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const emptyValue = (field) => field.default ?? (field.type === "checkbox" ? false : "");
+export const emptyValue = (field) =>
+  field.default ?? (field.type === "checkbox" ? false : field.type === "checkboxes" ? [] : "");
 
 /** Starting values for a form: from a loaded entity when given, otherwise each field's default. */
 export const initialValuesFor = (fields, source) =>

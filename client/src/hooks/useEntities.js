@@ -16,6 +16,11 @@ import {
   auditLogUseCases,
   dashboardUseCases,
   permissionUseCases,
+  workShiftUseCases,
+  shiftAssignmentUseCases,
+  documentRequirementUseCases,
+  employeeDocumentUseCases,
+  documentChecklistUseCases,
 } from "../container";
 
 export const {
@@ -91,6 +96,56 @@ export const useCan = (permission) => {
 /** The modules and actions a role can be granted. Fixed by the server, so it never goes stale. */
 export const usePermissionCatalog = () =>
   useQuery({ queryKey: ["permission-catalog"], queryFn: permissionUseCases.catalog, staleTime: Infinity });
+
+export const {
+  useList: useWorkShifts,
+  usePage: useWorkShiftsPage,
+  useOne: useWorkShift,
+  useCreate: useCreateWorkShift,
+  useUpdate: useUpdateWorkShift,
+  useRemove: useRemoveWorkShift,
+} = createCrudHooks("work-shifts", workShiftUseCases);
+
+// Assignments are added and removed, never edited.
+export const {
+  useList: useShiftAssignments,
+  usePage: useShiftAssignmentsPage,
+  useOne: useShiftAssignment,
+  useCreate: useCreateShiftAssignment,
+  useRemove: useRemoveShiftAssignment,
+} = createCrudHooks("shift-assignments", shiftAssignmentUseCases);
+
+export const {
+  useList: useDocumentRequirements,
+  usePage: useDocumentRequirementsPage,
+  useOne: useDocumentRequirement,
+  useCreate: useCreateDocumentRequirement,
+  useUpdate: useUpdateDocumentRequirement,
+  useRemove: useRemoveDocumentRequirement,
+} = createCrudHooks("document-requirements", documentRequirementUseCases);
+
+export const {
+  useCreate: useCreateEmployeeDocument,
+  useUpdate: useUpdateEmployeeDocument,
+} = createCrudHooks("employee-documents", employeeDocumentUseCases);
+
+/** One employee's onboarding checklist. It sits under the "employee-documents" key, so any change to their documents refreshes it. */
+export const useDocumentChecklist = (employeeId) =>
+  useQuery({
+    queryKey: ["employee-documents", "checklist", employeeId],
+    queryFn: () => documentChecklistUseCases.checklist(employeeId),
+    enabled: Boolean(employeeId),
+  });
+
+/** HR verifies or rejects a received document (rejecting needs the reason). */
+export const useReviewDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, action, remarks }) =>
+      action === "reject" ? documentChecklistUseCases.reject(id, remarks) : documentChecklistUseCases.verify(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employee-documents"] }),
+  });
+};
 
 export const {
   useList: useRoleAssignments,

@@ -28,7 +28,15 @@ export const config = {
     EMPLOYEE_JWT_SECRET: process.env.EMPLOYEE_JWT_SECRET || 'employee-secret123',
     EMPLOYEE_TOKEN_TTL: process.env.EMPLOYEE_TOKEN_TTL || '8h',
     ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || '15m',
-    REFRESH_TOKEN_TTL: process.env.REFRESH_TOKEN_TTL || '7d'
+    REFRESH_TOKEN_TTL: process.env.REFRESH_TOKEN_TTL || '7d',
+
+    // The workplace clock for shifts, lateness and the working day: UTC plus this many minutes.
+    // Default 480 = UTC+8 (Philippines, no daylight saving).
+    WORK_UTC_OFFSET_MINUTES: Number(process.env.WORK_UTC_OFFSET_MINUTES ?? 480),
+
+    // Web addresses allowed to call the API from a browser, comma-separated, e.g.
+    // CORS_ORIGINS=https://hr.example.com,http://localhost:3000. Empty allows every origin.
+    CORS_ORIGINS: (process.env.CORS_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean)
 }
 
 export default config;

@@ -14,6 +14,10 @@ export const PERMISSION_MODULES = [
   { key: "leave-types", label: "Leave Types", actions: CRUD },
   { key: "inventory", label: "Inventory", actions: CRUD },
   { key: "attendance", label: "Attendance", actions: ["view", "create", "edit", "delete"] },
+  { key: "work-shifts", label: "Work Shifts", actions: ["view", "create", "edit", "delete"] },
+  { key: "shift-assignments", label: "Shift Schedules", actions: ["view", "create", "delete"] },
+  { key: "documents", label: "Employee Documents", actions: ["view", "create", "edit", "verify", "delete"] },
+  { key: "document-requirements", label: "Document Requirements", actions: ["view", "create", "edit", "delete"] },
   // HR only: who may see and set what employees are paid per hour. Enforced by the server.
   { key: "salary-rates", label: "Salary Rates", actions: ["view", "assign"] },
   { key: "audit-logs", label: "Audit Logs", actions: ["view"] },

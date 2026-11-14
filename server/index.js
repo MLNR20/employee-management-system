@@ -6,6 +6,7 @@ import { createApp } from './src/presentation/http/app.js';
 const DATABASE_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 const app = createApp({
     ...useCases,
+    corsOrigins: config.CORS_ORIGINS,
     getHealth: () => ({ database: DATABASE_STATES[mongoose.connection.readyState] ?? 'unknown' })
 });
 
@@ -16,6 +17,10 @@ app.listen(config.PORT, () =>{
 // Log connection status
 mongoose.connect(config.dbConnection).then(()=>{
     console.log('App connected to database');
+    // A fresh install gets the standard onboarding checklist; once any requirement exists this does nothing.
+    return useCases.documentRequirementUseCases.ensureDefaultRequirements().then(({ created }) => {
+        if (created) console.log(`Created ${created} default document requirements`);
+    });
 }).catch((error) =>{
     console.log(error);
 });

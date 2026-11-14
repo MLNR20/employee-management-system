@@ -6,6 +6,7 @@ import { auditLogResource } from "./audit";
 import { attendanceResource } from "./attendance";
 import { salaryRateResource } from "./salaryRates";
 import { leaveTypeResource, leaveBalanceResource, leaveRequestResource } from "./leave";
+import { workShiftResource, shiftAssignmentResource, documentRequirementResource } from "./onboarding";
 
 /**
  * Every resource that gets a list page, an add page and (when it has an update
@@ -23,4 +24,7 @@ export const resources = [
   attendanceResource,
   salaryRateResource,
   auditLogResource,
+  documentRequirementResource,
+  workShiftResource,
+  shiftAssignmentResource,
 ];

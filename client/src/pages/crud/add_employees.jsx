@@ -10,6 +10,7 @@ import PortalPasswordField, { validatePortalPassword } from "../../components/Po
 import { validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate } from "react-router-dom";
 import { validatePersonName } from "../../validation/personName";
+import ManagerSelect from "../../components/ManagerSelect";
 
 export default function Add_Employees() {
   const [first_name, setFirstName] = useState("");
@@ -22,6 +23,7 @@ export default function Add_Employees() {
   const [ids, setIds] = useState({});
   const [portalPassword, setPortalPassword] = useState("");
   const [contact, setContact] = useState({});
+  const [managerId, setManagerId] = useState("");
   const navigate = useNavigate();
   const createEmployee = useCreateEmployee();
   const createContact = useCreateEmergencyContact();
@@ -93,6 +95,7 @@ export default function Add_Employees() {
       department,
       position,
       status,
+      managerId,
       ...ids,
       ...(portalPassword ? { portalPassword } : {}),
     };
@@ -138,7 +141,8 @@ export default function Add_Employees() {
             });
           })
           .catch((error) => {
-            console.log(error);
+            // An expired session is already redirected to /login by the API client.
+            Swal.fire("Could not save", error.response?.data?.message ?? "Something went wrong.", "error");
           });
       }
     });
@@ -308,6 +312,7 @@ export default function Add_Employees() {
                       </label>
                     )}
                   </div>
+                  <ManagerSelect value={managerId} onChange={setManagerId} />
                   <div>
                     <label
                       for="website"
