@@ -42,7 +42,11 @@ const employeesSchema = createEntitySchema({
   sssNumber: { type: String, trim: true, default: "" },
   tinNumber: { type: String, trim: true, default: "" },
   philhealthNumber: { type: String, trim: true, default: "" },
-  pagibigNumber: { type: String, trim: true, default: "" }
+  pagibigNumber: { type: String, trim: true, default: "" },
+  // The employee this one reports to. Points back at the same collection; null for someone at the top.
+  managerId: { type: mongoose.Schema.Types.ObjectId, ref: "employees", default: null }
 });
+
+employeesSchema.index({ managerId: 1 });
 
 export const EmployeeModel = mongoose.model("employees", employeesSchema);

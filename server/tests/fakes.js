@@ -123,6 +123,14 @@ export class InMemoryEmployeeRepository extends InMemoryRepository {
     this.passwords.set(id, passwordHash);
   }
 
+  async findByManagerId(managerId) {
+    return [...this.items.values()].filter((e) => e.managerId === managerId);
+  }
+
+  async existsWithManager(managerId) {
+    return [...this.items.values()].some((e) => e.managerId === managerId);
+  }
+
   async findCredentialsByEmail(email) {
     const employee = [...this.items.values()].find((e) => e.email === String(email).trim().toLowerCase());
     if (!employee) return null;

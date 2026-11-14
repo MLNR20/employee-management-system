@@ -31,6 +31,12 @@ export const createEmployeeRouter = ({
     res.status(200).json(await employeeUseCases.employeeSummary());
   });
 
+  // The employees who report directly to this one.
+  router.get("/:id/direct-reports", async (req, res) => {
+    const reports = await employeeUseCases.listDirectReports(req.params.id);
+    res.status(200).json({ count: reports.length, data: reports.map(toDto) });
+  });
+
   // An employee's leave: what they are entitled to, and what they have filed.
   router.get("/:id/leave-balances", async (req, res) => {
     const balances = await leaveBalanceUseCases.listForEmployee(req.params.id);

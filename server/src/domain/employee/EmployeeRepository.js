@@ -21,4 +21,14 @@ export class EmployeeRepository extends Repository {
   async findCredentialsByEmail(email) {
     throw new Error("EmployeeRepository.findCredentialsByEmail not implemented");
   }
+
+  /** @returns {Promise<import("./Employee").Employee[]>} the employees who report directly to this one */
+  async findByManagerId(managerId) {
+    throw new Error("EmployeeRepository.findByManagerId not implemented");
+  }
+
+  /** @returns {Promise<boolean>} whether anyone reports directly to this employee */
+  async existsWithManager(managerId) {
+    throw new Error("EmployeeRepository.existsWithManager not implemented");
+  }
 }

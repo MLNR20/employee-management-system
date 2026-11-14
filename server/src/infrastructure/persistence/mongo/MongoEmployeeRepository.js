@@ -19,6 +19,7 @@ const toEmployee = (doc) =>
     tinNumber: doc.tinNumber,
     philhealthNumber: doc.philhealthNumber,
     pagibigNumber: doc.pagibigNumber,
+    managerId: doc.managerId ? String(doc.managerId) : null,
   });
 
 export class MongoEmployeeRepository extends MongoRepository {
@@ -34,6 +35,17 @@ export class MongoEmployeeRepository extends MongoRepository {
   async setPassword(id, passwordHash) {
     if (!mongoose.isValidObjectId(id)) return;
     await EmployeeModel.updateOne({ _id: id }, { passwordHash });
+  }
+
+  async findByManagerId(managerId) {
+    if (!mongoose.isValidObjectId(managerId)) return [];
+    const docs = await EmployeeModel.find({ managerId }).sort({ first_name: 1, last_name: 1 }).lean();
+    return docs.map(toEmployee);
+  }
+
+  async existsWithManager(managerId) {
+    if (!mongoose.isValidObjectId(managerId)) return false;
+    return Boolean(await EmployeeModel.exists({ managerId }));
   }
 
   async findCredentialsByEmail(email) {

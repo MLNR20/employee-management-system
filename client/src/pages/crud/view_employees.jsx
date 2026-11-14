@@ -9,12 +9,14 @@ import { useServerTable } from "../../hooks/useServerTable";
 import { employeeUseCases } from "../../container";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
+import { ManagerName } from "../../components/ManagerSelect";
 
 const columns = [
   { key: "index", header: "#", sortable: false, searchable: false, render: (_, index) => index + 1 },
   { key: "fullName", header: "Full Name", sortKey: "first_name", accessor: (e) => e.fullName },
   { key: "email", header: "Email", sortKey: "email" },
   { key: "position", header: "Position", sortKey: "position" },
+  { key: "manager", header: "Manager", sortable: false, searchable: false, render: (e) => <ManagerName id={e.managerId} /> },
   { key: "salary", header: "Salary", sortKey: "salary" },
   { key: "department", header: "Department", sortKey: "department" },
   {

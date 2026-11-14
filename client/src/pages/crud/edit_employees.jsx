@@ -7,6 +7,7 @@ import GovernmentIdFields from "../../components/GovernmentIdFields";
 import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { governmentIdValues, validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate, useParams } from "react-router-dom";
+import ManagerSelect from "../../components/ManagerSelect";
 
 export default function Edit_Employees() {
   const [first_name, setFirstName] = useState("");
@@ -18,6 +19,7 @@ export default function Edit_Employees() {
   const [status, setStatus] = useState("");
   const [ids, setIds] = useState({});
   const [portalPassword, setPortalPassword] = useState("");
+  const [managerId, setManagerId] = useState("");
   const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
@@ -38,6 +40,7 @@ export default function Edit_Employees() {
     setPosition(employee.position);
     setStatus(String(employee.isActive));
     setIds(governmentIdValues(employee));
+    setManagerId(employee.managerId ?? "");
   }, [employee]);
 
   const validateForm = () => {
@@ -108,6 +111,7 @@ export default function Edit_Employees() {
       department,
       position,
       status,
+      managerId,
       ...ids,
       ...(portalPassword ? { portalPassword } : {}),
     };
@@ -140,7 +144,8 @@ export default function Edit_Employees() {
             });
           })
           .catch((error) => {
-            console.log(error);
+            // An expired session is already redirected to /login by the API client.
+            Swal.fire("Could not save", error.response?.data?.message ?? "Something went wrong.", "error");
           });
       }
     });
@@ -310,6 +315,7 @@ export default function Edit_Employees() {
                       </label>
                     )}
                   </div>
+                  <ManagerSelect value={managerId} onChange={setManagerId} excludeId={id} />
                   <div>
                     <label
                       htmlFor="website"
