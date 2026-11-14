@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { createCrudHooks } from "./createCrudHooks";
 import {
   employeeUseCases,
+  emergencyContactUseCases,
   departmentUseCases,
   roleUseCases,
   roleAssignmentUseCases,
@@ -12,6 +13,7 @@ import {
   inventoryUseCases,
   auditLogUseCases,
   dashboardUseCases,
+  permissionUseCases,
 } from "../container";
 
 export const {
@@ -22,6 +24,15 @@ export const {
   useUpdate: useUpdateEmployee,
   useRemove: useRemoveEmployee,
 } = createCrudHooks("employees", employeeUseCases);
+
+export const {
+  useList: useEmergencyContacts,
+  usePage: useEmergencyContactsPage,
+  useOne: useEmergencyContact,
+  useCreate: useCreateEmergencyContact,
+  useUpdate: useUpdateEmergencyContact,
+  useRemove: useRemoveEmergencyContact,
+} = createCrudHooks("emergency-contacts", emergencyContactUseCases);
 
 export const {
   useList: useDepartments,
@@ -40,6 +51,10 @@ export const {
   useUpdate: useUpdateRole,
   useRemove: useRemoveRole,
 } = createCrudHooks("roles", roleUseCases);
+
+/** The modules and actions a role can be granted. Fixed by the server, so it never goes stale. */
+export const usePermissionCatalog = () =>
+  useQuery({ queryKey: ["permission-catalog"], queryFn: permissionUseCases.catalog, staleTime: Infinity });
 
 export const {
   useList: useRoleAssignments,

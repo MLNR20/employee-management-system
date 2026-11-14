@@ -3,6 +3,7 @@ import { Repository } from "../src/domain/Repository.js";
 import { AdministratorRepository } from "../src/domain/administrator/AdministratorRepository.js";
 import { Administrator } from "../src/domain/administrator/Administrator.js";
 import { Employee } from "../src/domain/employee/Employee.js";
+import { EmergencyContact } from "../src/domain/employee/EmergencyContact.js";
 import { Department } from "../src/domain/department/Department.js";
 import { Role } from "../src/domain/role/Role.js";
 import { RoleAssignment } from "../src/domain/role/RoleAssignment.js";
@@ -13,11 +14,16 @@ import { LeaveApproval } from "../src/domain/leave/LeaveApproval.js";
 import { AuditLog } from "../src/domain/audit/AuditLog.js";
 import { Item } from "../src/domain/inventory/Item.js";
 import { Borrowing } from "../src/domain/inventory/Borrowing.js";
+import { Job } from "../src/domain/job/Job.js";
+import { JobApplication } from "../src/domain/job/JobApplication.js";
+import { Attendance } from "../src/domain/attendance/Attendance.js";
+import { SalaryRate } from "../src/domain/salary/SalaryRate.js";
 import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
   DuplicateEmployeeError,
   DuplicateItemError,
+  DuplicateJobApplicationError,
   DuplicateLeaveBalanceError,
   DuplicateLeaveTypeError,
   DuplicateRoleAssignmentError,
@@ -188,6 +194,22 @@ export class InMemoryLeaveBalanceRepository extends InMemoryRepository {
   }
 }
 
+export class InMemoryEmergencyContactRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new EmergencyContact(props), [], () => new Error("unreachable"));
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()].filter((c) => c.employeeId === employeeId);
+  }
+
+  async removeForEmployee(employeeId) {
+    for (const [id, contact] of this.items) {
+      if (contact.employeeId === employeeId) this.items.delete(id);
+    }
+  }
+}
+
 export class InMemoryLeaveRequestRepository extends InMemoryRepository {
   constructor() {
     super((props) => new LeaveRequest(props), [], () => new Error("unreachable"));
@@ -238,6 +260,10 @@ export class InMemoryRoleAssignmentRepository extends InMemoryRepository {
 
   async existsForRole(roleId) {
     return [...this.items.values()].some((assignment) => assignment.roleId === roleId);
+  }
+
+  async findByAdministratorId(administratorId) {
+    return [...this.items.values()].filter((assignment) => assignment.administratorId === administratorId);
   }
 }
 
@@ -343,5 +369,69 @@ export class InMemoryBorrowingRepository extends InMemoryRepository {
       .reverse()
       .find((b) => b.itemId === itemId && b.employeeId === employeeId && !b.returnedAt);
     return open ? this.update(open.id, { returnedAt: new Date() }) : null;
+  }
+}
+
+export class InMemoryJobRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Job(props), [], () => new Error("unreachable"));
+  }
+
+  async findOpen() {
+    return [...this.items.values()].filter((job) => job.status === "open" && job.isActive !== false).reverse();
+  }
+}
+
+export class InMemoryJobApplicationRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new JobApplication(props), [["employeeId", "jobId"]], () => new DuplicateJobApplicationError());
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()].filter((a) => a.employeeId === employeeId).reverse();
+  }
+
+  async findByJobId(jobId) {
+    return [...this.items.values()].filter((a) => a.jobId === jobId).reverse();
+  }
+
+  async existsForJob(jobId) {
+    return [...this.items.values()].some((a) => a.jobId === jobId);
+  }
+}
+
+export class InMemoryAttendanceRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Attendance(props), [["employeeId", "date"]], () => new Error("duplicate"));
+  }
+
+  async findByEmployeeAndDate(employeeId, date) {
+    return [...this.items.values()].find((a) => a.employeeId === employeeId && a.date === date) ?? null;
+  }
+
+  async findOpenByEmployeeId(employeeId) {
+    return [...this.items.values()].reverse().find((a) => a.employeeId === employeeId && !a.timeOut) ?? null;
+  }
+}
+
+export class InMemorySalaryRateRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new SalaryRate(props), [], () => new Error("duplicate"));
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()]
+      .filter((r) => r.employeeId === employeeId)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom));
+  }
+
+  async findEffective(employeeId, day) {
+    // Ties go to the newest assignment, which is the last one stored.
+    return (
+      [...this.items.values()]
+        .filter((r) => r.employeeId === employeeId && r.effectiveFrom <= day)
+        .reverse()
+        .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null
+    );
   }
 }

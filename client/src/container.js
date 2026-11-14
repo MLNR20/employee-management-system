@@ -5,6 +5,7 @@ import { HttpAuthRepository } from "./infrastructure/repositories/HttpAuthReposi
 import { HttpEmployeeRepository } from "./infrastructure/repositories/HttpEmployeeRepository";
 import { HttpDepartmentRepository } from "./infrastructure/repositories/HttpDepartmentRepository";
 import { HttpLeaveRequestRepository } from "./infrastructure/repositories/HttpLeaveRequestRepository";
+import { HttpPermissionRepository } from "./infrastructure/repositories/HttpPermissionRepository";
 import { createAuthUseCases } from "./application/auth/authUseCases";
 import { createEmployeeUseCases } from "./application/employee/employeeUseCases";
 import { createDepartmentUseCases } from "./application/department/departmentUseCases";
@@ -17,6 +18,7 @@ import { Item } from "./domain/inventory/Item";
 import { HttpDashboardRepository } from "./infrastructure/repositories/HttpDashboardRepository";
 import { HttpEmployeePortalRepository } from "./infrastructure/repositories/HttpEmployeePortalRepository";
 import { AuditLog } from "./domain/audit/AuditLog";
+import { EmergencyContact } from "./domain/employee/EmergencyContact";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
 
@@ -27,7 +29,11 @@ export const authUseCases = createAuthUseCases(new HttpAuthRepository());
 export const employeeUseCases = createEmployeeUseCases(new HttpEmployeeRepository());
 export const departmentUseCases = createDepartmentUseCases(new HttpDepartmentRepository());
 
+export const emergencyContactUseCases = restCrud("emergency-contacts", EmergencyContact.fromApi);
+
 export const roleUseCases = restCrud("roles", Role.fromApi);
+const permissionRepository = new HttpPermissionRepository();
+export const permissionUseCases = { catalog: () => permissionRepository.getCatalog() };
 export const roleAssignmentUseCases = restCrud("role-assignments", RoleAssignment.fromApi);
 export const leaveTypeUseCases = restCrud("leave-types", LeaveType.fromApi);
 export const leaveBalanceUseCases = restCrud("leave-balances", LeaveBalance.fromApi);

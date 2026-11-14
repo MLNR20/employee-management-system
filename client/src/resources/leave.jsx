@@ -151,7 +151,7 @@ function LeaveRequestActions({ row }) {
       <button className={`${buttonClass} bg-red-700 hover:bg-red-800`} onClick={() => run("reject", "Reject this leave?", true)}>
         Reject
       </button>
-      <button className={`${buttonClass} bg-gray-600 hover:bg-gray-700`} onClick={() => run("cancel", "Cancel this request?", false)}>
+      <button className="focus:outline-none text-gray-800 border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2" onClick={() => run("cancel", "Cancel this request?", false)}>
         Cancel
       </button>
     </div>

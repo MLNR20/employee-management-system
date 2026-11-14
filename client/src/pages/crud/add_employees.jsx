@@ -1,12 +1,15 @@
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
 import { useState } from "react";
-import { useCreateEmployee } from "../../hooks/useEntities";
+import { useCreateEmployee, useCreateEmergencyContact } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import GovernmentIdFields from "../../components/GovernmentIdFields";
+import EmergencyContactFields from "../../components/EmergencyContactFields";
+import { hasContactInput, toContactPayload, validateContact } from "../../domain/employee/emergencyContactRules";
 import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate } from "react-router-dom";
+import { validatePersonName } from "../../validation/personName";
 
 export default function Add_Employees() {
   const [first_name, setFirstName] = useState("");
@@ -18,40 +21,21 @@ export default function Add_Employees() {
   const [status, setStatus] = useState("");
   const [ids, setIds] = useState({});
   const [portalPassword, setPortalPassword] = useState("");
+  const [contact, setContact] = useState({});
   const navigate = useNavigate();
   const createEmployee = useCreateEmployee();
+  const createContact = useCreateEmergencyContact();
 
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    const regex = /^[A-Za-z-]+$/;
 
-    if (!first_name)
-    {
-      newErrors.first_name = "First name is required." ;
-    } 
-    else if(first_name.length <2)
-    {
-      newErrors.first_name = "First name must be not be a single character";
-    }
-    else if(!regex.test(first_name))
-    {
-      newErrors.first_name = "First name must contain letters and - only."
-    }
+    const firstNameError = validatePersonName("First name", first_name);
+    if (firstNameError) newErrors.first_name = firstNameError;
 
-    if (!last_name)
-    {
-      newErrors.last_name = "Last name is required.";
-    } 
-    else if(last_name.length < 2)
-    {
-       newErrors.last_name = "Last name must be not be a single character";
-    }
-    else if(!regex.test(last_name))
-    {
-      newErrors.last_name = "Last name must contain letters and - only."
-    }
+    const lastNameError = validatePersonName("Last name", last_name);
+    if (lastNameError) newErrors.last_name = lastNameError;
 
     if (!email) {
       newErrors.email = "Email is required.";
@@ -87,6 +71,11 @@ export default function Add_Employees() {
     const passwordError = validatePortalPassword(portalPassword);
     if (passwordError) newErrors.portalPassword = passwordError;
 
+    // Contact errors are stored as contact_<field> so they cannot collide with the employee's.
+    Object.entries(validateContact(contact)).forEach(([field, message]) => {
+      newErrors[`contact_${field}`] = message;
+    });
+
     return newErrors;
   };
 
@@ -120,11 +109,24 @@ export default function Add_Employees() {
       if (result.isConfirmed) {
         createEmployee
           .mutateAsync(employees)
-          .then(() => {
-            Swal.fire({
-              title: "Success!",
-              text: "Employee successfully added.",
-              icon: "success",
+          .then(async (employee) => {
+            // The contact needs the new employee's id, so it is saved second. If it fails the
+            // employee already exists: say so instead of pretending the whole save worked.
+            let contactSaved = true;
+            if (hasContactInput(contact)) {
+              try {
+                await createContact.mutateAsync(toContactPayload(employee.id, contact));
+              } catch (error) {
+                contactSaved = false;
+              }
+            }
+
+            return Swal.fire({
+              title: contactSaved ? "Success!" : "Employee added",
+              text: contactSaved
+                ? "Employee successfully added."
+                : "The employee was added, but the emergency contact could not be saved. Add it from Emergency Contacts.",
+              icon: contactSaved ? "success" : "warning",
               showCancelButton: true,
               confirmButtonColor: "#3F7D58",
               cancelButtonColor: "#3085d6",
@@ -412,6 +414,21 @@ export default function Add_Employees() {
                   onChange={(name, value) => {
                     setIds((previous) => ({ ...previous, [name]: value }));
                     setErrors((previous) => ({ ...previous, [name]: undefined }));
+                  }}
+                />
+                <EmergencyContactFields
+                  values={contact}
+                  errors={Object.fromEntries(
+                    Object.entries(errors)
+                      .filter(([key]) => key.startsWith("contact_"))
+                      .map(([key, message]) => [key.slice("contact_".length), message])
+                  )}
+                  onChange={(name, value) => {
+                    setContact((previous) => ({ ...previous, [name]: value }));
+                    // Typing in one field can change which others are required, so clear them all.
+                    setErrors((previous) =>
+                      Object.fromEntries(Object.entries(previous).filter(([key]) => !key.startsWith("contact_")))
+                    );
                   }}
                 />
                 <PortalPasswordField

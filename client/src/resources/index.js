@@ -1,4 +1,5 @@
 import { departmentResource } from "./departments";
+import { emergencyContactResource } from "./emergencyContacts";
 import { roleResource, roleAssignmentResource } from "./roles";
 import { inventoryResource } from "./inventory";
 import { auditLogResource } from "./audit";
@@ -10,6 +11,7 @@ import { leaveTypeResource, leaveBalanceResource, leaveRequestResource } from ".
  */
 export const resources = [
   departmentResource,
+  emergencyContactResource,
   roleResource,
   roleAssignmentResource,
   leaveRequestResource,

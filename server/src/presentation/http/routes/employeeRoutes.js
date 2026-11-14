@@ -1,5 +1,6 @@
 import express from "express";
 import { createCrudRouter, toDto } from "./crudRouter.js";
+import { validateEmployeeNames } from "../validation/personName.js";
 
 // The forms send the active flag as `status` ("true"/"false"); the model calls it `isActive`.
 const toEmployeeInput = (body = {}) => {
@@ -14,11 +15,16 @@ export const createEmployeeRouter = ({
   employeeUseCases,
   leaveBalanceUseCases,
   leaveRequestUseCases,
+  emergencyContactUseCases, // optional: without it /employees/:id/emergency-contacts is not served
   requireAuth,
 }) => {
   const router = express.Router();
 
   router.use(requireAuth);
+
+  // Names are letters only, at least 2 characters; checked before the CRUD handlers below.
+  router.post("/", validateEmployeeNames);
+  router.put("/:id", validateEmployeeNames);
 
   // Lets the client ask "who am I?" with its access token. Registered before
   // the CRUD routes so "/protected" is not read as an employee id.
@@ -41,6 +47,14 @@ export const createEmployeeRouter = ({
     const requests = await leaveRequestUseCases.listForEmployee(req.params.id);
     res.status(200).json({ count: requests.length, data: requests.map(toDto) });
   });
+
+  // The people to call in an emergency (one employee has many).
+  if (emergencyContactUseCases) {
+    router.get("/:id/emergency-contacts", async (req, res) => {
+      const contacts = await emergencyContactUseCases.listForEmployee(req.params.id);
+      res.status(200).json({ count: contacts.length, data: contacts.map(toDto) });
+    });
+  }
 
   return createCrudRouter({
     router,

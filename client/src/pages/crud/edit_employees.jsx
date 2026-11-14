@@ -7,6 +7,7 @@ import GovernmentIdFields from "../../components/GovernmentIdFields";
 import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { governmentIdValues, validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate, useParams } from "react-router-dom";
+import { validatePersonName } from "../../validation/personName";
 
 export default function Edit_Employees() {
   const [first_name, setFirstName] = useState("");
@@ -43,23 +44,11 @@ export default function Edit_Employees() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!first_name)
-    {
-      newErrors.first_name = "First name is required." ;
-    } 
-    else if(first_name.length <3)
-    {
-      newErrors.first_name = "First name must be greater than 2 characters";
-    }
+    const firstNameError = validatePersonName("First name", first_name);
+    if (firstNameError) newErrors.first_name = firstNameError;
 
-    if (!last_name)
-    {
-      newErrors.last_name = "Last name is required.";
-    } 
-    else if(last_name.length < 2)
-    {
-       newErrors.last_name = "Last name must be not be a single character";
-    }
+    const lastNameError = validatePersonName("Last name", last_name);
+    if (lastNameError) newErrors.last_name = lastNameError;
 
     if (!email) {
       newErrors.email = "Email is required.";

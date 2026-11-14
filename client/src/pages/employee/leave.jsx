@@ -164,9 +164,21 @@ export default function EmployeeLeave() {
             </p>
             <p className="leave-hint">Weekends count as leave days.</p>
 
-            <button type="submit" className="leave-submit" disabled={apply.isPending}>
-              {apply.isPending ? "Sending…" : "Apply for leave"}
-            </button>
+            <div className="leave-actions">
+              <button type="submit" className="leave-submit" disabled={apply.isPending}>
+                {apply.isPending ? "Sending…" : "Apply for leave"}
+              </button>
+              <button
+                type="button"
+                className="leave-cancel"
+                onClick={() => {
+                  setForm(emptyForm);
+                  setPickingEnd(false);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </section>
       </div>

@@ -14,7 +14,7 @@ const resourceLink = (resource) => ({
 });
 
 const sectionKeys = [
-  { label: "Organization", keys: ["departments", "roles", "role-assignments"] },
+  { label: "Organization", keys: ["departments", "emergency-contacts", "roles", "role-assignments"] },
   { label: "Leave Management", keys: ["leave-requests", "leave-balances", "leave-types"] },
   { label: "Assets", keys: ["inventory"] },
   { label: "Administration", keys: ["audit-logs"] },
@@ -33,6 +33,11 @@ const sections = [
     items: keys.map((key) => resources.find((r) => r.key === key)).filter(Boolean).map(resourceLink),
   })),
 ];
+
+// The permission matrix is a page of its own (not a resource list), so it is added by hand,
+// straight after Roles and Role Assignments.
+const organization = sections.find((section) => section.label === "Organization");
+organization?.items.push({ to: "/permissions", label: "Permissions", icon: "lock" });
 
 const placed = new Set(sectionKeys.flatMap(({ keys }) => keys));
 const unplaced = resources.filter((r) => !placed.has(r.key));

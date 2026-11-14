@@ -1,3 +1,11 @@
+// Reads server/.env when it exists (Node 20.12+). Variables already in the environment, such as the ones
+// docker-compose passes, take priority over the file.
+try {
+    process.loadEnvFile(new URL("../../../.env", import.meta.url));
+} catch (error) {
+    if (error.code !== "ENOENT") throw error;
+}
+
 //MONGO_URI=mongodb://admin:secret@mongodb:27017/employees?authSource=admin
 
 export const config = {

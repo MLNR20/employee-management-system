@@ -6,6 +6,7 @@
 //   required?:  boolean
 //   minLength?, maxLength?, min?, max?
 //   pattern?:   RegExp, with patternMessage? for the error text
+//   schema?:    a zod schema the trimmed text must satisfy; the first issue's message is shown
 //   validate?:  (value, allValues) => string | undefined   custom rule, returns the error message
 //   default?:   starting value
 //   hint?:      small help text under the input
@@ -61,6 +62,11 @@ export function validateFields(fields, values) {
       else if (field.max !== undefined && number > field.max) message = `${label} must be at most ${field.max}.`;
     } else if (field.pattern && !field.pattern.test(text)) {
       message = field.patternMessage ?? `${label} is not in the right format.`;
+    }
+
+    if (!message && field.schema) {
+      const parsed = field.schema.safeParse(text);
+      if (!parsed.success) message = parsed.error.issues[0].message;
     }
 
     message ??= field.validate?.(raw, values);

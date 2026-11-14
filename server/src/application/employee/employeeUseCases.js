@@ -9,12 +9,14 @@ import { assertValidEmployee, pickEmployeeFields } from "../../domain/employee/e
  * @param {import("../../domain/leave/LeaveRequestRepository").LeaveRequestRepository} deps.leaveRequestRepository
  * @param {import("../ports/PasswordHasher").PasswordHasher} [deps.passwordHasher] hashes portal passwords; without it they are refused
  * @param {import("../../domain/inventory/ItemRepository").ItemRepository} [deps.itemRepository] when given, an employee holding items cannot be deleted
+ * @param {import("../../domain/employee/EmergencyContactRepository").EmergencyContactRepository} [deps.emergencyContactRepository] when given, an employee's emergency contacts are deleted with them
  */
 export const createEmployeeUseCases = ({
   employeeRepository,
   leaveBalanceRepository,
   leaveRequestRepository,
   itemRepository,
+  emergencyContactRepository,
   passwordHasher,
 }) => {
   const crud = createCrudUseCases({
@@ -62,6 +64,7 @@ export const createEmployeeUseCases = ({
 
       await crud.remove(id);
       await leaveBalanceRepository.removeForEmployee(id);
+      await emergencyContactRepository?.removeForEmployee(id);
     },
   };
 };

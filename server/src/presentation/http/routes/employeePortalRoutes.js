@@ -20,6 +20,8 @@ export const createEmployeePortalRouter = ({
   leaveBalanceUseCases,
   leaveRequestUseCases,
   borrowingUseCases,
+  jobUseCases, // optional, with jobApplicationUseCases: without both the job routes are not served
+  jobApplicationUseCases,
   requireEmployeeAuth,
 }) => {
   const router = express.Router();
@@ -90,6 +92,26 @@ export const createEmployeePortalRouter = ({
   router.post("/equipment/:id/return", async (req, res) => {
     res.status(200).json(equipmentDto(await borrowingUseCases.giveBack(req.user.id, req.params.id)));
   });
+
+  // Jobs. Employees see the open positions and only their own applications. The applicant is always
+  // the signed-in employee, and the status and submission date are set by the server.
+  if (jobUseCases && jobApplicationUseCases) {
+    const jobDto = ({ id, jobTitle, jobDescription, status }) => ({ _id: id, jobTitle, jobDescription, status });
+
+    router.get("/jobs", async (req, res) => {
+      const jobs = await jobUseCases.listOpenJobs();
+      res.status(200).json({ count: jobs.length, data: jobs.map(jobDto) });
+    });
+
+    router.get("/job-applications", async (req, res) => {
+      res.status(200).json(list(await jobApplicationUseCases.listForEmployee(req.user.id)));
+    });
+
+    router.post("/job-applications", async (req, res) => {
+      const { jobId, resumeLink } = req.body ?? {};
+      res.status(200).json(toDto(await jobApplicationUseCases.apply(req.user.id, { jobId, resumeLink })));
+    });
+  }
 
   return router;
 };

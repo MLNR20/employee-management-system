@@ -64,6 +64,18 @@ export class DuplicateItemError extends DomainError {
   }
 }
 
+export class DuplicateJobApplicationError extends DomainError {
+  constructor(message = "You have already applied to this job") {
+    super(message);
+  }
+}
+
+export class JobInUseError extends DomainError {
+  constructor(message = "This job has applications. Close it instead of deleting.") {
+    super(message);
+  }
+}
+
 /** The action does not fit the current state, e.g. deciding a request that is already decided. */
 export class InvalidStateError extends DomainError {
   constructor(message = "This action is not allowed in the current state") {
@@ -91,6 +103,13 @@ export class EmployeeInUseError extends DomainError {
 
 export class RoleInUseError extends DomainError {
   constructor(message = "This role is assigned to administrators. Remove the assignments first.") {
+    super(message);
+  }
+}
+
+/** The signed-in administrator is known but their roles do not allow this action. */
+export class ForbiddenError extends DomainError {
+  constructor(message = "You do not have permission to do this") {
     super(message);
   }
 }
