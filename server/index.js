@@ -12,6 +12,10 @@ app.listen(config.PORT, () =>{
 // Log connection status
 mongoose.connect(config.dbConnection).then(()=>{
     console.log('App connected to database');
+    // A fresh install gets the standard onboarding checklist; once any requirement exists this does nothing.
+    return useCases.documentRequirementUseCases.ensureDefaultRequirements().then(({ created }) => {
+        if (created) console.log(`Created ${created} default document requirements`);
+    });
 }).catch((error) =>{
     console.log(error);
 });

@@ -15,6 +15,12 @@ import { Item } from "../src/domain/inventory/Item.js";
 import { Borrowing } from "../src/domain/inventory/Borrowing.js";
 import { Attendance } from "../src/domain/attendance/Attendance.js";
 import { SalaryRate } from "../src/domain/salary/SalaryRate.js";
+import { WorkShift } from "../src/domain/shift/WorkShift.js";
+import { ShiftAssignment } from "../src/domain/shift/ShiftAssignment.js";
+import { nameKey, scheduleKey } from "../src/domain/shift/shiftRules.js";
+import { DocumentRequirement } from "../src/domain/document/DocumentRequirement.js";
+import { EmployeeDocument } from "../src/domain/document/EmployeeDocument.js";
+import { requirementNameKey } from "../src/domain/document/documentRules.js";
 import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
@@ -24,6 +30,9 @@ import {
   DuplicateLeaveTypeError,
   DuplicateRoleAssignmentError,
   DuplicateRoleError,
+  DuplicateShiftError,
+  DuplicateDocumentRequirementError,
+  DuplicateEmployeeDocumentError,
 } from "../src/domain/errors.js";
 
 let nextId = 1;
@@ -385,5 +394,111 @@ export class InMemorySalaryRateRepository extends InMemoryRepository {
         .reverse()
         .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null
     );
+  }
+}
+
+/** Mirrors the Mongo repository: a soft-deleted shift is invisible except to findByIdIncludingDeleted. */
+export class InMemoryWorkShiftRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new WorkShift(props), [], () => new DuplicateShiftError());
+  }
+
+  #live() {
+    return [...this.items.values()].filter((shift) => !shift.deletedAt);
+  }
+
+  async findAll() {
+    return this.#live();
+  }
+
+  async findPage({ page, pageSize }) {
+    const live = this.#live();
+    return { items: live.slice((page - 1) * pageSize, page * pageSize), total: live.length };
+  }
+
+  async findById(id) {
+    const shift = this.items.get(id);
+    return shift && !shift.deletedAt ? shift : null;
+  }
+
+  async update(id, data) {
+    return (await this.findById(id)) ? super.update(id, data) : null;
+  }
+
+  async findByName(name) {
+    return this.#live().find((shift) => nameKey(shift.name) === nameKey(name)) ?? null;
+  }
+
+  async findByScheduleKey(key) {
+    return this.#live().find((shift) => scheduleKey(shift) === key) ?? null;
+  }
+
+  async findByIdIncludingDeleted(id) {
+    return this.items.get(id) ?? null;
+  }
+
+  async softDelete(id) {
+    const shift = await this.findById(id);
+    if (!shift) return false;
+    this.items.set(id, new WorkShift({ ...shift, deletedAt: new Date(), isActive: false }));
+    return true;
+  }
+}
+
+export class InMemoryShiftAssignmentRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new ShiftAssignment(props), [], () => new Error("duplicate"));
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()]
+      .filter((a) => a.employeeId === employeeId)
+      .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom));
+  }
+
+  async findEffective(employeeId, day) {
+    // Ties go to the newest assignment, which is the last one stored.
+    return (
+      [...this.items.values()]
+        .filter((a) => a.employeeId === employeeId && a.effectiveFrom <= day)
+        .reverse()
+        .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null
+    );
+  }
+
+  async existsForShift(shiftId) {
+    return [...this.items.values()].some((a) => a.shiftId === shiftId);
+  }
+}
+
+export class InMemoryDocumentRequirementRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new DocumentRequirement(props), [], () => new DuplicateDocumentRequirementError());
+  }
+
+  async findByName(name) {
+    return [...this.items.values()].find((r) => requirementNameKey(r.name) === requirementNameKey(name)) ?? null;
+  }
+
+  async findActive() {
+    return [...this.items.values()].filter((r) => r.isActive !== false);
+  }
+}
+
+export class InMemoryEmployeeDocumentRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new EmployeeDocument(props), [["employeeId", "requirementId"]], () => new DuplicateEmployeeDocumentError());
+  }
+
+  async findByEmployeeId(employeeId) {
+    return [...this.items.values()].filter((d) => d.employeeId === employeeId);
+  }
+
+  async findByEmployeeAndRequirement(employeeId, requirementId) {
+    return [...this.items.values()].find((d) => d.employeeId === employeeId && d.requirementId === requirementId) ?? null;
+  }
+
+  async existsForRequirement(requirementId) {
+    return [...this.items.values()].some((d) => d.requirementId === requirementId);
   }
 }

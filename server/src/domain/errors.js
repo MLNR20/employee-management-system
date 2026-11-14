@@ -113,3 +113,27 @@ export class TokenExpiredError extends InvalidTokenError {
     super(message);
   }
 }
+
+export class DuplicateShiftError extends DomainError {
+  constructor(message = "A work shift with this name or schedule already exists") {
+    super(message);
+  }
+}
+
+export class DuplicateDocumentRequirementError extends DomainError {
+  constructor(message = "A document requirement with this name already exists") {
+    super(message);
+  }
+}
+
+export class DocumentRequirementInUseError extends DomainError {
+  constructor(message = "Employees have documents recorded for this requirement. Mark it inactive instead.") {
+    super(message);
+  }
+}
+
+export class DuplicateEmployeeDocumentError extends DomainError {
+  constructor(message = "This employee already has a record for that document") {
+    super(message);
+  }
+}

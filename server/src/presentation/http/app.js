@@ -5,6 +5,8 @@ import { createEmployeeRouter } from "./routes/employeeRoutes.js";
 import { createDepartmentRouter } from "./routes/departmentRoutes.js";
 import { createAttendanceRouter } from "./routes/attendanceRoutes.js";
 import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
+import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shiftRoutes.js";
+import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "./routes/documentRoutes.js";
 import { createRequirePermission } from "./middleware/permissionMiddleware.js";
 import {
   createAdministratorListRouter,
@@ -41,6 +43,10 @@ export const createApp = ({
   attendanceUseCases, // optional: without it /attendance is not served
   salaryRateUseCases, // optional, with authorizationUseCases: without both /salary-rates is not served
   authorizationUseCases,
+  workShiftUseCases, // optional: without it /work-shifts is not served
+  shiftAssignmentUseCases, // optional: without it /shift-assignments is not served
+  documentRequirementUseCases, // optional: without it /document-requirements is not served
+  employeeDocumentUseCases, // optional: without it /employee-documents is not served
 }) => {
   const app = express();
   const requireAuth = createAuthMiddleware(authUseCases);
@@ -55,6 +61,16 @@ export const createApp = ({
     createEmployeeRouter({ employeeUseCases, leaveBalanceUseCases, leaveRequestUseCases, requireAuth })
   );
   if (attendanceUseCases) app.use("/attendance", createAttendanceRouter({ attendanceUseCases, requireAuth }));
+  if (workShiftUseCases) app.use("/work-shifts", createWorkShiftRouter({ workShiftUseCases, requireAuth }));
+  if (shiftAssignmentUseCases) {
+    app.use("/shift-assignments", createShiftAssignmentRouter({ shiftAssignmentUseCases, requireAuth }));
+  }
+  if (documentRequirementUseCases) {
+    app.use("/document-requirements", createDocumentRequirementRouter({ documentRequirementUseCases, requireAuth }));
+  }
+  if (employeeDocumentUseCases) {
+    app.use("/employee-documents", createEmployeeDocumentRouter({ employeeDocumentUseCases, requireAuth }));
+  }
   if (salaryRateUseCases && authorizationUseCases) {
     const requirePermission = createRequirePermission(authorizationUseCases);
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));

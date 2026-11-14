@@ -17,6 +17,7 @@ const sectionKeys = [
   { label: "Organization", keys: ["departments", "roles", "role-assignments"] },
   { label: "Leave Management", keys: ["leave-requests", "leave-balances", "leave-types"] },
   { label: "Assets", keys: ["inventory"] },
+  { label: "Onboarding", keys: ["document-requirements", "work-shifts", "shift-assignments"] },
   { label: "Administration", keys: ["audit-logs"] },
 ];
 
@@ -38,6 +39,10 @@ const sections = [
 // straight after Roles and Role Assignments.
 const organization = sections.find((section) => section.label === "Organization");
 organization?.items.push({ to: "/permissions", label: "Permissions", icon: "lock" });
+
+// The per-employee document checklist is a page of its own, so it leads the Onboarding section.
+const onboarding = sections.find((section) => section.label === "Onboarding");
+onboarding?.items.unshift({ to: "/documents/checklist", label: "Document Checklist", icon: "checkCircle" });
 
 const placed = new Set(sectionKeys.flatMap(({ keys }) => keys));
 const unplaced = resources.filter((r) => !placed.has(r.key));

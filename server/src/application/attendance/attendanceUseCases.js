@@ -1,6 +1,6 @@
 import { createCrudUseCases } from "../shared/crudUseCases.js";
 import { InvalidStateError, NotFoundError, ValidationError } from "../../domain/errors.js";
-import { toDay } from "../../domain/dashboard/attendance.js";
+import { localDay, lateMinutesFor } from "../../domain/attendance/localTime.js";
 import {
   assertValidAttendance,
   computeHoursWorked,
@@ -11,27 +11,36 @@ import {
 const TIME_FIELDS = ["employeeId", "timeIn", "lunchOut", "lunchIn", "timeOut", "hourlyRate"];
 
 /**
- * Daily time records. An employee times in (which fixes the hourly rate for the day), may go out
- * to lunch and come back, then times out; the hours worked are time in to time out less lunch.
- * Administrators can also enter or correct a record by hand.
+ * Daily time records. An employee times in (which fixes the hourly rate for the day and, when they
+ * have a shift, how late they were), may go out to lunch and come back, then times out; the hours
+ * worked are time in to time out less lunch. Administrators can also enter or correct a record by hand.
  *
  * @param {Object} deps
  * @param {import("../../domain/attendance/AttendanceRepository").AttendanceRepository} deps.attendanceRepository
  * @param {import("../../domain/employee/EmployeeRepository").EmployeeRepository} deps.employeeRepository
+ * @param {import("../../domain/salary/SalaryRateRepository").SalaryRateRepository} [deps.salaryRateRepository]
+ *   without it the rate always comes from the salary
+ * @param {{effectiveShift: (employeeId: string, day: string) => Promise<import("../../domain/shift/WorkShift").WorkShift | null>}} [deps.shiftLookup]
+ *   without it no shift is recorded and nobody is ever late
+ * @param {number} [deps.utcOffsetMinutes] the workplace clock: shifts and the working day are in local time
  * @param {() => Date} [deps.now] the clock; tests pass a fixed one
  */
 export const createAttendanceUseCases = ({
   attendanceRepository,
   employeeRepository,
-  salaryRateRepository, // optional: without it the rate always comes from the salary
+  salaryRateRepository,
+  shiftLookup,
+  utcOffsetMinutes = 0,
   now = () => new Date(),
 }) => {
   const crud = createCrudUseCases({
     repository: attendanceRepository,
     entityName: "Attendance record",
     validate: assertValidAttendance,
-    pickFields: pickAttendanceFields,
+    pickFields: (input) => pickAttendanceFields(input, utcOffsetMinutes),
   });
+
+  const dayOf = (instant) => localDay(instant, utcOffsetMinutes);
 
   const findActiveEmployee = async (employeeId) => {
     const employee = typeof employeeId === "string" ? await employeeRepository.findById(employeeId) : null;
@@ -53,6 +62,17 @@ export const createAttendanceUseCases = ({
       throw new ValidationError("This employee has no hourly rate yet. HR must assign one first.");
     }
     return derived;
+  };
+
+  /**
+   * The shift the employee was on the day they timed in and how late they were. Like the rate, this is
+   * worked out here and never taken from a request.
+   */
+  const scheduleFor = async (employeeId, timeIn) => {
+    const shift = shiftLookup ? await shiftLookup.effectiveShift(employeeId, dayOf(timeIn)) : null;
+    return shift
+      ? { shiftId: shift.id, lateMinutes: lateMinutesFor(shift, timeIn, utcOffsetMinutes) }
+      : { shiftId: null, lateMinutes: 0 };
   };
 
   const assertOneRecordPerDay = async (employeeId, date, exceptId) => {
@@ -85,27 +105,38 @@ export const createAttendanceUseCases = ({
     getAttendance: crud.get,
     deleteAttendance: crud.remove,
 
-    /** Administrator enters a whole record. The rate defaults from the employee's salary. */
+    /** Administrator enters a whole record. The rate and shift come from what is on file for that day. */
     async addAttendance(input = {}) {
       assertValidAttendance(input);
       const employee = await findActiveEmployee(input.employeeId);
-      await assertOneRecordPerDay(input.employeeId, toDay(input.timeIn));
+      const day = dayOf(input.timeIn);
+      await assertOneRecordPerDay(input.employeeId, day);
 
-      return crud.add({ ...input, hourlyRate: await resolveHourlyRate(employee, toDay(input.timeIn)) });
+      return crud.add({
+        ...input,
+        hourlyRate: await resolveHourlyRate(employee, day),
+        ...(await scheduleFor(input.employeeId, input.timeIn)),
+      });
     },
 
-    /** Administrator corrects a record. Fields that are left out keep their stored value, the rate included. */
+    /**
+     * Administrator corrects a record. Fields that are left out keep their stored value, the rate
+     * included. The shift and lateness are worked out again only when the employee or time in changes.
+     */
     async updateAttendance(id, input = {}) {
       const existing = await crud.get(id);
-      const { hourlyRate: ignored, ...changes } = input;
+      const { hourlyRate, shiftId, lateMinutes, ...changes } = input; // none of these may be set by hand
       const merged = { ...Object.fromEntries(TIME_FIELDS.map((field) => [field, existing[field]])), ...changes };
 
       assertValidAttendance(merged);
-      await assertOneRecordPerDay(merged.employeeId, toDay(merged.timeIn), id);
-      return crud.update(id, merged);
+      await assertOneRecordPerDay(merged.employeeId, dayOf(merged.timeIn), id);
+
+      const moved =
+        merged.employeeId !== existing.employeeId || new Date(merged.timeIn).getTime() !== new Date(existing.timeIn).getTime();
+      return crud.update(id, moved ? { ...merged, ...(await scheduleFor(merged.employeeId, merged.timeIn)) } : merged);
     },
 
-    /** Time in: starts the day and records the hourly rate it will be paid at. */
+    /** Time in: starts the day and records the hourly rate it will be paid at and how late it is. */
     async timeIn(employeeId) {
       const employee = await findActiveEmployee(employeeId);
       const time = now();
@@ -113,11 +144,11 @@ export const createAttendanceUseCases = ({
       if (await attendanceRepository.findOpenByEmployeeId(employeeId)) {
         throw new InvalidStateError("This employee is already timed in. Time out first.");
       }
-      await assertOneRecordPerDay(employeeId, toDay(time));
+      await assertOneRecordPerDay(employeeId, dayOf(time));
 
-      const rate = await resolveHourlyRate(employee, toDay(time));
+      const rate = await resolveHourlyRate(employee, dayOf(time));
       assertValidAttendance({ employeeId, timeIn: time, hourlyRate: rate });
-      return crud.add({ employeeId, timeIn: time, hourlyRate: rate });
+      return crud.add({ employeeId, timeIn: time, hourlyRate: rate, ...(await scheduleFor(employeeId, time)) });
     },
 
     async lunchOut(employeeId) {

@@ -6,6 +6,9 @@ import { HttpEmployeeRepository } from "./infrastructure/repositories/HttpEmploy
 import { HttpDepartmentRepository } from "./infrastructure/repositories/HttpDepartmentRepository";
 import { HttpLeaveRequestRepository } from "./infrastructure/repositories/HttpLeaveRequestRepository";
 import { HttpPermissionRepository } from "./infrastructure/repositories/HttpPermissionRepository";
+import { HttpDocumentRepository } from "./infrastructure/repositories/HttpDocumentRepository";
+import { WorkShift, ShiftAssignment } from "./domain/shift/WorkShift";
+import { DocumentRequirement, EmployeeDocument } from "./domain/document/Document";
 import { createAuthUseCases } from "./application/auth/authUseCases";
 import { createEmployeeUseCases } from "./application/employee/employeeUseCases";
 import { createDepartmentUseCases } from "./application/department/departmentUseCases";
@@ -32,6 +35,19 @@ export const roleUseCases = restCrud("roles", Role.fromApi);
 const permissionRepository = new HttpPermissionRepository();
 export const permissionUseCases = { catalog: () => permissionRepository.getCatalog() };
 export const roleAssignmentUseCases = restCrud("role-assignments", RoleAssignment.fromApi);
+
+export const workShiftUseCases = restCrud("work-shifts", WorkShift.fromApi);
+export const shiftAssignmentUseCases = restCrud("shift-assignments", ShiftAssignment.fromApi);
+export const documentRequirementUseCases = restCrud("document-requirements", DocumentRequirement.fromApi);
+export const employeeDocumentUseCases = restCrud("employee-documents", EmployeeDocument.fromApi);
+
+const documentRepository = new HttpDocumentRepository();
+export const documentChecklistUseCases = {
+  checklist: (employeeId) => documentRepository.getChecklist(employeeId),
+  verify: (documentId) => documentRepository.verify(documentId),
+  reject: (documentId, remarks) => documentRepository.reject(documentId, remarks),
+};
+
 export const leaveTypeUseCases = restCrud("leave-types", LeaveType.fromApi);
 export const leaveBalanceUseCases = restCrud("leave-balances", LeaveBalance.fromApi);
 export const administratorUseCases = restCrud("administrators", AdministratorAccount.fromApi);

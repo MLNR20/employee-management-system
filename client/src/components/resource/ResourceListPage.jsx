@@ -25,7 +25,7 @@ export default function ResourceListPage({ resource }) {
   const confirmDelete = (id) =>
     Swal.fire({
       title: "Are you sure?",
-      text: "This action cannot be undone.",
+      text: resource.deleteNote ?? "This action cannot be undone.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",

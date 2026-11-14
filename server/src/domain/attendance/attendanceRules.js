@@ -1,9 +1,10 @@
 import { ValidationError } from "../errors.js";
 import { isMissing, pickFields } from "../pickFields.js";
-import { toDay } from "../dashboard/attendance.js";
+import { localDay } from "./localTime.js";
 
 const TIME_FIELDS = ["timeIn", "lunchOut", "lunchIn", "timeOut"];
-const ALLOWED = ["employeeId", ...TIME_FIELDS, "hourlyRate", "isActive"];
+// hourlyRate, shiftId and lateMinutes are never taken from a request: the use cases work them out and pass them in.
+const ALLOWED = ["employeeId", ...TIME_FIELDS, "hourlyRate", "shiftId", "lateMinutes", "isActive"];
 
 const MS_PER_HOUR = 60 * 60 * 1000;
 
@@ -70,14 +71,14 @@ export function assertValidAttendance(input) {
  * Whitelists the writable fields, turns the times into Dates (blank ones become null), and fills in
  * what is derived from them: the working day and the hours worked.
  */
-export function pickAttendanceFields(input) {
+export function pickAttendanceFields(input, utcOffsetMinutes = 0) {
   const picked = pickFields(input, ALLOWED);
 
   for (const field of TIME_FIELDS) {
     if (field in picked) picked[field] = toTime(picked[field]);
   }
   if ("hourlyRate" in picked) picked.hourlyRate = isMissing(picked.hourlyRate) ? undefined : Number(picked.hourlyRate);
-  if (picked.timeIn) picked.date = toDay(picked.timeIn);
+  if (picked.timeIn) picked.date = localDay(picked.timeIn, utcOffsetMinutes);
 
   picked.hoursWorked = computeHoursWorked({ ...input, ...picked });
   return picked;

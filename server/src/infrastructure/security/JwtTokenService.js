@@ -12,13 +12,20 @@ export class JwtTokenService extends TokenService {
     this.refreshTtl = refreshTtl;
   }
 
-  signAccessToken(admin) {
+  /**
+   * `access` carries what the administrator may do, resolved when the token is issued:
+   * the names of their active roles and the union of those roles' permissions ("<module>:<action>").
+   * Changes to roles reach a signed-in administrator when the token is next renewed.
+   */
+  signAccessToken(admin, access = {}) {
     return jwt.sign(
       {
         id: admin.id,
         username: admin.username,
         first_name: admin.first_name,
         last_name: admin.last_name,
+        roles: access.roles ?? [],
+        permissions: access.permissions ?? [],
       },
       this.accessSecret,
       { expiresIn: this.accessTtl }

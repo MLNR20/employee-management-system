@@ -13,12 +13,18 @@ const isNonEmptyString = (value) => typeof value === "string" && value.length > 
  * @param {import("../ports/PasswordHasher").PasswordHasher} deps.passwordHasher
  * @param {import("../ports/TokenService").TokenService} deps.tokenService
  * @param {{username?: string, password?: string, first_name?: string, last_name?: string, email?: string}} [deps.seedAdministrator]
+ * @param {{accessFor: (administratorId: string) => Promise<{roles: string[], permissions: string[]}>}} [deps.accessResolver]
+ *   looks up the administrator's active roles and permissions, which are put in every access token issued.
+ *   Without it tokens carry no roles or permissions.
  */
+const NO_ACCESS = { roles: [], permissions: [] };
+
 export const createAuthUseCases = ({
   administratorRepository,
   passwordHasher,
   tokenService,
   seedAdministrator = {},
+  accessResolver,
 }) => ({
   async login({ username, password } = {}) {
     // Type checks stop objects like {"$ne": null} from reaching the query.
@@ -40,7 +46,8 @@ export const createAuthUseCases = ({
       tokenService.fingerprint(refreshToken)
     );
 
-    return { accessToken: tokenService.signAccessToken(admin), refreshToken };
+    const access = (await accessResolver?.accessFor(admin.id)) ?? NO_ACCESS;
+    return { accessToken: tokenService.signAccessToken(admin, access), refreshToken };
   },
 
   /** Exchanges a refresh token for a new pair; the old refresh token stops working. */
@@ -66,8 +73,10 @@ export const createAuthUseCases = ({
       throw new InvalidTokenError("Refresh token already used");
     }
 
+    // Roles are looked up again on every renewal, so a change to them reaches a session within one access-token lifetime.
+    const access = (await accessResolver?.accessFor(admin.id)) ?? NO_ACCESS;
     return {
-      accessToken: tokenService.signAccessToken(admin),
+      accessToken: tokenService.signAccessToken(admin, access),
       refreshToken: newRefreshToken,
     };
   },

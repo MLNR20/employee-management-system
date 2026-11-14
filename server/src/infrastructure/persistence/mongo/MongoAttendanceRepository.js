@@ -16,6 +16,8 @@ const toAttendance = (doc) =>
     timeOut: doc.timeOut ?? null,
     hourlyRate: doc.hourlyRate,
     hoursWorked: doc.hoursWorked ?? null,
+    shiftId: doc.shiftId ? String(doc.shiftId) : null,
+    lateMinutes: doc.lateMinutes ?? 0,
   });
 
 export class MongoAttendanceRepository extends MongoRepository {
