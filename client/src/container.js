@@ -19,6 +19,8 @@ import { HttpDashboardRepository } from "./infrastructure/repositories/HttpDashb
 import { HttpEmployeePortalRepository } from "./infrastructure/repositories/HttpEmployeePortalRepository";
 import { AuditLog } from "./domain/audit/AuditLog";
 import { EmergencyContact } from "./domain/employee/EmergencyContact";
+import { SalaryRate } from "./domain/salary/SalaryRate";
+import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAttendanceRepository";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
 
@@ -30,10 +32,16 @@ export const employeeUseCases = createEmployeeUseCases(new HttpEmployeeRepositor
 export const departmentUseCases = createDepartmentUseCases(new HttpDepartmentRepository());
 
 export const emergencyContactUseCases = restCrud("emergency-contacts", EmergencyContact.fromApi);
+export const attendanceUseCases = createCrudUseCases(new HttpAttendanceRepository());
+// HR only: the server refuses every request to /salary-rates unless the administrator holds the permission.
+export const salaryRateUseCases = restCrud("salary-rates", SalaryRate.fromApi);
 
 export const roleUseCases = restCrud("roles", Role.fromApi);
 const permissionRepository = new HttpPermissionRepository();
-export const permissionUseCases = { catalog: () => permissionRepository.getCatalog() };
+export const permissionUseCases = {
+  catalog: () => permissionRepository.getCatalog(),
+  mine: () => permissionRepository.getMine(),
+};
 export const roleAssignmentUseCases = restCrud("role-assignments", RoleAssignment.fromApi);
 export const leaveTypeUseCases = restCrud("leave-types", LeaveType.fromApi);
 export const leaveBalanceUseCases = restCrud("leave-balances", LeaveBalance.fromApi);

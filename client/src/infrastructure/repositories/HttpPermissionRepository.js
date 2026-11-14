@@ -10,4 +10,10 @@ export class HttpPermissionRepository {
     const { data } = await this.client.get("/roles/permissions");
     return data.data;
   }
+
+  /** The permissions ("<module>:<action>") held by the signed-in administrator, through their roles. */
+  async getMine() {
+    const { data } = await this.client.get("/roles/mine");
+    return data.data;
+  }
 }

@@ -5,13 +5,20 @@ import { PERMISSION_MODULES } from "../../../domain/role/permissions.js";
 // Routers for roles, role assignments, leave types and the administrator list.
 // All require a signed-in administrator.
 
-export const createRoleRouter = ({ roleUseCases, requireAuth }) => {
+export const createRoleRouter = ({ roleUseCases, requireAuth, authorizationUseCases }) => {
   const router = express.Router();
   router.use(requireAuth);
 
   // Registered before the CRUD routes so "permissions" is not read as a role id.
   router.get("/permissions", (req, res) => {
     res.status(200).json({ data: PERMISSION_MODULES });
+  });
+
+  // What the signed-in administrator may do, so the client can hide screens (HR salary rates, for one)
+  // they would only be refused. The server still enforces every permission itself.
+  router.get("/mine", async (req, res) => {
+    const permissions = authorizationUseCases ? await authorizationUseCases.permissionsFor(req.user.id) : [];
+    res.status(200).json({ data: permissions });
   });
 
   return createCrudRouter({

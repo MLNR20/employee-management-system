@@ -6,14 +6,23 @@
  * @param {import("../../domain/role/RoleAssignmentRepository").RoleAssignmentRepository} deps.roleAssignmentRepository
  * @param {import("../../domain/role/RoleRepository").RoleRepository} deps.roleRepository
  */
-export const createAuthorizationUseCases = ({ roleAssignmentRepository, roleRepository }) => ({
-  async hasPermission(administratorId, permission) {
+export const createAuthorizationUseCases = ({ roleAssignmentRepository, roleRepository }) => {
+  /** Every permission granted by the administrator's active roles, without duplicates. */
+  const permissionsFor = async (administratorId) => {
     const assignments = await roleAssignmentRepository.findByAdministratorId(administratorId);
+    const granted = new Set();
 
     for (const { roleId } of assignments) {
       const role = await roleRepository.findById(roleId);
-      if (role && role.isActive !== false && role.permissions?.includes(permission)) return true;
+      if (role && role.isActive !== false) role.permissions?.forEach((permission) => granted.add(permission));
     }
-    return false;
-  },
-});
+    return [...granted];
+  };
+
+  return {
+    permissionsFor,
+    async hasPermission(administratorId, permission) {
+      return (await permissionsFor(administratorId)).includes(permission);
+    },
+  };
+};

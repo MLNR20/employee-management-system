@@ -2,6 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { initFlowbite } from "flowbite";
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useMyPermissions } from "../hooks/useEntities";
 import { resources } from "../resources";
 import SidebarIcon, { resourceIcons } from "./SidebarIcon";
 
@@ -11,11 +12,13 @@ const resourceLink = (resource) => ({
   to: resource.basePath,
   label: resource.title,
   icon: resourceIcons[resource.key],
+  permission: resource.permission, // when set, only administrators holding it see the link
 });
 
 const sectionKeys = [
   { label: "Organization", keys: ["departments", "emergency-contacts", "roles", "role-assignments"] },
   { label: "Leave Management", keys: ["leave-requests", "leave-balances", "leave-types"] },
+  { label: "Time & Pay", keys: ["attendance", "salary-rates"] },
   { label: "Assets", keys: ["inventory"] },
   { label: "Administration", keys: ["audit-logs"] },
 ];
@@ -47,6 +50,15 @@ const SideBar=()=> {
 
   const { logout } = useAuth();
 
+  // Links that need a permission (HR's salary rates) stay hidden until it is known the administrator has it.
+  const { data: permissions = [] } = useMyPermissions();
+  const visibleSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => !item.permission || permissions.includes(item.permission)),
+    }))
+    .filter((section) => section.items.length > 0);
+
   // The sidebar is on every signed-in page, so it sets their light gray backdrop on <body>
   // (the login and landing pages never render it, so they keep their own backgrounds).
   useEffect(() => {
@@ -65,7 +77,7 @@ const SideBar=()=> {
     <aside id="default-sidebar" className="app-sidebar fixed top-0 left-0 z-40 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 sm:translate-x-0" aria-label="default-sidebar">
                     <div className="h-full px-3 pb-4 overflow-y-auto bg-white flex flex-col justify-between">
                         <div className="space-y-6">
-                        {sections.map((section) => (
+                        {visibleSections.map((section) => (
                             <div key={section.label}>
                                 <p className="sidebar-heading px-2 mb-2 text-xs font-semibold tracking-wider text-gray-400 uppercase">{section.label}</p>
                                 <ul className="space-y-1 font-medium">

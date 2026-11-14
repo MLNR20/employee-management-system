@@ -3,6 +3,8 @@ import { emergencyContactResource } from "./emergencyContacts";
 import { roleResource, roleAssignmentResource } from "./roles";
 import { inventoryResource } from "./inventory";
 import { auditLogResource } from "./audit";
+import { attendanceResource } from "./attendance";
+import { salaryRateResource } from "./salaryRates";
 import { leaveTypeResource, leaveBalanceResource, leaveRequestResource } from "./leave";
 
 /**
@@ -18,5 +20,7 @@ export const resources = [
   leaveBalanceResource,
   leaveTypeResource,
   inventoryResource,
+  attendanceResource,
+  salaryRateResource,
   auditLogResource,
 ];
