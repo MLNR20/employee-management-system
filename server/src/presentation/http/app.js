@@ -104,7 +104,7 @@ export const createApp = ({
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));
   }
   app.use("/departments", createDepartmentRouter({ departmentUseCases, requireAuth }));
-  app.use("/roles", createRoleRouter({ roleUseCases, requireAuth }));
+  app.use("/roles", createRoleRouter({ roleUseCases, requireAuth, authorizationUseCases }));
   app.use("/role-assignments", createRoleAssignmentRouter({ roleAssignmentUseCases, requireAuth }));
   app.use("/leave-types", createLeaveTypeRouter({ leaveTypeUseCases, requireAuth }));
   app.use("/leave-balances", createLeaveBalanceRouter({ leaveBalanceUseCases, requireAuth }));

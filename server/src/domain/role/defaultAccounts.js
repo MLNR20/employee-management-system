@@ -25,14 +25,14 @@ export const DEFAULT_ACCOUNTS = [
     role: { name: "Administrator", description: "Full access, including HR salary rates", permissions: ALL_PERMISSIONS },
   },
   {
-    username: "user@ga31.com",
-    email: "user@ga31.com",
-    password: "user123",
-    first_name: "User",
+    username: "manager@ga31.com",
+    email: "manager@ga31.com",
+    password: "manager123",
+    first_name: "Manager",
     last_name: "GA31",
-    // Can look around and file leave or time records; no roles, audit logs or salary rates.
+    // Can look around and file leave or time records; no roles, audit logs or salary rates (HR only).
     role: {
-      name: "User",
+      name: "Manager",
       description: "Read access plus filing leave and attendance. No HR, roles or salary access.",
       permissions: [
         ...MODULES_A_USER_CAN_SEE.map((module) => permissionKey(module, "view")),

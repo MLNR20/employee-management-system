@@ -29,6 +29,9 @@ export const createAuthorizationUseCases = ({ roleAssignmentRepository, roleRepo
   return {
     accessFor,
 
+    /** Every permission granted by the administrator's active roles, without duplicates (GET /roles/mine). */
+    permissionsFor: async (administratorId) => (await accessFor(administratorId)).permissions,
+
     /** Looks the roles up fresh, so it reflects changes made since the token was issued. */
     async hasPermission(administratorId, permission) {
       return (await accessFor(administratorId)).permissions.includes(permission);

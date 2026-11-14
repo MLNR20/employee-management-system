@@ -3,6 +3,8 @@ import { createCrudHooks } from "./createCrudHooks";
 import {
   employeeUseCases,
   emergencyContactUseCases,
+  attendanceUseCases,
+  salaryRateUseCases,
   departmentUseCases,
   roleUseCases,
   roleAssignmentUseCases,
@@ -40,6 +42,22 @@ export const {
 } = createCrudHooks("emergency-contacts", emergencyContactUseCases);
 
 export const {
+  useList: useAttendance,
+  usePage: useAttendancePage,
+  useOne: useAttendanceRecord,
+  useCreate: useCreateAttendance,
+  useUpdate: useUpdateAttendance,
+  useRemove: useRemoveAttendance,
+} = createCrudHooks("attendance", attendanceUseCases);
+
+export const {
+  useList: useSalaryRates,
+  usePage: useSalaryRatesPage,
+  useOne: useSalaryRate,
+  useCreate: useAssignSalaryRate,
+} = createCrudHooks("salary-rates", salaryRateUseCases);
+
+export const {
   useList: useDepartments,
   usePage: useDepartmentsPage,
   useOne: useDepartment,
@@ -56,6 +74,24 @@ export const {
   useUpdate: useUpdateRole,
   useRemove: useRemoveRole,
 } = createCrudHooks("roles", roleUseCases);
+
+/**
+ * What the signed-in administrator may do. It only decides what the screens show: the server
+ * checks every permission itself, so hiding something here never replaces that check.
+ */
+export const useMyPermissions = () =>
+  useQuery({
+    queryKey: ["my-permissions"],
+    queryFn: permissionUseCases.mine,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+
+/** { allowed, isLoading } for one permission such as "salary-rates:view". Not allowed until it is known. */
+export const useCan = (permission) => {
+  const { data, isLoading } = useMyPermissions();
+  return { allowed: Boolean(data?.includes(permission)), isLoading };
+};
 
 /** The modules and actions a role can be granted. Fixed by the server, so it never goes stale. */
 export const usePermissionCatalog = () =>

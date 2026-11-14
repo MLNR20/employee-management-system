@@ -13,6 +13,7 @@ import EditEmployees from "./pages/crud/edit_employees";
 import RolePermissions from './pages/roles/permissions';
 import DocumentChecklist from './pages/documents/checklist';
 import ProtectedRoute from './components/protectedroute';
+import RequirePermission from './components/RequirePermission';
 import ResourceListPage from './components/resource/ResourceListPage';
 import ResourceFormPage from './components/resource/ResourceFormPage';
 import { AuthProvider } from './context/AuthContext';
@@ -20,7 +21,12 @@ import { resources } from './resources';
 
 // Every route needs a distinct key: the list and form pages call different hooks per
 // resource, so React must remount them (not reuse one instance) when the route changes.
-const guard = (key, page) => <ProtectedRoute key={key}>{page}</ProtectedRoute>;
+// A resource with a `permission` (HR salary rates) is also hidden from administrators without it.
+const guard = (key, page, permission) => (
+  <ProtectedRoute key={key}>
+    {permission ? <RequirePermission permission={permission}>{page}</RequirePermission> : page}
+  </ProtectedRoute>
+);
 
 function App() {
   return (
@@ -47,7 +53,7 @@ function App() {
               <Route
                 key={`${resource.key}-list`}
                 path={resource.basePath}
-                element={guard(`${resource.key}-list`, <ResourceListPage resource={resource} />)}
+                element={guard(`${resource.key}-list`, <ResourceListPage resource={resource} />, resource.permission)}
               />,
               // Read-only resources (no useCreate hook) get no add route either.
               ...(resource.hooks.useCreate
@@ -55,7 +61,7 @@ function App() {
                     <Route
                       key={`${resource.key}-add`}
                       path={`${resource.basePath}/add`}
-                      element={guard(`${resource.key}-add`, <ResourceFormPage resource={resource} />)}
+                      element={guard(`${resource.key}-add`, <ResourceFormPage resource={resource} />, resource.permission)}
                     />,
                   ]
                 : []),
@@ -65,7 +71,7 @@ function App() {
                     <Route
                       key={`${resource.key}-edit`}
                       path={`${resource.basePath}/edit/:id`}
-                      element={guard(`${resource.key}-edit`, <ResourceFormPage resource={resource} />)}
+                      element={guard(`${resource.key}-edit`, <ResourceFormPage resource={resource} />, resource.permission)}
                     />,
                   ]
                 : []),
