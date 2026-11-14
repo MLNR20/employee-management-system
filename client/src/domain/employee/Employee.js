@@ -13,6 +13,7 @@ export class Employee extends Entity {
     tinNumber,
     philhealthNumber,
     pagibigNumber,
+    managerId = null,
     ...base
   } = {}) {
     super(base);
@@ -27,6 +28,7 @@ export class Employee extends Entity {
     this.tinNumber = tinNumber;
     this.philhealthNumber = philhealthNumber;
     this.pagibigNumber = pagibigNumber;
+    this.managerId = managerId; // id of the employee this one reports to, or null
   }
 
   get fullName() {
@@ -48,6 +50,7 @@ export class Employee extends Entity {
       tinNumber: raw.tinNumber,
       philhealthNumber: raw.philhealthNumber,
       pagibigNumber: raw.pagibigNumber,
+      managerId: raw.managerId ?? null,
     });
   }
 }

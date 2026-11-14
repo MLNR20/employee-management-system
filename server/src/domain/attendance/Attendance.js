@@ -16,6 +16,8 @@ export class Attendance extends Entity {
    * @param {Date | null} [props.timeOut]
    * @param {number} props.hourlyRate rate in force when the employee timed in
    * @param {number | null} [props.hoursWorked] time in to time out, less the lunch break
+   * @param {string | null} [props.shiftId] the shift the employee was on that day, when they had one
+   * @param {number} [props.lateMinutes] minutes late at time in, 0 when on time or without a shift
    */
   constructor({
     employeeId,
@@ -26,6 +28,8 @@ export class Attendance extends Entity {
     timeOut = null,
     hourlyRate,
     hoursWorked = null,
+    shiftId = null,
+    lateMinutes = 0,
     ...base
   } = {}) {
     super(base);
@@ -37,5 +41,7 @@ export class Attendance extends Entity {
     this.timeOut = timeOut;
     this.hourlyRate = hourlyRate;
     this.hoursWorked = hoursWorked;
+    this.shiftId = shiftId;
+    this.lateMinutes = lateMinutes;
   }
 }

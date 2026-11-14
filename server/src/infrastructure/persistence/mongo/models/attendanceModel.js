@@ -12,6 +12,9 @@ const attendancesSchema = createEntitySchema({
   // Copied from the employee at time in, so later raises do not change past days.
   hourlyRate: { type: Number, required: true, min: 0 },
   hoursWorked: { type: Number, default: null, min: 0 },
+  // Worked out at time in from the employee's shift; never set by a request.
+  shiftId: { type: mongoose.Schema.Types.ObjectId, ref: "workshifts", default: null },
+  lateMinutes: { type: Number, default: 0, min: 0 },
 });
 
 // One record per employee per day. A write that races a second time in fails here.

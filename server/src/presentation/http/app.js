@@ -1,11 +1,13 @@
 import express from "express";
-import cors from "cors";
 import { createAdminRouter } from "./routes/adminRoutes.js";
 import { createEmployeeRouter } from "./routes/employeeRoutes.js";
-import { createDepartmentRouter } from "./routes/departmentRoutes.js";
 import { createEmergencyContactRouter } from "./routes/emergencyContactRoutes.js";
+import { createJobApplicationRouter, createJobRouter } from "./routes/jobRoutes.js";
+import { createDepartmentRouter } from "./routes/departmentRoutes.js";
 import { createAttendanceRouter } from "./routes/attendanceRoutes.js";
 import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
+import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shiftRoutes.js";
+import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "./routes/documentRoutes.js";
 import { createRequirePermission } from "./middleware/permissionMiddleware.js";
 import {
   createAdministratorListRouter,
@@ -17,12 +19,12 @@ import {
 } from "./routes/hrRoutes.js";
 import { createAuditLogRouter } from "./routes/auditLogRoutes.js";
 import { createInventoryRouter } from "./routes/inventoryRoutes.js";
-import { createJobApplicationRouter, createJobRouter } from "./routes/jobRoutes.js";
 import { createDashboardRouter } from "./routes/dashboardRoutes.js";
 import { createEmployeeAuthRouter, createEmployeePortalRouter } from "./routes/employeePortalRoutes.js";
 import { createAuthMiddleware } from "./middleware/authMiddleware.js";
 import { createAuditMiddleware } from "./middleware/auditMiddleware.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { createCorsMiddleware } from "./middleware/corsMiddleware.js";
 
 /** Builds the Express app from use cases. It owns no state, so tests can pass fakes. */
 export const createApp = ({
@@ -44,9 +46,14 @@ export const createApp = ({
   attendanceUseCases, // optional: without it /attendance is not served
   salaryRateUseCases, // optional, with authorizationUseCases: without both /salary-rates is not served
   authorizationUseCases,
+  workShiftUseCases, // optional: without it /work-shifts is not served
+  shiftAssignmentUseCases, // optional: without it /shift-assignments is not served
+  documentRequirementUseCases, // optional: without it /document-requirements is not served
+  employeeDocumentUseCases, // optional: without it /employee-documents is not served
   jobUseCases, // optional: without it /jobs is not served
   jobApplicationUseCases, // optional, with jobUseCases: without both /job-applications and the portal job routes are not served
   getHealth = () => ({}), // optional: extra fields for GET /health, e.g. the database state
+  corsOrigins = [], // origins browsers may call from; empty allows any (see middleware/corsMiddleware.js)
 }) => {
   const app = express();
   const requireAuth = createAuthMiddleware(authUseCases);
@@ -57,7 +64,7 @@ export const createApp = ({
     res.json({ status: "ok", uptime: Math.round(process.uptime()), ...getHealth() });
   });
 
-  app.use(cors());
+  app.use(createCorsMiddleware(corsOrigins));
   app.use(express.json());
   if (auditLogUseCases) app.use(createAuditMiddleware(auditLogUseCases));
 
@@ -82,6 +89,16 @@ export const createApp = ({
       : undefined;
     app.use("/attendance", createAttendanceRouter({ attendanceUseCases, requireAuth, canViewRates }));
   }
+  if (workShiftUseCases) app.use("/work-shifts", createWorkShiftRouter({ workShiftUseCases, requireAuth }));
+  if (shiftAssignmentUseCases) {
+    app.use("/shift-assignments", createShiftAssignmentRouter({ shiftAssignmentUseCases, requireAuth }));
+  }
+  if (documentRequirementUseCases) {
+    app.use("/document-requirements", createDocumentRequirementRouter({ documentRequirementUseCases, requireAuth }));
+  }
+  if (employeeDocumentUseCases) {
+    app.use("/employee-documents", createEmployeeDocumentRouter({ employeeDocumentUseCases, requireAuth }));
+  }
   if (salaryRateUseCases && authorizationUseCases) {
     const requirePermission = createRequirePermission(authorizationUseCases);
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));
@@ -100,12 +117,12 @@ export const createApp = ({
       "/employee-portal",
       createEmployeePortalRouter({
         employeeUseCases,
+        jobUseCases,
+        jobApplicationUseCases,
         leaveTypeUseCases,
         leaveBalanceUseCases,
         leaveRequestUseCases,
         borrowingUseCases,
-        jobUseCases,
-        jobApplicationUseCases,
         requireEmployeeAuth,
       })
     );

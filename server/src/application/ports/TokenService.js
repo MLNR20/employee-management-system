@@ -3,7 +3,11 @@
  * verify* methods throw InvalidTokenError / TokenExpiredError from the domain.
  */
 export class TokenService {
-  signAccessToken(administrator) {
+  /**
+   *  {object} administrator
+   * @param {{roles?: string[], permissions?: string[]}} [access] role names and permissions to carry in the token
+   */
+  signAccessToken(administrator, access) {
     throw new Error("TokenService.signAccessToken not implemented");
   }
 
@@ -11,7 +15,7 @@ export class TokenService {
     throw new Error("TokenService.signRefreshToken not implemented");
   }
 
-  /** @returns {{id: string, username: string, first_name: string, last_name: string}} */
+  /** @returns {{id: string, username: string, first_name: string, last_name: string, roles?: string[], permissions?: string[]}} */
   verifyAccessToken(token) {
     throw new Error("TokenService.verifyAccessToken not implemented");
   }

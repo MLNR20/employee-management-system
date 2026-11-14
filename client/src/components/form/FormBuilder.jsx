@@ -115,6 +115,35 @@ function Field({ field, value, onChange, disabled }) {
     );
   }
 
+  // A row of checkboxes that picks several of field.options. The value is the array of chosen values.
+  if (type === "checkboxes") {
+    const chosen = Array.isArray(value) ? value : [];
+    const toggle = (optionValue) =>
+      onChange(chosen.includes(optionValue) ? chosen.filter((v) => v !== optionValue) : [...chosen, optionValue]);
+
+    return (
+      <fieldset disabled={disabled}>
+        <legend className="block mb-2 text-sm font-medium text-gray-900">
+          {field.label}
+          {field.required && <span className="text-red-500"> *</span>}
+        </legend>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {(field.options ?? []).map((option) => (
+            <label key={option.value} className="flex items-center gap-2 text-sm text-gray-900">
+              <input
+                type="checkbox"
+                checked={chosen.includes(option.value)}
+                onChange={() => toggle(option.value)}
+                className="w-4 h-4 border border-gray-300 rounded bg-gray-50"
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  }
+
   return (
     <>
       <label htmlFor={id} className="block mb-2 text-sm font-medium text-gray-900">

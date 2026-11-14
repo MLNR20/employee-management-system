@@ -45,6 +45,11 @@ import { createJobUseCases } from "./application/job/jobUseCases.js";
 import { createJobApplicationUseCases } from "./application/job/jobApplicationUseCases.js";
 import { MongoJobRepository } from "./infrastructure/persistence/mongo/MongoJobRepository.js";
 import { MongoJobApplicationRepository } from "./infrastructure/persistence/mongo/MongoJobApplicationRepository.js";
+import { createWorkShiftUseCases } from "./application/shift/workShiftUseCases.js";
+import { createShiftAssignmentUseCases } from "./application/shift/shiftAssignmentUseCases.js";
+import { MongoWorkShiftRepository, MongoShiftAssignmentRepository } from "./infrastructure/persistence/mongo/MongoShiftRepositories.js";
+import { createDocumentRequirementUseCases, createEmployeeDocumentUseCases } from "./application/document/documentUseCases.js";
+import { MongoDocumentRequirementRepository, MongoEmployeeDocumentRepository } from "./infrastructure/persistence/mongo/MongoDocumentRepositories.js";
 
 const administratorRepository = new MongoAdministratorRepository();
 const employeeRepository = new MongoEmployeeRepository();
@@ -58,9 +63,12 @@ const itemRepository = new MongoInventoryRepository();
 const emergencyContactRepository = new MongoEmergencyContactRepository();
 const passwordHasher = new BcryptPasswordHasher();
 
+export const authorizationUseCases = createAuthorizationUseCases({ roleAssignmentRepository, roleRepository });
+
 export const authUseCases = createAuthUseCases({
   administratorRepository,
   passwordHasher,
+  accessResolver: authorizationUseCases,
   tokenService: new JwtTokenService({
     accessSecret: config.JWT_SECRET,
     refreshSecret: config.REFRESH_TOKEN_SECRET,
@@ -76,10 +84,40 @@ const salaryRateRepository = new MongoSalaryRateRepository();
 
 export const salaryRateUseCases = createSalaryRateUseCases({ salaryRateRepository, employeeRepository });
 
+const workShiftRepository = new MongoWorkShiftRepository();
+const shiftAssignmentRepository = new MongoShiftAssignmentRepository();
+const utcOffsetMinutes = config.WORK_UTC_OFFSET_MINUTES;
+
+export const workShiftUseCases = createWorkShiftUseCases({ workShiftRepository });
+
+export const shiftAssignmentUseCases = createShiftAssignmentUseCases({
+  shiftAssignmentRepository,
+  workShiftRepository,
+  employeeRepository,
+  utcOffsetMinutes,
+});
+
 export const attendanceUseCases = createAttendanceUseCases({
   attendanceRepository: new MongoAttendanceRepository(),
   employeeRepository,
   salaryRateRepository,
+  shiftLookup: shiftAssignmentUseCases,
+  utcOffsetMinutes,
+});
+
+const documentRequirementRepository = new MongoDocumentRequirementRepository();
+const employeeDocumentRepository = new MongoEmployeeDocumentRepository();
+
+export const documentRequirementUseCases = createDocumentRequirementUseCases({
+  documentRequirementRepository,
+  employeeDocumentRepository,
+});
+
+export const employeeDocumentUseCases = createEmployeeDocumentUseCases({
+  employeeDocumentRepository,
+  documentRequirementRepository,
+  employeeRepository,
+  utcOffsetMinutes,
 });
 
 export const employeeUseCases = createEmployeeUseCases({
