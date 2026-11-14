@@ -140,8 +140,6 @@ export const departmentUseCases = createDepartmentUseCases({
 
 export const roleUseCases = createRoleUseCases({ roleRepository, roleAssignmentRepository });
 
-export const authorizationUseCases = createAuthorizationUseCases({ roleAssignmentRepository, roleRepository });
-
 export const roleAssignmentUseCases = createRoleAssignmentUseCases({
   roleAssignmentRepository,
   roleRepository,
