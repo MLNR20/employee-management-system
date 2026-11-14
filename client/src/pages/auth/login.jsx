@@ -55,6 +55,13 @@ function Login() {
 
     }
 
+    const inputClass = (hasError) =>
+      `bg-gray-50 border text-gray-900 text-base rounded-lg block w-full p-3 ${
+        hasError
+          ? "border-red-600 focus:ring-red-600 focus:border-red-600"
+          : "border-gray-300 focus:ring-gray-400 focus:border-gray-400"
+      }`;
+
     const handleLogin = () => {
 
          const validationErrors = validateForm();
@@ -107,7 +114,7 @@ function Login() {
                       return newErrors;
                     });
                   }}
-                className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
+                className={inputClass(errors.username)}
               />
                 {errors.username && (
                       <label className="text-sm text-red-500">
@@ -135,7 +142,7 @@ function Login() {
                     });
                   }}
                 placeholder="Enter your password..."
-                className="bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3"
+                className={inputClass(errors.password)}
               />
                      {errors.password && (
                       <label className="text-sm text-red-500">
