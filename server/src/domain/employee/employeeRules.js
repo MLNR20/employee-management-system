@@ -3,7 +3,7 @@ import { isMissing, pickFields } from "../pickFields.js";
 import { GOVERNMENT_ID_FIELDS, assertValidGovernmentIds, normalizeGovernmentId } from "./governmentIds.js";
 
 const REQUIRED = ["first_name", "last_name", "email", "position", "department", "salary"];
-const ALLOWED = [...REQUIRED, ...GOVERNMENT_ID_FIELDS, "managerId", "isActive"]; // portalPassword is deliberately not stored as sent
+const ALLOWED = [...REQUIRED, ...GOVERNMENT_ID_FIELDS, "managerId", "employmentTypeId", "isActive"]; // portalPassword is deliberately not stored as sent
 
 export const PORTAL_PASSWORD_MIN = 8;
 export const PORTAL_PASSWORD_MAX = 72; // bcrypt ignores everything past 72 bytes
@@ -18,6 +18,9 @@ export function assertValidEmployee(input) {
   assertValidGovernmentIds(input);
   if (!isMissing(input.managerId) && typeof input.managerId !== "string") {
     throw new ValidationError("managerId must be the id of another employee");
+  }
+  if (!isMissing(input.employmentTypeId) && typeof input.employmentTypeId !== "string") {
+    throw new ValidationError("employmentTypeId must be the id of an employment type");
   }
   assertValidPortalPassword(input.portalPassword);
 }
@@ -44,5 +47,7 @@ export const pickEmployeeFields = (input) => {
   }
   // A blank manager means "no manager": store null so it can be cleared.
   if ("managerId" in picked && isMissing(picked.managerId)) picked.managerId = null;
+  // Likewise a blank employment type clears it.
+  if ("employmentTypeId" in picked && isMissing(picked.employmentTypeId)) picked.employmentTypeId = null;
   return picked;
 };

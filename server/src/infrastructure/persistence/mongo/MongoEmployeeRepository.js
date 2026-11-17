@@ -20,6 +20,7 @@ const toEmployee = (doc) =>
     philhealthNumber: doc.philhealthNumber,
     pagibigNumber: doc.pagibigNumber,
     managerId: doc.managerId ? String(doc.managerId) : null,
+    employmentTypeId: doc.employmentTypeId ? String(doc.employmentTypeId) : null,
   });
 
 export class MongoEmployeeRepository extends MongoRepository {

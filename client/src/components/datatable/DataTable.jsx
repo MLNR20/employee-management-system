@@ -140,22 +140,6 @@ export default function DataTable({
             />
           </div>
         )}
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <label htmlFor="datatable-page-size">Rows per page:</label>
-          <select
-            id="datatable-page-size"
-            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5 h-10"
-            style={{ minWidth: "4.5rem" }}
-            value={pageSize}
-            onChange={(e) => changePageSize(Number(e.target.value))}
-          >
-            {pageSizeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
       <table
@@ -217,12 +201,28 @@ export default function DataTable({
         </tbody>
       </table>
 
-      <div className="flex flex-wrap items-center justify-end gap-4 mt-4 text-sm text-gray-500">
-        <div className="flex items-center gap-4">
-          <span>
-            Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
-            {totalRows} rows
-          </span>
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4 text-sm text-gray-500">
+        <span>
+          Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
+          {totalRows} rows
+        </span>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="datatable-page-size">Rows per page:</label>
+            <select
+              id="datatable-page-size"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5 h-10"
+              style={{ minWidth: "4.5rem" }}
+              value={pageSize}
+              onChange={(e) => changePageSize(Number(e.target.value))}
+            >
+              {pageSizeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2">
             <button
               type="button"

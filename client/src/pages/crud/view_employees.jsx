@@ -10,6 +10,7 @@ import { employeeUseCases } from "../../container";
 import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { ManagerName } from "../../components/ManagerSelect";
+import { EmploymentTypeName } from "../../components/EmploymentTypeSelect";
 
 const columns = [
   { key: "index", header: "#", sortable: false, searchable: false, render: (_, index) => index + 1 },
@@ -17,6 +18,13 @@ const columns = [
   { key: "email", header: "Email", sortKey: "email" },
   { key: "position", header: "Position", sortKey: "position" },
   { key: "manager", header: "Manager", sortable: false, searchable: false, render: (e) => <ManagerName id={e.managerId} /> },
+  {
+    key: "employmentType",
+    header: "Employment Type",
+    sortable: false,
+    searchable: false,
+    render: (e) => <EmploymentTypeName id={e.employmentTypeId} />,
+  },
   { key: "salary", header: "Salary", sortKey: "salary" },
   { key: "department", header: "Department", sortKey: "department" },
   {

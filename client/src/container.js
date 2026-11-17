@@ -21,7 +21,8 @@ import { Item } from "./domain/inventory/Item";
 import { HttpDashboardRepository } from "./infrastructure/repositories/HttpDashboardRepository";
 import { HttpEmployeePortalRepository } from "./infrastructure/repositories/HttpEmployeePortalRepository";
 import { AuditLog } from "./domain/audit/AuditLog";
-import { EmergencyContact } from "./domain/employee/EmergencyContact";
+import { EmploymentType } from "./domain/employmentType/EmploymentType";
+import { HttpEmergencyContactRepository } from "./infrastructure/repositories/HttpEmergencyContactRepository";
 import { SalaryRate } from "./domain/salary/SalaryRate";
 import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAttendanceRepository";
 
@@ -34,7 +35,12 @@ export const authUseCases = createAuthUseCases(new HttpAuthRepository());
 export const employeeUseCases = createEmployeeUseCases(new HttpEmployeeRepository());
 export const departmentUseCases = createDepartmentUseCases(new HttpDepartmentRepository());
 
-export const emergencyContactUseCases = restCrud("emergency-contacts", EmergencyContact.fromApi);
+const emergencyContactRepository = new HttpEmergencyContactRepository();
+export const emergencyContactUseCases = {
+  ...createCrudUseCases(emergencyContactRepository),
+  listForEmployee: (employeeId) => emergencyContactRepository.getByEmployee(employeeId),
+};
+export const employmentTypeUseCases = restCrud("employment-types", EmploymentType.fromApi);
 export const attendanceUseCases = createCrudUseCases(new HttpAttendanceRepository());
 // HR only: the server refuses every request to /salary-rates unless the administrator holds the permission.
 export const salaryRateUseCases = restCrud("salary-rates", SalaryRate.fromApi);

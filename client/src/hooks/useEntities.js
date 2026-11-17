@@ -1,8 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createCrudHooks } from "./createCrudHooks";
+import { hasContactInput, toContactPayload } from "../domain/employee/emergencyContactRules";
 import {
   employeeUseCases,
   emergencyContactUseCases,
+  employmentTypeUseCases,
   attendanceUseCases,
   salaryRateUseCases,
   departmentUseCases,
@@ -40,6 +42,50 @@ export const {
   useUpdate: useUpdateEmergencyContact,
   useRemove: useRemoveEmergencyContact,
 } = createCrudHooks("emergency-contacts", emergencyContactUseCases);
+
+/** The emergency contacts of one employee. Under the "emergency-contacts" key, so any contact change refreshes it. */
+export const useEmployeeEmergencyContacts = (employeeId) =>
+  useQuery({
+    queryKey: ["emergency-contacts", "employee", employeeId],
+    queryFn: () => emergencyContactUseCases.listForEmployee(employeeId),
+    enabled: Boolean(employeeId),
+  });
+
+/**
+ * Saves the emergency contacts typed into the employee form: new ones are added, changed ones updated
+ * and ones taken off the form deleted. `contacts` are the rows on the form (see emergencyContactRules),
+ * `existing` the contacts the employee had when the form opened. Resolves to the number that failed.
+ */
+export const useSaveEmergencyContacts = () => {
+  const create = useCreateEmergencyContact();
+  const update = useUpdateEmergencyContact();
+  const remove = useRemoveEmergencyContact();
+
+  return async ({ employeeId, contacts, existing = [] }) => {
+    const kept = new Set(contacts.map((contact) => contact.id).filter(Boolean));
+    const requests = [
+      ...existing.filter((contact) => !kept.has(contact.id)).map((contact) => remove.mutateAsync(contact.id)),
+      ...contacts
+        .filter((contact) => hasContactInput(contact))
+        .map((contact) =>
+          contact.id
+            ? update.mutateAsync({ id: contact.id, data: toContactPayload(employeeId, contact) })
+            : create.mutateAsync(toContactPayload(employeeId, contact))
+        ),
+    ];
+    const results = await Promise.allSettled(requests);
+    return results.filter((result) => result.status === "rejected").length;
+  };
+};
+
+export const {
+  useList: useEmploymentTypes,
+  usePage: useEmploymentTypesPage,
+  useOne: useEmploymentType,
+  useCreate: useCreateEmploymentType,
+  useUpdate: useUpdateEmploymentType,
+  useRemove: useRemoveEmploymentType,
+} = createCrudHooks("employment-types", employmentTypeUseCases);
 
 export const {
   useList: useAttendance,

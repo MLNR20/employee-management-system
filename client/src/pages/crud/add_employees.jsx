@@ -1,16 +1,17 @@
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
 import { useState } from "react";
-import { useCreateEmployee, useCreateEmergencyContact } from "../../hooks/useEntities";
+import { useCreateEmployee, useSaveEmergencyContacts } from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import GovernmentIdFields from "../../components/GovernmentIdFields";
 import EmergencyContactFields from "../../components/EmergencyContactFields";
-import { hasContactInput, toContactPayload, validateContact } from "../../domain/employee/emergencyContactRules";
+import { newContactRow, validateContactRows } from "../../domain/employee/emergencyContactRules";
 import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate } from "react-router-dom";
 import { validatePersonName } from "../../validation/personName";
 import ManagerSelect from "../../components/ManagerSelect";
+import EmploymentTypeSelect from "../../components/EmploymentTypeSelect";
 
 export default function Add_Employees() {
   const [first_name, setFirstName] = useState("");
@@ -22,11 +23,13 @@ export default function Add_Employees() {
   const [status, setStatus] = useState("");
   const [ids, setIds] = useState({});
   const [portalPassword, setPortalPassword] = useState("");
-  const [contact, setContact] = useState({});
+  const [contacts, setContacts] = useState(() => [newContactRow()]);
+  const [contactErrors, setContactErrors] = useState({});
   const [managerId, setManagerId] = useState("");
+  const [employmentTypeId, setEmploymentTypeId] = useState("");
   const navigate = useNavigate();
   const createEmployee = useCreateEmployee();
-  const createContact = useCreateEmergencyContact();
+  const saveContacts = useSaveEmergencyContacts();
 
   const [errors, setErrors] = useState({});
 
@@ -73,19 +76,16 @@ export default function Add_Employees() {
     const passwordError = validatePortalPassword(portalPassword);
     if (passwordError) newErrors.portalPassword = passwordError;
 
-    // Contact errors are stored as contact_<field> so they cannot collide with the employee's.
-    Object.entries(validateContact(contact)).forEach(([field, message]) => {
-      newErrors[`contact_${field}`] = message;
-    });
-
     return newErrors;
   };
 
   const handleAddEmployees = () => {
     const validationErrors = validateForm();
+    const rowErrors = validateContactRows(contacts);
     setErrors(validationErrors);
+    setContactErrors(rowErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0 || Object.keys(rowErrors).length > 0) return;
 
     const employees = {
       first_name,
@@ -96,6 +96,7 @@ export default function Add_Employees() {
       position,
       status,
       managerId,
+      employmentTypeId,
       ...ids,
       ...(portalPassword ? { portalPassword } : {}),
     };
@@ -113,23 +114,17 @@ export default function Add_Employees() {
         createEmployee
           .mutateAsync(employees)
           .then(async (employee) => {
-            // The contact needs the new employee's id, so it is saved second. If it fails the
+            // The contacts need the new employee's id, so they are saved second. If any fail the
             // employee already exists: say so instead of pretending the whole save worked.
-            let contactSaved = true;
-            if (hasContactInput(contact)) {
-              try {
-                await createContact.mutateAsync(toContactPayload(employee.id, contact));
-              } catch (error) {
-                contactSaved = false;
-              }
-            }
+            const failed = await saveContacts({ employeeId: employee.id, contacts });
+            const contactsSaved = failed === 0;
 
             return Swal.fire({
-              title: contactSaved ? "Success!" : "Employee added",
-              text: contactSaved
+              title: contactsSaved ? "Success!" : "Employee added",
+              text: contactsSaved
                 ? "Employee successfully added."
-                : "The employee was added, but the emergency contact could not be saved. Add it from Emergency Contacts.",
-              icon: contactSaved ? "success" : "warning",
+                : `The employee was added, but ${failed} emergency contact${failed === 1 ? "" : "s"} could not be saved. Open Edit Employee to add ${failed === 1 ? "it" : "them"} again.`,
+              icon: contactsSaved ? "success" : "warning",
               showCancelButton: true,
               confirmButtonColor: "#3F7D58",
               cancelButtonColor: "#3085d6",
@@ -313,6 +308,7 @@ export default function Add_Employees() {
                     )}
                   </div>
                   <ManagerSelect value={managerId} onChange={setManagerId} />
+                  <EmploymentTypeSelect value={employmentTypeId} onChange={setEmploymentTypeId} />
                   <div>
                     <label
                       for="website"
@@ -422,19 +418,16 @@ export default function Add_Employees() {
                   }}
                 />
                 <EmergencyContactFields
-                  values={contact}
-                  errors={Object.fromEntries(
-                    Object.entries(errors)
-                      .filter(([key]) => key.startsWith("contact_"))
-                      .map(([key, message]) => [key.slice("contact_".length), message])
-                  )}
-                  onChange={(name, value) => {
-                    setContact((previous) => ({ ...previous, [name]: value }));
-                    // Typing in one field can change which others are required, so clear them all.
-                    setErrors((previous) =>
-                      Object.fromEntries(Object.entries(previous).filter(([key]) => !key.startsWith("contact_")))
-                    );
-                  }}
+                  rows={contacts}
+                  errors={contactErrors}
+                  onChange={setContacts}
+                  // Typing in one field can change which others are required, so clear that row's errors.
+                  onEdit={(key) =>
+                    setContactErrors((previous) => {
+                      const { [key]: _cleared, ...rest } = previous;
+                      return rest;
+                    })
+                  }
                 />
                 <PortalPasswordField
                   value={portalPassword}

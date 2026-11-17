@@ -53,3 +53,33 @@ export const toContactPayload = (employeeId, values) => ({
   employeeId,
   ...Object.fromEntries(CONTACT_FIELDS.map((field) => [field, String(values[field] ?? "").trim()])),
 });
+
+// --- The list of contacts on the Add / Edit Employee form --------------------------------------------
+// An employee can have several contacts. The form keeps them as rows: `key` identifies a row while
+// it is on screen, and `id` is set once the contact exists on the server.
+
+let rowCounter = 0;
+
+/** A blank row for a new contact. */
+export const newContactRow = () => ({ key: `new-${++rowCounter}` });
+
+/** A form row for a contact that is already saved. */
+export const contactRowFromEntity = (contact) => ({
+  key: contact.id,
+  id: contact.id,
+  ...Object.fromEntries(CONTACT_FIELDS.map((field) => [field, contact[field] ?? ""])),
+});
+
+/**
+ * Errors for every row, as { [row.key]: { [field]: message } } (rows without errors are left out).
+ * A blank new row is ignored, but a saved contact cannot be blanked out: it must be filled in or removed.
+ */
+export const validateContactRows = (rows = []) => {
+  const errors = {};
+  rows.forEach((row) => {
+    const rowErrors = validateContact(row);
+    if (row.id && !hasContactInput(row)) rowErrors.firstName = "Fill in this contact or remove it.";
+    if (Object.keys(rowErrors).length > 0) errors[row.key] = rowErrors;
+  });
+  return errors;
+};

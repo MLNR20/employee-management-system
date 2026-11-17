@@ -4,6 +4,7 @@ import { createEmployeeRouter } from "./routes/employeeRoutes.js";
 import { createEmergencyContactRouter } from "./routes/emergencyContactRoutes.js";
 import { createJobApplicationRouter, createJobRouter } from "./routes/jobRoutes.js";
 import { createDepartmentRouter } from "./routes/departmentRoutes.js";
+import { createEmploymentTypeRouter } from "./routes/employmentTypeRoutes.js";
 import { createAttendanceRouter } from "./routes/attendanceRoutes.js";
 import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
 import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shiftRoutes.js";
@@ -31,6 +32,7 @@ export const createApp = ({
   authUseCases,
   employeeUseCases,
   departmentUseCases,
+  employmentTypeUseCases, // optional: without it /employment-types is not served
   roleUseCases,
   roleAssignmentUseCases,
   leaveTypeUseCases,
@@ -104,6 +106,9 @@ export const createApp = ({
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));
   }
   app.use("/departments", createDepartmentRouter({ departmentUseCases, requireAuth }));
+  if (employmentTypeUseCases) {
+    app.use("/employment-types", createEmploymentTypeRouter({ employmentTypeUseCases, requireAuth }));
+  }
   app.use("/roles", createRoleRouter({ roleUseCases, requireAuth, authorizationUseCases }));
   app.use("/role-assignments", createRoleAssignmentRouter({ roleAssignmentUseCases, requireAuth }));
   app.use("/leave-types", createLeaveTypeRouter({ leaveTypeUseCases, requireAuth }));

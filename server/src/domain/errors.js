@@ -40,6 +40,18 @@ export class DuplicateDepartmentError extends DomainError {
   }
 }
 
+export class DuplicateEmploymentTypeError extends DomainError {
+  constructor(message = "An employment type with this name already exists") {
+    super(message);
+  }
+}
+
+export class EmploymentTypeInUseError extends DomainError {
+  constructor(message = "Employees hold this employment type. Mark it inactive instead.") {
+    super(message);
+  }
+}
+
 export class DuplicateRoleError extends DomainError {
   constructor(message = "A role with this name already exists") {
     super(message);

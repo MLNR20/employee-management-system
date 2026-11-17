@@ -44,9 +44,12 @@ const employeesSchema = createEntitySchema({
   philhealthNumber: { type: String, trim: true, default: "" },
   pagibigNumber: { type: String, trim: true, default: "" },
   // The employee this one reports to. Points back at the same collection; null for someone at the top.
-  managerId: { type: mongoose.Schema.Types.ObjectId, ref: "employees", default: null }
+  managerId: { type: mongoose.Schema.Types.ObjectId, ref: "employees", default: null },
+  // How the employee is employed (Regular, Contractual...). Null when none is assigned.
+  employmentTypeId: { type: mongoose.Schema.Types.ObjectId, ref: "employmenttypes", default: null }
 });
 
 employeesSchema.index({ managerId: 1 });
+employeesSchema.index({ employmentTypeId: 1 });
 
 export const EmployeeModel = mongoose.model("employees", employeesSchema);

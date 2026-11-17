@@ -14,6 +14,7 @@ export class Employee extends Entity {
     philhealthNumber,
     pagibigNumber,
     managerId = null,
+    employmentTypeId = null,
     ...base
   } = {}) {
     super(base);
@@ -30,5 +31,7 @@ export class Employee extends Entity {
     this.pagibigNumber = pagibigNumber;
     // The employee this one reports to (another employee), or null for someone at the top.
     this.managerId = managerId;
+    // How this employee is employed (an EmploymentType id), or null when none has been assigned.
+    this.employmentTypeId = employmentTypeId;
   }
 }

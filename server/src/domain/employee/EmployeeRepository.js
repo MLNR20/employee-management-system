@@ -30,5 +30,4 @@ export class EmployeeRepository extends Repository {
   /** @returns {Promise<boolean>} whether anyone reports directly to this employee */
   async existsWithManager(managerId) {
     throw new Error("EmployeeRepository.existsWithManager not implemented");
-  }
-}
+  }}

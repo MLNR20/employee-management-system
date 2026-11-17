@@ -5,6 +5,7 @@ import { Administrator } from "../src/domain/administrator/Administrator.js";
 import { Employee } from "../src/domain/employee/Employee.js";
 import { EmergencyContact } from "../src/domain/employee/EmergencyContact.js";
 import { Department } from "../src/domain/department/Department.js";
+import { EmploymentType } from "../src/domain/employmentType/EmploymentType.js";
 import { Role } from "../src/domain/role/Role.js";
 import { RoleAssignment } from "../src/domain/role/RoleAssignment.js";
 import { LeaveType } from "../src/domain/leave/LeaveType.js";
@@ -28,6 +29,7 @@ import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
   DuplicateEmployeeError,
+  DuplicateEmploymentTypeError,
   DuplicateItemError,
   DuplicateJobApplicationError,
   DuplicateLeaveBalanceError,
@@ -134,7 +136,6 @@ export class InMemoryEmployeeRepository extends InMemoryRepository {
   async existsWithManager(managerId) {
     return [...this.items.values()].some((e) => e.managerId === managerId);
   }
-
   async findCredentialsByEmail(email) {
     const employee = [...this.items.values()].find((e) => e.email === String(email).trim().toLowerCase());
     if (!employee) return null;
@@ -157,6 +158,53 @@ export const createInMemoryDepartmentRepository = () =>
     [["name"], ["code"]],
     () => new DuplicateDepartmentError()
   );
+
+/** Mirrors the Mongo repository: a soft-deleted type is invisible except to findByIdIncludingDeleted. */
+export class InMemoryEmploymentTypeRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new EmploymentType(props), [], () => new DuplicateEmploymentTypeError());
+  }
+
+  #live() {
+    return [...this.items.values()].filter((type) => !type.deletedAt);
+  }
+
+  async findAll() {
+    return this.#live();
+  }
+
+  async findPage({ page, pageSize }) {
+    const live = this.#live();
+    return { items: live.slice((page - 1) * pageSize, page * pageSize), total: live.length };
+  }
+
+  async findById(id) {
+    const type = this.items.get(id);
+    return type && !type.deletedAt ? type : null;
+  }
+
+  async update(id, data) {
+    return (await this.findById(id)) ? super.update(id, data) : null;
+  }
+
+  async findByName(name) {
+    const key = (value) => String(value).trim().replace(/\s+/g, " ").toLowerCase();
+    return this.#live().find((type) => key(type.name) === key(name)) ?? null;
+  }
+
+  async findByIdIncludingDeleted(id) {
+    return this.items.get(id) ?? null;
+  }
+
+  async softDelete(id) {
+    const type = await this.findById(id);
+    if (!type) return false;
+    this.items.set(id, new EmploymentType({ ...type, deletedAt: new Date(), isActive: false }));
+    return true;
+  }
+}
+
+export const createInMemoryEmploymentTypeRepository = () => new InMemoryEmploymentTypeRepository();
 
 export const createInMemoryRoleRepository = () =>
   new InMemoryRepository((props) => new Role(props), [["name"]], () => new DuplicateRoleError());

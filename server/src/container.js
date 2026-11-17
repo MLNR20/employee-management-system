@@ -21,6 +21,8 @@ import { createAuthUseCases } from "./application/auth/authUseCases.js";
 import { createAdministratorUseCases } from "./application/administrator/administratorUseCases.js";
 import { createEmployeeUseCases } from "./application/employee/employeeUseCases.js";
 import { createDepartmentUseCases } from "./application/department/departmentUseCases.js";
+import { createEmploymentTypeUseCases } from "./application/employmentType/employmentTypeUseCases.js";
+import { MongoEmploymentTypeRepository } from "./infrastructure/persistence/mongo/MongoEmploymentTypeRepository.js";
 import {
   createRoleUseCases,
   createRoleAssignmentUseCases,
@@ -120,14 +122,19 @@ export const employeeDocumentUseCases = createEmployeeDocumentUseCases({
   utcOffsetMinutes,
 });
 
+const employmentTypeRepository = new MongoEmploymentTypeRepository();
+
 export const employeeUseCases = createEmployeeUseCases({
   employeeRepository,
   leaveBalanceRepository,
   leaveRequestRepository,
   itemRepository,
   emergencyContactRepository,
+  employmentTypeRepository,
   passwordHasher,
 });
+
+export const employmentTypeUseCases = createEmploymentTypeUseCases({ employmentTypeRepository });
 
 export const emergencyContactUseCases = createEmergencyContactUseCases({
   emergencyContactRepository,

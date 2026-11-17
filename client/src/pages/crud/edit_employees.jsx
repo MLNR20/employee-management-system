@@ -1,7 +1,12 @@
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
-import { useState, useEffect} from "react";
-import { useEmployee, useUpdateEmployee } from "../../hooks/useEntities";
+import { useState, useEffect, useRef } from "react";
+import {
+  useEmployee,
+  useUpdateEmployee,
+  useEmployeeEmergencyContacts,
+  useSaveEmergencyContacts,
+} from "../../hooks/useEntities";
 import Swal from "sweetalert2";
 import GovernmentIdFields from "../../components/GovernmentIdFields";
 import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
@@ -9,6 +14,9 @@ import { governmentIdValues, validateGovernmentIds } from "../../domain/employee
 import { useNavigate, useParams } from "react-router-dom";
 import { validatePersonName } from "../../validation/personName";
 import ManagerSelect from "../../components/ManagerSelect";
+import EmploymentTypeSelect from "../../components/EmploymentTypeSelect";
+import EmergencyContactFields from "../../components/EmergencyContactFields";
+import { contactRowFromEntity, validateContactRows } from "../../domain/employee/emergencyContactRules";
 
 export default function Edit_Employees() {
   const [first_name, setFirstName] = useState("");
@@ -21,13 +29,27 @@ export default function Edit_Employees() {
   const [ids, setIds] = useState({});
   const [portalPassword, setPortalPassword] = useState("");
   const [managerId, setManagerId] = useState("");
+  const [employmentTypeId, setEmploymentTypeId] = useState("");
+  const [contacts, setContacts] = useState([]);
+  const [contactErrors, setContactErrors] = useState({});
   const navigate = useNavigate();
 
   const [errors, setErrors] = useState({});
   const {id} = useParams();
 
   const { data: employee } = useEmployee(id);
+  const { data: savedContacts } = useEmployeeEmergencyContacts(id);
   const updateEmployee = useUpdateEmployee();
+  const saveContacts = useSaveEmergencyContacts();
+
+  // The contacts the employee had when the form opened: the form is filled from them once, so a
+  // background refresh never overwrites what is being typed.
+  const contactsFilled = useRef(false);
+  useEffect(() => {
+    if (!savedContacts || contactsFilled.current) return;
+    contactsFilled.current = true;
+    setContacts(savedContacts.map(contactRowFromEntity));
+  }, [savedContacts]);
 
   // Fill the form once the employee has loaded. An expired session is
   // already redirected to /login by the API client.
@@ -42,6 +64,7 @@ export default function Edit_Employees() {
     setStatus(String(employee.isActive));
     setIds(governmentIdValues(employee));
     setManagerId(employee.managerId ?? "");
+    setEmploymentTypeId(employee.employmentTypeId ?? "");
   }, [employee]);
 
   const validateForm = () => {
@@ -88,9 +111,11 @@ export default function Edit_Employees() {
 
   const handleEditEmployees = () => {
     const validationErrors = validateForm();
+    const rowErrors = validateContactRows(contacts);
     setErrors(validationErrors);
+    setContactErrors(rowErrors);
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0 || Object.keys(rowErrors).length > 0) return;
 
     const employees = {
       first_name,
@@ -101,6 +126,7 @@ export default function Edit_Employees() {
       position,
       status,
       managerId,
+      employmentTypeId,
       ...ids,
       ...(portalPassword ? { portalPassword } : {}),
     };
@@ -117,11 +143,16 @@ export default function Edit_Employees() {
       if (result.isConfirmed) {
         updateEmployee
           .mutateAsync({ id, data: employees })
-          .then(() => {
-            Swal.fire({
-              title: "Success!",
-              text: "Employee successfully updated.",
-              icon: "success",
+          .then(async () => {
+            const failed = await saveContacts({ employeeId: id, contacts, existing: savedContacts });
+            const contactsSaved = failed === 0;
+
+            return Swal.fire({
+              title: contactsSaved ? "Success!" : "Employee updated",
+              text: contactsSaved
+                ? "Employee successfully updated."
+                : `The employee was updated, but ${failed} emergency contact change${failed === 1 ? "" : "s"} could not be saved. Check the contacts and try again.`,
+              icon: contactsSaved ? "success" : "warning",
               showCancelButton: true,
               confirmButtonColor: "#3F7D58",
               cancelButtonColor: "#3085d6",
@@ -305,6 +336,7 @@ export default function Edit_Employees() {
                     )}
                   </div>
                   <ManagerSelect value={managerId} onChange={setManagerId} excludeId={id} />
+                  <EmploymentTypeSelect value={employmentTypeId} onChange={setEmploymentTypeId} />
                   <div>
                     <label
                       htmlFor="website"
@@ -412,6 +444,17 @@ export default function Edit_Employees() {
                     setIds((previous) => ({ ...previous, [name]: value }));
                     setErrors((previous) => ({ ...previous, [name]: undefined }));
                   }}
+                />
+                <EmergencyContactFields
+                  rows={contacts}
+                  errors={contactErrors}
+                  onChange={setContacts}
+                  onEdit={(key) =>
+                    setContactErrors((previous) => {
+                      const { [key]: _cleared, ...rest } = previous;
+                      return rest;
+                    })
+                  }
                 />
                 <PortalPasswordField
                   value={portalPassword}

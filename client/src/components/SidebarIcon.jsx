@@ -30,7 +30,7 @@ const paths = {
 /** Which icon each resource in resources/index.js gets; anything new falls back to a list icon. */
 export const resourceIcons = {
   departments: "building",
-  "emergency-contacts": "users",
+  "employment-types": "idCard",
   roles: "shield",
   "role-assignments": "idCard",
   "leave-requests": "calendar",

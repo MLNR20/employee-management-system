@@ -15,6 +15,7 @@ const MAX_REPORTING_DEPTH = 100;
  * @param {import("../ports/PasswordHasher").PasswordHasher} [deps.passwordHasher] hashes portal passwords; without it they are refused
  * @param {import("../../domain/inventory/ItemRepository").ItemRepository} [deps.itemRepository] when given, an employee holding items cannot be deleted
  * @param {import("../../domain/employee/EmergencyContactRepository").EmergencyContactRepository} [deps.emergencyContactRepository] when given, an employee's emergency contacts are deleted with them
+ * @param {import("../../domain/employmentType/EmploymentTypeRepository").EmploymentTypeRepository} [deps.employmentTypeRepository] when given, an employment type sent with an employee must exist and be active
  */
 export const createEmployeeUseCases = ({
   employeeRepository,
@@ -22,6 +23,7 @@ export const createEmployeeUseCases = ({
   leaveRequestRepository,
   itemRepository,
   emergencyContactRepository,
+  employmentTypeRepository,
   passwordHasher,
 }) => {
   const crud = createCrudUseCases({
@@ -68,6 +70,27 @@ export const createEmployeeUseCases = ({
     }
   };
 
+  /**
+   * Checks an employment type that was sent with an employee. A blank one (none) is always fine.
+   * Otherwise it must exist (not deleted) and be active, unless the employee already holds it: an
+   * employee keeps a type that was later marked inactive or deleted.
+   */
+  const assertValidEmploymentType = async (employeeId, employmentTypeId) => {
+    if (isMissing(employmentTypeId) || !employmentTypeRepository) return;
+
+    const holdsIt =
+      employeeId !== undefined && (await employeeRepository.findById(employeeId))?.employmentTypeId === employmentTypeId;
+
+    const employmentType = await employmentTypeRepository.findById(employmentTypeId);
+    if (!employmentType) {
+      if (holdsIt && (await employmentTypeRepository.findByIdIncludingDeleted(employmentTypeId))) return;
+      throw new ValidationError("That employment type does not exist");
+    }
+    if (employmentType.isActive === false && !holdsIt) {
+      throw new ValidationError("An inactive employment type cannot be assigned");
+    }
+  };
+
   return {
     listEmployees: crud.list,
     listEmployeesPage: crud.listPage,
@@ -77,6 +100,7 @@ export const createEmployeeUseCases = ({
     async addEmployee(input = {}) {
       assertValidEmployee(input);
       await assertValidManager(undefined, input.managerId);
+      await assertValidEmploymentType(undefined, input.employmentTypeId);
 
       const employee = await crud.add(input);
       await storePortalPassword(employee.id, input.portalPassword);
@@ -87,6 +111,7 @@ export const createEmployeeUseCases = ({
       assertValidEmployee(input);
       // Only a manager that was sent is checked: leaving the field out keeps the current one.
       await assertValidManager(id, input.managerId);
+      await assertValidEmploymentType(id, input.employmentTypeId);
 
       const employee = await crud.update(id, input);
       await storePortalPassword(id, input.portalPassword);
