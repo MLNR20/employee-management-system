@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import PortalLayout from "../../components/employee/PortalLayout";
@@ -16,6 +16,19 @@ export default function EmployeeLeave() {
   const [month, setMonth] = useState(() => new Date());
   const [form, setForm] = useState(emptyForm);
   const [pickingEnd, setPickingEnd] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const closeModal = () => {
+    setOpen(false);
+    setPickingEnd(false);
+  };
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event) => event.key === "Escape" && closeModal();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const types = useQuery({ queryKey: ["employee-portal", "leave-types"], queryFn: employeePortal.getLeaveTypes });
   const balances = useQuery({ queryKey: ["employee-portal", "leave-balances"], queryFn: employeePortal.getLeaveBalances });
@@ -35,7 +48,7 @@ export default function EmployeeLeave() {
     onSuccess: () => {
       enqueueSnackbar("Leave request sent. It stays pending until an administrator decides it.", { variant: "success" });
       setForm(emptyForm);
-      setPickingEnd(false);
+      closeModal();
       refresh();
     },
     onError: (error) => enqueueSnackbar(messageOf(error), { variant: "error" }),
@@ -128,60 +141,98 @@ export default function EmployeeLeave() {
               selection={{ start: form.startDate, end: form.endDate }}
               onPickDay={pickDay}
             />
+            <div className="leave-file-row">
+              <button type="button" className="leave-submit" onClick={() => setOpen(true)}>
+                File leave
+              </button>
+            </div>
           </section>
         </div>
 
-        <section className="portal-panel portal-updates" aria-labelledby="leave-apply-heading">
-          <h2 id="leave-apply-heading" className="portal-panel-title">
-            Apply for leave
+        <section className="portal-panel portal-updates" aria-labelledby="leave-available-heading">
+          <h2 id="leave-available-heading" className="portal-panel-title">
+            Available leaves
           </h2>
-          <form onSubmit={submit} noValidate className="leave-form">
-            <label htmlFor="leave-type">Leave type</label>
-            <select id="leave-type" value={form.leaveTypeId} onChange={change("leaveTypeId")}>
-              <option value="">Select a leave type…</option>
-              {(types.data ?? []).map((type) => {
-                const balance = balanceFor(type._id);
+          {(balances.data ?? []).length === 0 ? (
+            <p className="portal-empty">{balances.isLoading ? "Loading…" : "No leave balances have been set up for you yet."}</p>
+          ) : (
+            <ul className="leave-balance-list">
+              {(balances.data ?? []).map((balance) => {
+                const left = balance.availableLeaves;
+                const percent = balance.maxLeaves > 0 ? Math.max(0, Math.min(100, (left / balance.maxLeaves) * 100)) : 0;
                 return (
-                  <option key={type._id} value={type._id} disabled={!balance}>
-                    {type.name} {balance ? `(${balance.availableLeaves} days left)` : "(no balance)"}
-                  </option>
+                  <li key={balance._id} className="leave-balance-card">
+                    <div className="leave-balance-head">
+                      <p className="leave-item-title">{typeName(balance.leaveTypeId)}</p>
+                      <p className="leave-balance-count">
+                        <strong>{left}</strong> of {balance.maxLeaves} {balance.maxLeaves === 1 ? "day" : "days"} left
+                      </p>
+                    </div>
+                    <div className="leave-balance-bar" role="presentation">
+                      <div className="leave-balance-fill" style={{ width: `${percent}%` }} />
+                    </div>
+                  </li>
                 );
               })}
-            </select>
-
-            <label htmlFor="leave-start">First day</label>
-            <input id="leave-start" type="date" value={form.startDate} onChange={change("startDate")} />
-
-            <label htmlFor="leave-end">Last day</label>
-            <input id="leave-end" type="date" value={form.endDate} min={form.startDate || undefined} onChange={change("endDate")} />
-
-            <label htmlFor="leave-reason">Reason (optional)</label>
-            <textarea id="leave-reason" rows={3} value={form.reason} onChange={change("reason")} />
-
-            <p className="leave-summary" aria-live="polite">
-              {days > 0 ? `${days} ${days === 1 ? "day" : "days"} requested` : "Pick days on the calendar or enter dates."}
-              {days > 0 && available !== undefined && days > available ? ` · only ${available} left` : ""}
-            </p>
-            <p className="leave-hint">Weekends count as leave days.</p>
-
-            <div className="leave-actions">
-              <button type="submit" className="leave-submit" disabled={apply.isPending}>
-                {apply.isPending ? "Sending…" : "Apply for leave"}
-              </button>
-              <button
-                type="button"
-                className="leave-cancel"
-                onClick={() => {
-                  setForm(emptyForm);
-                  setPickingEnd(false);
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+            </ul>
+          )}
         </section>
       </div>
+
+      {open && (
+        <div className="leave-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>
+          <div className="leave-modal" role="dialog" aria-modal="true" aria-labelledby="leave-apply-heading">
+            <h2 id="leave-apply-heading" className="portal-panel-title">
+              File leave
+            </h2>
+            <form onSubmit={submit} noValidate className="leave-form">
+              <label htmlFor="leave-type">Leave type</label>
+              <select id="leave-type" value={form.leaveTypeId} onChange={change("leaveTypeId")}>
+                <option value="">Select a leave type…</option>
+                {(types.data ?? []).map((type) => {
+                  const balance = balanceFor(type._id);
+                  return (
+                    <option key={type._id} value={type._id} disabled={!balance}>
+                      {type.name} {balance ? `(${balance.availableLeaves} days left)` : "(no balance)"}
+                    </option>
+                  );
+                })}
+              </select>
+
+              <label htmlFor="leave-start">First day</label>
+              <input id="leave-start" type="date" value={form.startDate} onChange={change("startDate")} />
+
+              <label htmlFor="leave-end">Last day</label>
+              <input id="leave-end" type="date" value={form.endDate} min={form.startDate || undefined} onChange={change("endDate")} />
+
+              <label htmlFor="leave-reason">Reason (optional)</label>
+              <textarea id="leave-reason" rows={3} value={form.reason} onChange={change("reason")} />
+
+              <p className="leave-summary" aria-live="polite">
+                {days > 0 ? `${days} ${days === 1 ? "day" : "days"} requested` : "Pick days on the calendar or enter dates."}
+                {days > 0 && available !== undefined && days > available ? ` · only ${available} left` : ""}
+              </p>
+              <p className="leave-hint">Weekends count as leave days.</p>
+
+              <div className="leave-actions">
+                <button type="submit" className="leave-submit" disabled={apply.isPending}>
+                  {apply.isPending ? "Sending…" : "Apply for leave"}
+                </button>
+                <button
+                  type="button"
+                  className="leave-cancel"
+                  onClick={() => {
+                    setForm(emptyForm);
+                    closeModal();
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </PortalLayout>
   );
 }
