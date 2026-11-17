@@ -27,6 +27,7 @@ import { SalaryRate } from "./domain/salary/SalaryRate";
 import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAttendanceRepository";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
+export { setEmployeeSessionExpiredHandler } from "./infrastructure/repositories/HttpEmployeePortalRepository";
 
 // A plain REST resource needs no subclass: name the path and how a payload becomes an entity.
 const restCrud = (resource, fromApi) => createCrudUseCases(new HttpRepository({ resource, fromApi }));

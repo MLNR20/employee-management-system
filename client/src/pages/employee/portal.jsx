@@ -1,4 +1,5 @@
-import PortalLayout, { useEmployeeMe } from "../../components/employee/PortalLayout";
+import PortalLayout from "../../components/employee/PortalLayout";
+import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -18,7 +19,7 @@ const details = (me) => [
  * and the employee's details in the left column, updates on the right (7/5).
  */
 export default function EmployeePortal() {
-  const { data: me } = useEmployeeMe();
+  const { employee: me } = useEmployeeAuth();
 
   return (
     <PortalLayout>

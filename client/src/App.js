@@ -16,7 +16,9 @@ import ProtectedRoute from './components/protectedroute';
 import RequirePermission from './components/RequirePermission';
 import ResourceListPage from './components/resource/ResourceListPage';
 import ResourceFormPage from './components/resource/ResourceFormPage';
+import EmployeeProtectedRoute from './components/employee/EmployeeProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { EmployeeAuthProvider } from './context/EmployeeAuthContext';
 import { resources } from './resources';
 
 // Every route needs a distinct key: the list and form pages call different hooks per
@@ -33,15 +35,16 @@ function App() {
     <div className="App">
        <Router>
         <AuthProvider>
+         <EmployeeAuthProvider>
           <Routes>
             {/* No landing page: signed-in users go to the dashboard, everyone else to login. */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/employee/login" element={<EmployeeLogin />} />
-            <Route path="/employee" element={<EmployeePortal />} />
-            <Route path="/employee/leave" element={<EmployeeLeave />} />
-            <Route path="/employee/equipment" element={<EmployeeEquipment />} />
+            <Route path="/employee" element={<EmployeeProtectedRoute><EmployeePortal /></EmployeeProtectedRoute>} />
+            <Route path="/employee/leave" element={<EmployeeProtectedRoute><EmployeeLeave /></EmployeeProtectedRoute>} />
+            <Route path="/employee/equipment" element={<EmployeeProtectedRoute><EmployeeEquipment /></EmployeeProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/permissions" element={<ProtectedRoute><RolePermissions /></ProtectedRoute>} />
             <Route path="/documents/checklist" element={<ProtectedRoute><DocumentChecklist /></ProtectedRoute>} />
@@ -77,6 +80,7 @@ function App() {
                 : []),
             ])}
           </Routes>
+         </EmployeeAuthProvider>
         </AuthProvider>
       </Router>
     </div>

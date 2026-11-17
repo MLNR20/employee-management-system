@@ -5,6 +5,13 @@ import { InvalidCredentialsError } from "../../domain/errors";
 
 const client = axios.create({ baseURL: API_BASE_URL });
 
+let onSessionExpired = () => {};
+
+/** The auth context registers here so it learns when the server turns the employee's token down. */
+export function setEmployeeSessionExpiredHandler(handler) {
+  onSessionExpired = handler;
+}
+
 // Employee tokens are short-lived and have no refresh: an expired or rejected one just ends the session.
 client.interceptors.request.use((config) => {
   const token = employeeTokenStorage.get();
@@ -14,7 +21,10 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) employeeTokenStorage.clear();
+    if (error.response?.status === 401) {
+      employeeTokenStorage.clear();
+      onSessionExpired();
+    }
     return Promise.reject(error);
   }
 );

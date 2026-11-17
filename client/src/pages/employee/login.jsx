@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import AuthLayout from "../../components/AuthLayout";
 import PasswordInput from "../../components/PasswordInput";
-import { employeePortal } from "../../container";
+import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
 import { InvalidCredentialsError } from "../../domain/errors";
 
 const inputClass =
@@ -17,8 +17,9 @@ export default function EmployeeLogin() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const { isAuthenticated, login } = useEmployeeAuth();
 
-  if (employeePortal.isSignedIn()) return <Navigate to="/employee" replace />;
+  if (isAuthenticated) return <Navigate to="/employee" replace />;
 
   const submit = async (event) => {
     event.preventDefault();
@@ -31,7 +32,7 @@ export default function EmployeeLogin() {
 
     setSubmitting(true);
     try {
-      await employeePortal.login({ email: email.trim(), password });
+      await login({ email: email.trim(), password });
       navigate("/employee", { replace: true });
     } catch (error) {
       enqueueSnackbar(
