@@ -140,6 +140,23 @@ export default function DataTable({
             />
           </div>
         )}
+        {/* ml-auto keeps it at the far end of the row, level with the search bar. */}
+        <div className="ml-auto flex items-center gap-2 text-sm text-gray-500">
+          <label htmlFor="datatable-page-size">Rows per page:</label>
+          <select
+            id="datatable-page-size"
+            className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5 h-10"
+            style={{ minWidth: "4.5rem" }}
+            value={pageSize}
+            onChange={(e) => changePageSize(Number(e.target.value))}
+          >
+            {pageSizeOptions.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <table
@@ -206,43 +223,25 @@ export default function DataTable({
           Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
           {totalRows} rows
         </span>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <label htmlFor="datatable-page-size">Rows per page:</label>
-            <select
-              id="datatable-page-size"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5 h-10"
-              style={{ minWidth: "4.5rem" }}
-              value={pageSize}
-              onChange={(e) => changePageSize(Number(e.target.value))}
-            >
-              {pageSizeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="px-3 py-1.5 border border-gray-300 rounded-lg"
-              style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
-              disabled={currentPage === 0}
-              onClick={() => goToPage(currentPage - 1)}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1.5 border border-gray-300 rounded-lg"
-              style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
-              disabled={currentPage >= pageCount - 1}
-              onClick={() => goToPage(currentPage + 1)}
-            >
-              Next
-            </button>
-          </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg"
+            style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
+            disabled={currentPage === 0}
+            onClick={() => goToPage(currentPage - 1)}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg"
+            style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
+            disabled={currentPage >= pageCount - 1}
+            onClick={() => goToPage(currentPage + 1)}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
