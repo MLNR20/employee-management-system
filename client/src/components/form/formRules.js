@@ -10,6 +10,7 @@
 //   validate?:  (value, allValues) => string | undefined   custom rule, returns the error message
 //   default?:   starting value
 //   hint?:      small help text under the input
+//   height?:    CSS height of a "textarea" (default "24rem")
 //   options?:   [{ value, label }]                 for "select" and "checkboxes" (which holds an array of the chosen values)
 //   optionsFrom?: { useList, value(item), label(item) }   for "select", loaded from another resource
 //   wide?:      span both columns

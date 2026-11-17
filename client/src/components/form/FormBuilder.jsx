@@ -154,7 +154,8 @@ function Field({ field, value, onChange, disabled }) {
       {type === "textarea" ? (
         <textarea
           id={id}
-          rows={3}
+          // Inline for the same reason as the grid span above; a field can set its own `height`.
+          style={{ height: field.height ?? "24rem" }}
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
