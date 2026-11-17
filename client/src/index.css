@@ -382,7 +382,7 @@ code {
 .leave-cancel:hover:not(:disabled) { background: #f9fafb; }
 .leave-cancel:disabled { opacity: 0.6; cursor: default; }
 
-.leave-file-row { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.leave-file-row { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
 
 .leave-balance-list { display: flex; flex-direction: column; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
 .leave-balance-card { padding: 1rem; border: 1px solid #e5e7eb; border-radius: 0.75rem; background: #f9fafb; }

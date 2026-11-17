@@ -134,6 +134,11 @@ export default function EmployeeLeave() {
             <h2 id="leave-calendar-heading" className="portal-panel-title">
               Leave calendar
             </h2>
+            <div className="leave-file-row">
+              <button type="button" className="leave-submit" onClick={() => setOpen(true)}>
+                File leave
+              </button>
+            </div>
             <LeaveCalendar
               month={month}
               onMonthChange={setMonth}
@@ -141,11 +146,6 @@ export default function EmployeeLeave() {
               selection={{ start: form.startDate, end: form.endDate }}
               onPickDay={pickDay}
             />
-            <div className="leave-file-row">
-              <button type="button" className="leave-submit" onClick={() => setOpen(true)}>
-                File leave
-              </button>
-            </div>
           </section>
         </div>
 
