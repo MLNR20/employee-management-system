@@ -42,8 +42,9 @@ export default function LeaveCalendar({ month, onMonthChange, leaves, selection,
       const leave = covering(day);
       const status = leave.some((l) => l.status === "approved") ? "approved" : leave.length ? "pending" : "";
       const classes = ["leave-cal-day"];
+      // A checkerboard: the grid is seven wide, so alternating by position alternates down the rows too.
+      if ((firstWeekday + i) % 2 === 1) classes.push("leave-cal-alt");
       if (day === today) classes.push("leave-cal-today");
-      if (status) classes.push(`leave-cal-${status}`);
       if (picked(day)) classes.push("leave-cal-picked");
       return (
         <button
@@ -54,7 +55,9 @@ export default function LeaveCalendar({ month, onMonthChange, leaves, selection,
           aria-label={`${day}${status ? `, ${status} leave` : ""}`}
           aria-pressed={Boolean(picked(day))}
         >
-          {i + 1}
+          <span className="leave-cal-num">{i + 1}</span>
+          {/* Leave shows as a pill, so the cell keeps its checkerboard colour. */}
+          {status && <span className={`leave-cal-pill leave-cal-pill-${status}`}>{status}</span>}
         </button>
       );
     }),
@@ -64,6 +67,17 @@ export default function LeaveCalendar({ month, onMonthChange, leaves, selection,
 
   return (
     <div className="leave-cal">
+      <ul className="leave-cal-legend">
+        <li>
+          <span className="leave-cal-swatch leave-cal-pill-approved" /> Approved
+        </li>
+        <li>
+          <span className="leave-cal-swatch leave-cal-pill-pending" /> Pending
+        </li>
+        <li>
+          <span className="leave-cal-swatch leave-cal-picked" /> Selected
+        </li>
+      </ul>
       <div className="leave-cal-header">
         <button type="button" className="leave-cal-nav" onClick={() => shift(-1)} aria-label="Previous month">
           ‹
@@ -83,17 +97,6 @@ export default function LeaveCalendar({ month, onMonthChange, leaves, selection,
         ))}
         {cells}
       </div>
-      <ul className="leave-cal-legend">
-        <li>
-          <span className="leave-cal-swatch leave-cal-approved" /> Approved
-        </li>
-        <li>
-          <span className="leave-cal-swatch leave-cal-pending" /> Pending
-        </li>
-        <li>
-          <span className="leave-cal-swatch leave-cal-picked" /> Selected
-        </li>
-      </ul>
     </div>
   );
 }

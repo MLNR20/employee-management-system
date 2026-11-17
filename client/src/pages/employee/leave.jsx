@@ -78,19 +78,6 @@ export default function EmployeeLeave() {
     <PortalLayout>
       <div className="portal-columns">
         <div className="portal-column">
-          <section className="portal-panel" aria-labelledby="leave-calendar-heading">
-            <h2 id="leave-calendar-heading" className="portal-panel-title">
-              Leave calendar
-            </h2>
-            <LeaveCalendar
-              month={month}
-              onMonthChange={setMonth}
-              leaves={leaves}
-              selection={{ start: form.startDate, end: form.endDate }}
-              onPickDay={pickDay}
-            />
-          </section>
-
           <section className="portal-panel" aria-labelledby="leave-requests-heading">
             <h2 id="leave-requests-heading" className="portal-panel-title">
               My leave requests
@@ -128,6 +115,19 @@ export default function EmployeeLeave() {
                   ))}
               </ul>
             )}
+          </section>
+
+          <section className="portal-panel" aria-labelledby="leave-calendar-heading">
+            <h2 id="leave-calendar-heading" className="portal-panel-title">
+              Leave calendar
+            </h2>
+            <LeaveCalendar
+              month={month}
+              onMonthChange={setMonth}
+              leaves={leaves}
+              selection={{ start: form.startDate, end: form.endDate }}
+              onPickDay={pickDay}
+            />
           </section>
         </div>
 

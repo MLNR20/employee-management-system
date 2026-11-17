@@ -352,20 +352,21 @@ code {
 .leave-cal-title { margin: 0; font-size: 1rem; font-weight: 600; color: #111827; }
 .leave-cal-nav { width: 2rem; height: 2rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: #fff; color: #374151; font-size: 1.25rem; line-height: 1; cursor: pointer; }
 .leave-cal-nav:hover { background: #f3f4f6; }
-.leave-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
+.leave-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
 .leave-cal-weekday { padding: 0.25rem 0; text-align: center; font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; }
-.leave-cal-day { aspect-ratio: 1 / 1; min-height: 2.25rem; border: 1px solid transparent; border-radius: 0.5rem; background: transparent; color: #374151; font-size: 0.875rem; cursor: pointer; }
-.leave-cal-day:hover { background: #f3f4f6; }
+.leave-cal-day { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 0.25rem; padding: 0.5rem 0.625rem; aspect-ratio: 1 / 1; min-height: 2.25rem; border: 1px solid transparent; border-radius: 0; background: #fff; color: #374151; font-size: 0.875rem; cursor: pointer; }
+.leave-cal-alt { background: #f3f4f6; }
+.leave-cal-day:hover { background: #e5e7eb; }
 .leave-cal-today { border-color: #9ca3af; font-weight: 700; }
-.leave-cal-approved { background: #dcfce7; color: #166534; }
-.leave-cal-pending { background: #fef3c7; color: #92400e; }
-.leave-cal-day.leave-cal-approved:hover { background: #bbf7d0; }
-.leave-cal-day.leave-cal-pending:hover { background: #fde68a; }
+.leave-cal-pill { display: inline-block; max-width: 100%; padding: 0.0625rem 0.5rem; overflow: hidden; border-radius: 999px; font-size: 0.6875rem; font-weight: 600; line-height: 1.25; text-overflow: ellipsis; text-transform: capitalize; white-space: nowrap; }
+.leave-cal-pill-approved { background: #dcfce7; color: #166534; }
+.leave-cal-pill-pending { background: #fef3c7; color: #92400e; }
 .leave-cal-picked { border-color: #b91c1c; box-shadow: inset 0 0 0 1px #b91c1c; }
-.leave-cal-legend { display: flex; gap: 1rem; margin: 1rem 0 0; padding: 0; list-style: none; font-size: 0.8125rem; color: #6b7280; }
+.leave-cal-legend { display: flex; gap: 1rem; margin: 0 0 1rem; padding: 0; list-style: none; font-size: 0.8125rem; color: #6b7280; }
 .leave-cal-legend li { display: flex; align-items: center; gap: 0.375rem; }
 .leave-cal-swatch { display: inline-block; width: 0.875rem; height: 0.875rem; border-radius: 0.25rem; border: 1px solid transparent; }
 .leave-cal-swatch.leave-cal-picked { background: #fff; }
+.leave-cal-swatch.leave-cal-pill-approved, .leave-cal-swatch.leave-cal-pill-pending { width: 1.5rem; border-radius: 999px; }
 
 .leave-list { margin: 0; padding: 0; list-style: none; }
 .leave-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
