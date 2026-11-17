@@ -13,7 +13,7 @@ export default function AuthLayout({ children }) {
               <div className="flex flex-wrap justify-between items-left mx-auto max-w-full">
                 <Link to="/login" className="flex items-center">
                   <img src={icon} className="mr-3 h-10 sm:h-9" alt="Gallium31 logo" />
-                  <span className="self-center text-xl object-cover font-semibold whitespace-nowrap text-gray-500">
+                  <span className="self-center text-xl object-cover font-semibold whitespace-nowrap text-gray-700">
                     Gallium31 Employee Management System
                   </span>
                 </Link>

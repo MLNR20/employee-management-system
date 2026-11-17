@@ -32,7 +32,7 @@ const Navbars=() =>{
         
           <Link to="/" className="flex items-center justify-between mr-4">
             <img src={icon} className="mr-3 ml-3 h-10" alt="Gallium31 logo"/>
-            <span className="self-center text-xl font-semibold text-gray-500 whitespace-nowrap hidden  sm:hidden lg:block">Gallium31 Employee Management System</span>
+            <span className="self-center text-xl font-semibold text-gray-700 whitespace-nowrap hidden  sm:hidden lg:block">Gallium31 Employee Management System</span>
           </Link>
         </div>
         <div className="flex items-center lg:order-2">
