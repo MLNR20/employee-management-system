@@ -48,7 +48,7 @@ export const resourceIcons = {
 export default function SidebarIcon({ name }) {
   return (
     <svg
-      className="flex-shrink-0 w-6 h-6 transition duration-75"
+      className="shrink-0 w-6 h-6 transition duration-75"
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"

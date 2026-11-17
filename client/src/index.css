@@ -290,12 +290,12 @@ code {
 
 /* Collapsible sidebar: body.sidebar-collapsed (set by the navbar toggle) shrinks the sidebar to icons
    and widens the page content to match. Phones keep the full-width drawer. */
-.app-sidebar { width: 16rem; transition: width 0.2s ease, transform 0.15s ease; }
+.app-sidebar { width: 17rem; transition: width 0.2s ease, transform 0.15s ease; }
 .main-content { transition: margin-left 0.2s ease; }
 .sidebar-toggle { display: none; }
 
 @media (min-width: 640px) {
-  .main-content { margin-left: 16rem; }
+  .main-content { margin-left: 17rem; }
   .sidebar-toggle { display: inline-flex; }
 
   .sidebar-collapsed .app-sidebar { width: 4.5rem; }
