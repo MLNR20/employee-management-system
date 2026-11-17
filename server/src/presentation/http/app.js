@@ -26,6 +26,10 @@ import { createAuthMiddleware } from "./middleware/authMiddleware.js";
 import { createAuditMiddleware } from "./middleware/auditMiddleware.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { createCorsMiddleware } from "./middleware/corsMiddleware.js";
+import { createApiRateLimiter, createAuthRateLimiter } from "./middleware/rateLimitMiddleware.js";
+
+// Endpoints an attacker can hammer to guess credentials or tokens; they get the stricter limit.
+const AUTH_ATTEMPT_PATHS = ["/admin/login", "/admin/register", "/admin/refresh", "/employee-auth/login"];
 
 /** Builds the Express app from use cases. It owns no state, so tests can pass fakes. */
 export const createApp = ({
@@ -56,9 +60,12 @@ export const createApp = ({
   jobApplicationUseCases, // optional, with jobUseCases: without both /job-applications and the portal job routes are not served
   getHealth = () => ({}), // optional: extra fields for GET /health, e.g. the database state
   corsOrigins = [], // origins browsers may call from; empty allows any (see middleware/corsMiddleware.js)
+  rateLimits, // optional: { api, auth, trustProxy }; without it nothing is limited (see middleware/rateLimitMiddleware.js)
 }) => {
   const app = express();
   const requireAuth = createAuthMiddleware(authUseCases);
+  // Behind a reverse proxy (Render) the client's address is in X-Forwarded-For; the limiters need it.
+  if (rateLimits?.trustProxy) app.set("trust proxy", rateLimits.trustProxy);
 
   // Liveness ping for Render and uptime monitors. Always 200 while the process is up: it must not depend
   // on MongoDB, or a slow database would make the platform restart a healthy server.
@@ -66,7 +73,14 @@ export const createApp = ({
     res.json({ status: "ok", uptime: Math.round(process.uptime()), ...getHealth() });
   });
 
+  // After CORS so a 429 still carries the CORS headers and the browser can show its message; before the body
+  // parser so a flood is turned away without parsing anything.
   app.use(createCorsMiddleware(corsOrigins));
+  if (rateLimits?.api) app.use(createApiRateLimiter(rateLimits.api));
+  if (rateLimits?.auth) {
+    const authLimiter = createAuthRateLimiter(rateLimits.auth);
+    for (const path of AUTH_ATTEMPT_PATHS) app.post(path, authLimiter);
+  }
   app.use(express.json());
   if (auditLogUseCases) app.use(createAuditMiddleware(auditLogUseCases));
 

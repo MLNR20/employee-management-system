@@ -7,6 +7,11 @@ const DATABASE_STATES = ['disconnected', 'connected', 'connecting', 'disconnecti
 const app = createApp({
     ...useCases,
     corsOrigins: config.CORS_ORIGINS,
+    rateLimits: {
+        api: { windowMs: config.RATE_LIMIT_WINDOW_MS, max: config.RATE_LIMIT_MAX },
+        auth: { windowMs: config.AUTH_RATE_LIMIT_WINDOW_MS, max: config.AUTH_RATE_LIMIT_MAX },
+        trustProxy: config.TRUST_PROXY
+    },
     getHealth: () => ({ database: DATABASE_STATES[mongoose.connection.readyState] ?? 'unknown' })
 });
 

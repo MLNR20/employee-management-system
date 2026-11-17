@@ -34,6 +34,16 @@ export const config = {
     // Default 480 = UTC+8 (Philippines, no daylight saving).
     WORK_UTC_OFFSET_MINUTES: Number(process.env.WORK_UTC_OFFSET_MINUTES ?? 480),
 
+    // Rate limiting, per client IP. The general limit covers the whole API; the auth limit is the stricter
+    // one for sign-in, registration and token refresh (only failed attempts count).
+    RATE_LIMIT_WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
+    RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX ?? 300),
+    AUTH_RATE_LIMIT_WINDOW_MS: Number(process.env.AUTH_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000),
+    AUTH_RATE_LIMIT_MAX: Number(process.env.AUTH_RATE_LIMIT_MAX ?? 10),
+    // Number of reverse proxies in front of the server (Render's is 1). Without it every request appears to
+    // come from the proxy's address and one busy client would exhaust the limit for everybody. 0 = no proxy.
+    TRUST_PROXY: Number(process.env.TRUST_PROXY ?? 0),
+
     // Web addresses allowed to call the API from a browser, comma-separated, e.g.
     // CORS_ORIGINS=https://hr.example.com,http://localhost:3000. Empty allows every origin.
     CORS_ORIGINS: (process.env.CORS_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean)
