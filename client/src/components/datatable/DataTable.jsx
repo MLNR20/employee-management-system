@@ -223,7 +223,16 @@ export default function DataTable({
           Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
           {totalRows} rows
         </span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg"
+            style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
+            disabled={currentPage === 0}
+            onClick={() => goToPage(0)}
+          >
+            First
+          </button>
           <button
             type="button"
             className="px-3 py-1.5 border border-gray-300 rounded-lg"
@@ -233,6 +242,27 @@ export default function DataTable({
           >
             Previous
           </button>
+          {pageCount > 3 &&
+            pageItems(currentPage, pageCount).map((item, i) =>
+              item === "gap" ? (
+                <span key={`gap-${i}`} className="px-1" aria-hidden="true">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  className={`min-w-9 px-3 py-1.5 rounded-lg ${
+                    item === currentPage ? "bg-gray-200 font-semibold text-gray-900" : "hover:bg-gray-100"
+                  }`}
+                  aria-label={`Page ${item + 1}`}
+                  aria-current={item === currentPage ? "page" : undefined}
+                  onClick={() => goToPage(item)}
+                >
+                  {item + 1}
+                </button>
+              )
+            )}
           <button
             type="button"
             className="px-3 py-1.5 border border-gray-300 rounded-lg"
@@ -242,10 +272,33 @@ export default function DataTable({
           >
             Next
           </button>
+          <button
+            type="button"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg"
+            style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
+            disabled={currentPage >= pageCount - 1}
+            onClick={() => goToPage(pageCount - 1)}
+          >
+            Last
+          </button>
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * The page buttons between Previous and Next: the first page, the last page and three pages around
+ * the current one (zero-based), with "gap" where pages are skipped: 1 2 3 ... 100, 1 ... 4 5 6 ... 100.
+ */
+function pageItems(current, count) {
+  const windowStart = Math.min(Math.max(current - 1, 0), count - 3);
+  const pages = [...new Set([0, windowStart, windowStart + 1, windowStart + 2, count - 1])].sort((a, b) => a - b);
+  return pages.flatMap((page, i) => {
+    const hidden = i === 0 ? 0 : page - pages[i - 1] - 1;
+    if (hidden === 1) return [page - 1, page]; // one skipped page is shown rather than "..."
+    return hidden > 1 ? ["gap", page] : [page];
+  });
 }
 
 // Missing values sort last; numbers and dates compare by value, everything else as text.
