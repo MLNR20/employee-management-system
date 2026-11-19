@@ -117,7 +117,6 @@ export default function DataTable({
     return setSort({ key: null, direction: "asc" });
   };
 
-  if (isLoading) return <p className="text-sm text-gray-500 p-4">Loading...</p>;
   if (error) return <p className="text-sm text-red-600 p-4">Something went wrong loading the data.</p>;
 
   return (
@@ -133,6 +132,7 @@ export default function DataTable({
               id="datatable-search"
               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-72 p-2.5 h-10"
               value={search}
+              disabled={isLoading}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setClientPage(0);
@@ -148,6 +148,7 @@ export default function DataTable({
             className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-1.5 h-10"
             style={{ minWidth: "4.5rem" }}
             value={pageSize}
+            disabled={isLoading}
             onChange={(e) => changePageSize(Number(e.target.value))}
           >
             {pageSizeOptions.map((option) => (
@@ -162,7 +163,7 @@ export default function DataTable({
       <table
         className="text-sm w-full text-left text-gray-500"
         style={{ opacity: isFetching ? 0.6 : 1 }}
-        aria-busy={isFetching}
+        aria-busy={isFetching || isLoading}
       >
         <thead className="bg-gray-100">
           <tr>
@@ -178,7 +179,9 @@ export default function DataTable({
                     active ? (sort.direction === "asc" ? "ascending" : "descending") : undefined
                   }
                 >
-                  {sortable ? (
+                  {isLoading ? (
+                    <span className="skeleton" style={{ width: "4.5rem" }} />
+                  ) : sortable ? (
                     <button
                       type="button"
                       className="font-bold flex items-center gap-1"
@@ -198,7 +201,20 @@ export default function DataTable({
           </tr>
         </thead>
         <tbody>
-          {visibleRows.length === 0 ? (
+          {isLoading ? (
+            Array.from({ length: pageSize }, (_, rowIndex) => (
+              <tr key={`skeleton-${rowIndex}`} className="odd:bg-white even:bg-gray-50">
+                {columns.map((column, colIndex) => (
+                  <td key={column.key} className="px-6 py-4">
+                    <span
+                      className="skeleton"
+                      style={{ width: SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length] }}
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : visibleRows.length === 0 ? (
             <tr>
               <td className="px-6 py-4 text-center" colSpan={columns.length}>
                 {emptyMessage}
@@ -219,16 +235,20 @@ export default function DataTable({
       </table>
 
       <div className="flex flex-wrap items-center justify-between gap-4 mt-4 text-sm text-gray-500">
-        <span>
-          Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
-          {totalRows} rows
-        </span>
+        {isLoading ? (
+          <span className="skeleton" style={{ width: "10rem" }} />
+        ) : (
+          <span>
+            Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
+            {totalRows} rows
+          </span>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             className="px-3 py-1.5 border border-gray-300 rounded-lg"
             style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
-            disabled={currentPage === 0}
+            disabled={isLoading || currentPage === 0}
             onClick={() => goToPage(0)}
           >
             First
@@ -237,7 +257,7 @@ export default function DataTable({
             type="button"
             className="px-3 py-1.5 border border-gray-300 rounded-lg"
             style={{ opacity: currentPage === 0 ? 0.5 : 1 }}
-            disabled={currentPage === 0}
+            disabled={isLoading || currentPage === 0}
             onClick={() => goToPage(currentPage - 1)}
           >
             Previous
@@ -267,7 +287,7 @@ export default function DataTable({
             type="button"
             className="px-3 py-1.5 border border-gray-300 rounded-lg"
             style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
-            disabled={currentPage >= pageCount - 1}
+            disabled={isLoading || currentPage >= pageCount - 1}
             onClick={() => goToPage(currentPage + 1)}
           >
             Next
@@ -276,7 +296,7 @@ export default function DataTable({
             type="button"
             className="px-3 py-1.5 border border-gray-300 rounded-lg"
             style={{ opacity: currentPage >= pageCount - 1 ? 0.5 : 1 }}
-            disabled={currentPage >= pageCount - 1}
+            disabled={isLoading || currentPage >= pageCount - 1}
             onClick={() => goToPage(pageCount - 1)}
           >
             Last
@@ -286,6 +306,9 @@ export default function DataTable({
     </div>
   );
 }
+
+// Varied widths so the placeholder rows look like real content rather than a solid block.
+const SKELETON_WIDTHS = ["60%", "80%", "45%", "70%", "55%"];
 
 /**
  * The page buttons between Previous and Next: the first page, the last page and three pages around
