@@ -2,6 +2,7 @@ import { Entity, baseProps } from "../Entity";
 
 export class Employee extends Entity {
   constructor({
+    employmentCode = "",
     first_name,
     last_name,
     email,
@@ -18,6 +19,7 @@ export class Employee extends Entity {
     ...base
   } = {}) {
     super(base);
+    this.employmentCode = employmentCode;
     this.first_name = first_name;
     this.last_name = last_name;
     this.email = email;
@@ -41,6 +43,7 @@ export class Employee extends Entity {
   static fromApi(raw = {}) {
     return new Employee({
       ...baseProps(raw),
+      employmentCode: raw.employmentCode ?? "",
       first_name: raw.first_name,
       last_name: raw.last_name,
       email: raw.email,

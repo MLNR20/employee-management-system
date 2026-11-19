@@ -3,7 +3,8 @@ import { isMissing, pickFields } from "../pickFields.js";
 import { GOVERNMENT_ID_FIELDS, assertValidGovernmentIds, normalizeGovernmentId } from "./governmentIds.js";
 
 const REQUIRED = ["first_name", "last_name", "email", "position", "department", "salary"];
-const ALLOWED = [...REQUIRED, ...GOVERNMENT_ID_FIELDS, "managerId", "employmentTypeId", "isActive"]; // portalPassword is deliberately not stored as sent
+export const EMPLOYMENT_CODE_MAX = 30;
+const ALLOWED = [...REQUIRED, ...GOVERNMENT_ID_FIELDS, "employmentCode", "managerId", "employmentTypeId", "isActive"]; // portalPassword is deliberately not stored as sent
 
 export const PORTAL_PASSWORD_MIN = 8;
 export const PORTAL_PASSWORD_MAX = 72; // bcrypt ignores everything past 72 bytes
@@ -16,6 +17,11 @@ export function assertValidEmployee(input) {
     );
   }
   assertValidGovernmentIds(input);
+  if (!isMissing(input.employmentCode)) {
+    if (typeof input.employmentCode !== "string" || input.employmentCode.trim().length > EMPLOYMENT_CODE_MAX) {
+      throw new ValidationError(`Employment code must be text of at most ${EMPLOYMENT_CODE_MAX} characters`);
+    }
+  }
   if (!isMissing(input.managerId) && typeof input.managerId !== "string") {
     throw new ValidationError("managerId must be the id of another employee");
   }

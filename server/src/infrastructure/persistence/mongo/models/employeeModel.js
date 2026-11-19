@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
 
 const employeesSchema = createEntitySchema({
+  // The employee's company-issued employment code (employee number). Optional.
+  employmentCode: {
+    type: String,
+    trim: true,
+    default: ""
+  },
   first_name: {
     type: String,
     required: true,

@@ -14,6 +14,7 @@ import ManagerSelect from "../../components/ManagerSelect";
 import EmploymentTypeSelect from "../../components/EmploymentTypeSelect";
 
 export default function Add_Employees() {
+  const [employmentCode, setEmploymentCode] = useState("");
   const [first_name, setFirstName] = useState("");
   const [last_name, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -88,6 +89,7 @@ export default function Add_Employees() {
     if (Object.keys(validationErrors).length > 0 || Object.keys(rowErrors).length > 0) return;
 
     const employees = {
+      employmentCode: employmentCode.trim(),
       first_name,
       last_name,
       email,
@@ -154,6 +156,36 @@ export default function Add_Employees() {
             <div class="overflow-auto mt-6 ">
               <div class="relative p-2 overflow-x-auto" id="LogsTableHere">
                 <div class="grid gap-6 mb-6 md:grid-cols-2">
+                  <div class="grid gap-6 md:col-span-2 md:grid-cols-3">
+                  <div>
+                    <label
+                      for="employmentCode"
+                      class="block mb-2 text-sm font-medium text-gray-900"
+                    >
+                      Employment code
+                    </label>
+                    <input
+                      type="text"
+                      id="employmentCode"
+                      value={employmentCode}
+                      maxLength={30}
+                      onChange={(e) => {
+                        setEmploymentCode(e.target.value);
+                        setErrors((prevErrors) => {
+                          const newErrors = { ...prevErrors };
+                          delete newErrors.employmentCode;
+                          return newErrors;
+                        });
+                      }}
+                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-12"
+                      placeholder="e.g. EMP-0001"
+                    />
+                    {errors.employmentCode && (
+                      <label className="text-sm text-red-500">
+                        {errors.employmentCode}
+                      </label>
+                    )}
+                  </div>
                   <div>
                     <label
                       for="first_name"
@@ -212,6 +244,7 @@ export default function Add_Employees() {
                         {errors.last_name}
                       </label>
                     )}
+                  </div>
                   </div>
                   <div>
                     <label

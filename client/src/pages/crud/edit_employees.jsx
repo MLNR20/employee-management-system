@@ -19,6 +19,7 @@ import EmergencyContactFields from "../../components/EmergencyContactFields";
 import { contactRowFromEntity, validateContactRows } from "../../domain/employee/emergencyContactRules";
 
 export default function Edit_Employees() {
+  const [employmentCode, setEmploymentCode] = useState("");
   const [first_name, setFirstName] = useState("");
   const [last_name, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -55,6 +56,7 @@ export default function Edit_Employees() {
   // already redirected to /login by the API client.
   useEffect(() => {
     if (!employee) return;
+    setEmploymentCode(employee.employmentCode ?? "");
     setFirstName(employee.first_name);
     setLastName(employee.last_name);
     setEmail(employee.email);
@@ -118,6 +120,7 @@ export default function Edit_Employees() {
     if (Object.keys(validationErrors).length > 0 || Object.keys(rowErrors).length > 0) return;
 
     const employees = {
+      employmentCode: employmentCode.trim(),
       first_name,
       last_name,
       email,
@@ -182,6 +185,36 @@ export default function Edit_Employees() {
             <div className="overflow-auto mt-6 ">
               <div className="relative p-2 overflow-x-auto" id="LogsTableHere">
                 <div className="grid gap-6 mb-6 md:grid-cols-2">
+                  <div className="grid gap-6 md:col-span-2 md:grid-cols-3">
+                  <div>
+                    <label
+                      htmlFor="employmentCode"
+                      className="block mb-2 text-sm font-medium text-gray-900"
+                    >
+                      Employment code
+                    </label>
+                    <input
+                      type="text"
+                      id="employmentCode"
+                      value={employmentCode}
+                      maxLength={30}
+                      onChange={(e) => {
+                        setEmploymentCode(e.target.value);
+                        setErrors((prevErrors) => {
+                          const newErrors = { ...prevErrors };
+                          delete newErrors.employmentCode;
+                          return newErrors;
+                        });
+                      }}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-12"
+                      placeholder="e.g. EMP-0001"
+                    />
+                    {errors.employmentCode && (
+                      <label className="text-sm text-red-500">
+                        {errors.employmentCode}
+                      </label>
+                    )}
+                  </div>
                   <div>
                     <label
                       htmlFor="first_name"
@@ -240,6 +273,7 @@ export default function Edit_Employees() {
                         {errors.last_name}
                       </label>
                     )}
+                  </div>
                   </div>
                   <div>
                     <label

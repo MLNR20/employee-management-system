@@ -8,6 +8,7 @@ import { toBaseProps } from "./models/baseSchema.js";
 const toEmployee = (doc) =>
   new Employee({
     ...toBaseProps(doc),
+    employmentCode: doc.employmentCode ?? "",
     first_name: doc.first_name,
     last_name: doc.last_name,
     email: doc.email,
@@ -27,7 +28,7 @@ export class MongoEmployeeRepository extends MongoRepository {
   constructor() {
     super({
       model: EmployeeModel,
-      searchFields: ["first_name", "last_name", "email", "position", "department"],
+      searchFields: ["employmentCode", "first_name", "last_name", "email", "position", "department"],
       toEntity: toEmployee,
       duplicateError: () => new DuplicateEmployeeError(),
     });
