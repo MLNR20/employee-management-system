@@ -14,6 +14,7 @@ import { EmploymentTypeName } from "../../components/EmploymentTypeSelect";
 
 const columns = [
   { key: "index", header: "#", sortable: false, searchable: false, render: (_, index) => index + 1 },
+  { key: "employmentCode", header: "Employment Code", sortKey: "employmentCode", render: (e) => e.employmentCode || "—" },
   { key: "fullName", header: "Full Name", sortKey: "first_name", accessor: (e) => e.fullName },
   { key: "email", header: "Email", sortKey: "email" },
   { key: "position", header: "Position", sortKey: "position" },
@@ -54,8 +55,9 @@ const columns = [
 const exportTable = (employees) => ({
   filename: "employees",
   title: "Employees",
-  headers: ["Full Name", "Email", "Position", "Salary", "Department", "Status", "Hire Date"],
+  headers: ["Employment Code", "Full Name", "Email", "Position", "Salary", "Department", "Status", "Hire Date"],
   rows: employees.map((e) => [
+    e.employmentCode,
     e.fullName,
     e.email,
     e.position,
