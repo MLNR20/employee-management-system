@@ -6,8 +6,13 @@ import PasswordInput from "../../components/PasswordInput";
 import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
 import { InvalidCredentialsError } from "../../domain/errors";
 
-const inputClass =
-  "bg-gray-50 border border-red-600 text-gray-900 text-base rounded-lg focus:ring-red-600 focus:border-red-600 block w-full p-3";
+// Same as the admin login: gray border, red only when the field is invalid.
+const inputClass = (hasError) =>
+  `bg-gray-50 border text-gray-900 text-base rounded-lg block w-full p-3 ${
+    hasError
+      ? "border-red-600 focus:ring-red-600 focus:border-red-600"
+      : "border-gray-300 focus:ring-gray-400 focus:border-gray-400"
+  }`;
 
 /** Employee sign-in: email and the portal password an administrator set. */
 export default function EmployeeLogin() {
@@ -67,7 +72,7 @@ export default function EmployeeLogin() {
               setEmail(e.target.value);
               clear("email");
             }}
-            className={inputClass}
+            className={inputClass(errors.email)}
           />
           {errors.email && <label className="text-sm text-red-500">{errors.email}</label>}
         </div>
@@ -86,7 +91,7 @@ export default function EmployeeLogin() {
               setPassword(e.target.value);
               clear("password");
             }}
-            className={inputClass}
+            className={inputClass(errors.password)}
           />
           {errors.password && <label className="text-sm text-red-500">{errors.password}</label>}
         </div>
