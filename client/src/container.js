@@ -25,6 +25,7 @@ import { EmploymentType } from "./domain/employmentType/EmploymentType";
 import { HttpEmergencyContactRepository } from "./infrastructure/repositories/HttpEmergencyContactRepository";
 import { SalaryRate } from "./domain/salary/SalaryRate";
 import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAttendanceRepository";
+import { HttpPayrollRepository } from "./infrastructure/repositories/HttpPayrollRepository";
 import { HttpNotificationRepository } from "./infrastructure/repositories/HttpNotificationRepository";
 import { subscribeToNotifications } from "./infrastructure/realtime/notificationSocket";
 
@@ -82,6 +83,11 @@ export const dashboardUseCases = {
   attendance: (days) => dashboardRepository.getAttendance(days),
 };
 export const auditLogUseCases = restCrud("audit-logs", AuditLog.fromApi);
+
+const payrollRepository = new HttpPayrollRepository();
+export const payrollUseCases = {
+  report: (period) => payrollRepository.getReport(period),
+};
 
 const notificationRepository = new HttpNotificationRepository();
 export const notificationUseCases = {

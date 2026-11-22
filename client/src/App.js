@@ -14,6 +14,7 @@ import AddEmployees from "./pages/crud/add_employees";
 import EditEmployees from "./pages/crud/edit_employees";
 import RolePermissions from './pages/roles/permissions';
 import DocumentChecklist from './pages/documents/checklist';
+import Payroll from './pages/payroll/payroll';
 import ProtectedRoute from './components/protectedroute';
 import RequirePermission from './components/RequirePermission';
 import ResourceListPage from './components/resource/ResourceListPage';
@@ -52,6 +53,7 @@ function App() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/permissions" element={<ProtectedRoute><RolePermissions /></ProtectedRoute>} />
             <Route path="/documents/checklist" element={<ProtectedRoute><DocumentChecklist /></ProtectedRoute>} />
+            <Route path="/payroll" element={guard("payroll", <Payroll />, "salary-rates:view")} />
             <Route path="/employees" element={<ProtectedRoute><ViewEmployees /></ProtectedRoute>} />
             <Route path="/employees/add" element={<ProtectedRoute><AddEmployees /></ProtectedRoute>} />
             <Route path="/employees/edit/:id" element={<ProtectedRoute><EditEmployees /></ProtectedRoute>} />

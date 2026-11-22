@@ -506,6 +506,10 @@ export class InMemoryAttendanceRepository extends InMemoryRepository {
   async findOpenByEmployeeId(employeeId) {
     return [...this.items.values()].reverse().find((a) => a.employeeId === employeeId && !a.timeOut) ?? null;
   }
+
+  async findBetween(from, to) {
+    return [...this.items.values()].filter((a) => a.date >= from && a.date <= to);
+  }
 }
 
 export class InMemorySalaryRateRepository extends InMemoryRepository {

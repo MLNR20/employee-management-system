@@ -47,4 +47,10 @@ export class MongoAttendanceRepository extends MongoRepository {
     const doc = await AttendanceModel.findOne({ employeeId, timeOut: null }).sort({ timeIn: -1 }).lean();
     return doc ? toAttendance(doc) : null;
   }
+
+  async findBetween(from, to) {
+    // `date` is "YYYY-MM-DD" text, which sorts and compares like a date.
+    const docs = await AttendanceModel.find({ date: { $gte: from, $lte: to } }).sort({ date: 1 }).lean();
+    return docs.map(toAttendance);
+  }
 }

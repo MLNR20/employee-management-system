@@ -24,4 +24,12 @@ export class AttendanceRepository extends Repository {
   async findOpenByEmployeeId(employeeId) {
     throw new Error("AttendanceRepository.findOpenByEmployeeId not implemented");
   }
+
+  /**
+   * Every employee's records for the days from `from` to `to` ("YYYY-MM-DD", both included).
+   * @returns {Promise<import("./Attendance").Attendance[]>}
+   */
+  async findBetween(from, to) {
+    throw new Error("AttendanceRepository.findBetween not implemented");
+  }
 }

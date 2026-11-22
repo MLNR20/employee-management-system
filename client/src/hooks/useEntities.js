@@ -17,6 +17,7 @@ import {
   inventoryUseCases,
   auditLogUseCases,
   dashboardUseCases,
+  payrollUseCases,
   permissionUseCases,
   workShiftUseCases,
   shiftAssignmentUseCases,
@@ -238,6 +239,15 @@ export const {
 
 // The audit trail is read-only: pages and single entries only.
 export const { usePage: useAuditLogsPage, useOne: useAuditLog } = createCrudHooks("audit-logs", auditLogUseCases);
+
+/** HR's payroll report for the days from `from` to `to` ("YYYY-MM-DD"). Waits until both are set. */
+export const usePayroll = ({ from, to }) =>
+  useQuery({
+    queryKey: ["payroll", from, to],
+    queryFn: () => payrollUseCases.report({ from, to }),
+    enabled: Boolean(from && to && from <= to),
+    placeholderData: keepPreviousData,
+  });
 
 /** Today's headcount for the dashboard: total, present and absent (on approved leave). */
 export const useDashboardSummary = () =>

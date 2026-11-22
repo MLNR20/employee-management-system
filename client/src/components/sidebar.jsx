@@ -43,6 +43,10 @@ const sections = [
 const organization = sections.find((section) => section.label === "Organization");
 organization?.items.push({ to: "/permissions", label: "Permissions", icon: "lock" });
 
+// Payroll is a page of its own (not a resource list), HR only like the salary rates it is built from.
+const timeAndPay = sections.find((section) => section.label === "Time & Pay");
+timeAndPay?.items.push({ to: "/payroll", label: "Payroll", icon: "banknotes", permission: "salary-rates:view" });
+
 // The per-employee document checklist is a page of its own, so it leads the Onboarding section.
 const onboarding = sections.find((section) => section.label === "Onboarding");
 onboarding?.items.unshift({ to: "/documents/checklist", label: "Document Checklist", icon: "checkCircle" });

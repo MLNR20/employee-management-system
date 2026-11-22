@@ -7,6 +7,7 @@ import { createDepartmentRouter } from "./routes/departmentRoutes.js";
 import { createEmploymentTypeRouter } from "./routes/employmentTypeRoutes.js";
 import { createAttendanceRouter } from "./routes/attendanceRoutes.js";
 import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
+import { createPayrollRouter } from "./routes/payrollRoutes.js";
 import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shiftRoutes.js";
 import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "./routes/documentRoutes.js";
 import { createRequirePermission } from "./middleware/permissionMiddleware.js";
@@ -53,6 +54,7 @@ export const createApp = ({
   emergencyContactUseCases, // optional: without it /emergency-contacts is not served
   attendanceUseCases, // optional: without it /attendance is not served
   salaryRateUseCases, // optional, with authorizationUseCases: without both /salary-rates is not served
+  payrollUseCases, // optional, with authorizationUseCases: without both /payroll is not served
   authorizationUseCases,
   workShiftUseCases, // optional: without it /work-shifts is not served
   shiftAssignmentUseCases, // optional: without it /shift-assignments is not served
@@ -120,6 +122,10 @@ export const createApp = ({
   if (salaryRateUseCases && authorizationUseCases) {
     const requirePermission = createRequirePermission(authorizationUseCases);
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));
+  }
+  if (payrollUseCases && authorizationUseCases) {
+    const requirePermission = createRequirePermission(authorizationUseCases);
+    app.use("/payroll", createPayrollRouter({ payrollUseCases, requireAuth, requirePermission }));
   }
   app.use("/departments", createDepartmentRouter({ departmentUseCases, requireAuth }));
   if (employmentTypeUseCases) {

@@ -44,6 +44,7 @@ import { MongoEmergencyContactRepository } from "./infrastructure/persistence/mo
 import { createAttendanceUseCases } from "./application/attendance/attendanceUseCases.js";
 import { MongoAttendanceRepository } from "./infrastructure/persistence/mongo/MongoAttendanceRepository.js";
 import { createSalaryRateUseCases } from "./application/salary/salaryRateUseCases.js";
+import { createPayrollUseCases } from "./application/payroll/payrollUseCases.js";
 import { MongoSalaryRateRepository } from "./infrastructure/persistence/mongo/MongoSalaryRateRepository.js";
 import { createAuthorizationUseCases } from "./application/role/authorizationUseCases.js";
 import { createJobUseCases } from "./application/job/jobUseCases.js";
@@ -102,13 +103,17 @@ export const shiftAssignmentUseCases = createShiftAssignmentUseCases({
   utcOffsetMinutes,
 });
 
+const attendanceRepository = new MongoAttendanceRepository();
+
 export const attendanceUseCases = createAttendanceUseCases({
-  attendanceRepository: new MongoAttendanceRepository(),
+  attendanceRepository,
   employeeRepository,
   salaryRateRepository,
   shiftLookup: shiftAssignmentUseCases,
   utcOffsetMinutes,
 });
+
+export const payrollUseCases = createPayrollUseCases({ employeeRepository, attendanceRepository, salaryRateRepository });
 
 const documentRequirementRepository = new MongoDocumentRequirementRepository();
 const employeeDocumentRepository = new MongoEmployeeDocumentRepository();
