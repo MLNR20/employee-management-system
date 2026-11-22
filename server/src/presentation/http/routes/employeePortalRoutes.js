@@ -20,6 +20,7 @@ export const createEmployeePortalRouter = ({
   leaveBalanceUseCases,
   leaveRequestUseCases,
   borrowingUseCases,
+  attendanceUseCases, // optional: without it the attendance routes are not served
   jobUseCases, // optional, with jobApplicationUseCases: without both the job routes are not served
   jobApplicationUseCases,
   requireEmployeeAuth,
@@ -92,6 +93,36 @@ export const createEmployeePortalRouter = ({
   router.post("/equipment/:id/return", async (req, res) => {
     res.status(200).json(equipmentDto(await borrowingUseCases.giveBack(req.user.id, req.params.id)));
   });
+
+  // Attendance. The employee clocks themselves in and out; the id never comes from the request, and
+  // the hourly rate (salary information) is never part of what they see.
+  if (attendanceUseCases) {
+    const attendanceDto = (record) =>
+      record && {
+        _id: record.id,
+        date: record.date,
+        timeIn: record.timeIn,
+        lunchOut: record.lunchOut,
+        lunchIn: record.lunchIn,
+        timeOut: record.timeOut,
+        hoursWorked: record.hoursWorked,
+        lateMinutes: record.lateMinutes,
+      };
+
+    router.get("/attendance", async (req, res) => {
+      const { today, recent } = await attendanceUseCases.myAttendance(req.user.id);
+      res.status(200).json({ today: attendanceDto(today), recent: recent.map(attendanceDto) });
+    });
+
+    const clock = (path, action) =>
+      router.post(`/attendance/${path}`, async (req, res) => {
+        res.status(200).json(attendanceDto(await attendanceUseCases[action](req.user.id)));
+      });
+    clock("time-in", "timeIn");
+    clock("lunch-out", "lunchOut");
+    clock("lunch-in", "lunchIn");
+    clock("time-out", "timeOut");
+  }
 
   // Jobs. Employees see the open positions and only their own applications. The applicant is always
   // the signed-in employee, and the status and submission date are set by the server.

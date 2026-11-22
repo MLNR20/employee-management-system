@@ -8,6 +8,16 @@ export class AttendanceRepository extends Repository {
   }
 
   /**
+   * The employee's records, newest day first.
+   * @param {string} employeeId
+   * @param {number} limit the most records to return
+   * @returns {Promise<import("./Attendance").Attendance[]>}
+   */
+  async findByEmployeeId(employeeId, limit) {
+    throw new Error("AttendanceRepository.findByEmployeeId not implemented");
+  }
+
+  /**
    * The employee's record that has no time out yet (the latest one, if several).
    * @returns {Promise<import("./Attendance").Attendance | null>}
    */

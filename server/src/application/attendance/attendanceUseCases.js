@@ -9,6 +9,7 @@ import {
 } from "../../domain/attendance/attendanceRules.js";
 
 const TIME_FIELDS = ["employeeId", "timeIn", "lunchOut", "lunchIn", "timeOut", "hourlyRate"];
+const RECENT_RECORDS = 14; // how many past days an employee sees in the portal
 
 /**
  * Daily time records. An employee times in (which fixes the hourly rate for the day and, when they
@@ -134,6 +135,18 @@ export const createAttendanceUseCases = ({
       const moved =
         merged.employeeId !== existing.employeeId || new Date(merged.timeIn).getTime() !== new Date(existing.timeIn).getTime();
       return crud.update(id, moved ? { ...merged, ...(await scheduleFor(merged.employeeId, merged.timeIn)) } : merged);
+    },
+
+    /**
+     * What an employee sees of their own attendance: today's record (the one still open, else the
+     * one for today's working day, else null) and their latest records, newest first.
+     */
+    async myAttendance(employeeId) {
+      await findActiveEmployee(employeeId);
+      const today =
+        (await attendanceRepository.findOpenByEmployeeId(employeeId)) ??
+        (await attendanceRepository.findByEmployeeAndDate(employeeId, dayOf(now())));
+      return { today, recent: await attendanceRepository.findByEmployeeId(employeeId, RECENT_RECORDS) };
     },
 
     /** Time in: starts the day and records the hourly rate it will be paid at and how late it is. */

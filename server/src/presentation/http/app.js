@@ -144,6 +144,7 @@ export const createApp = ({
         leaveBalanceUseCases,
         leaveRequestUseCases,
         borrowingUseCases,
+        attendanceUseCases,
         requireEmployeeAuth,
       })
     );

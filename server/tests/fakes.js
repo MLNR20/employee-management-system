@@ -496,6 +496,13 @@ export class InMemoryAttendanceRepository extends InMemoryRepository {
     return [...this.items.values()].find((a) => a.employeeId === employeeId && a.date === date) ?? null;
   }
 
+  async findByEmployeeId(employeeId, limit = 14) {
+    return [...this.items.values()]
+      .filter((a) => a.employeeId === employeeId)
+      .sort((a, b) => new Date(b.timeIn) - new Date(a.timeIn))
+      .slice(0, limit);
+  }
+
   async findOpenByEmployeeId(employeeId) {
     return [...this.items.values()].reverse().find((a) => a.employeeId === employeeId && !a.timeOut) ?? null;
   }

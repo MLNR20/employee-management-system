@@ -21,7 +21,9 @@ import { createInventoryUseCases } from "../src/application/inventory/inventoryU
 import { createDashboardUseCases } from "../src/application/dashboard/dashboardUseCases.js";
 import { createBorrowingUseCases } from "../src/application/inventory/borrowingUseCases.js";
 import { createEmployeeAuthUseCases } from "../src/application/employee/employeeAuthUseCases.js";
+import { createAttendanceUseCases } from "../src/application/attendance/attendanceUseCases.js";
 import {
+  InMemoryAttendanceRepository,
   InMemoryAdministratorRepository,
   InMemoryAuditLogRepository,
   InMemoryBorrowingRepository,
@@ -123,6 +125,10 @@ before(async () => {
         accessTtl: "15m",
         refreshTtl: "15m",
       }),
+    }),
+    attendanceUseCases: createAttendanceUseCases({
+      attendanceRepository: new InMemoryAttendanceRepository(),
+      employeeRepository,
     }),
     auditLogUseCases: createAuditLogUseCases({ auditLogRepository: new InMemoryAuditLogRepository() }),
   });
@@ -1141,4 +1147,52 @@ test("equipment that is under maintenance, retired, inactive or unknown cannot b
   assert.equal(view.available.some((i) => i._id === maintenance._id), false);
   assert.equal((await call("POST", `/employee-portal/equipment/${maintenance._id}/borrow`, { token: ann.token })).status, 409);
   assert.equal((await call("POST", "/employee-portal/equipment/000000000000000000000999/borrow", { token: ann.token })).status, 404);
+});
+
+// --- employee portal: attendance ----------------------------------------------------------------
+
+test("an employee clocks themselves in and out, sees only their own day and never the hourly rate", async () => {
+  const admin = await signIn();
+  const ann = await portalEmployee(admin, "clock-ann@example.com");
+  const bob = await portalEmployee(admin, "clock-bob@example.com");
+
+  assert.equal((await call("GET", "/employee-portal/attendance")).status, 401);
+  assert.equal((await call("GET", "/employee-portal/attendance", { token: admin })).status, 401);
+
+  const before = (await call("GET", "/employee-portal/attendance", { token: ann.token })).body;
+  assert.equal(before.today, null);
+  assert.deepEqual(before.recent, []);
+
+  // the order is enforced: no lunch or time out before timing in
+  assert.equal((await call("POST", "/employee-portal/attendance/time-out", { token: ann.token })).status, 409);
+
+  const timedIn = await call("POST", "/employee-portal/attendance/time-in", { token: ann.token });
+  assert.equal(timedIn.status, 200);
+  assert.ok(timedIn.body.timeIn);
+  assert.equal(timedIn.body.timeOut, null);
+  assert.equal("hourlyRate" in timedIn.body, false);
+  assert.equal((await call("POST", "/employee-portal/attendance/time-in", { token: ann.token })).status, 409);
+
+  assert.equal((await call("POST", "/employee-portal/attendance/lunch-out", { token: ann.token })).status, 200);
+  assert.equal((await call("POST", "/employee-portal/attendance/time-out", { token: ann.token })).status, 409); // back from lunch first
+  assert.equal((await call("POST", "/employee-portal/attendance/lunch-in", { token: ann.token })).status, 200);
+
+  const today = (await call("GET", "/employee-portal/attendance", { token: ann.token })).body;
+  assert.equal(today.today._id, timedIn.body._id);
+  assert.equal(JSON.stringify(today).includes("hourlyRate"), false);
+
+  const timedOut = await call("POST", "/employee-portal/attendance/time-out", { token: ann.token });
+  assert.equal(timedOut.status, 200);
+  assert.ok(timedOut.body.timeOut);
+  assert.equal(typeof timedOut.body.hoursWorked, "number");
+
+  // the finished day is still today's record, and it is listed in the history
+  const after = (await call("GET", "/employee-portal/attendance", { token: ann.token })).body;
+  assert.equal(after.today._id, timedIn.body._id);
+  assert.equal(after.recent.length, 1);
+
+  // Bob sees none of it
+  const bobs = (await call("GET", "/employee-portal/attendance", { token: bob.token })).body;
+  assert.equal(bobs.today, null);
+  assert.deepEqual(bobs.recent, []);
 });

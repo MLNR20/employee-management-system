@@ -36,6 +36,12 @@ export class MongoAttendanceRepository extends MongoRepository {
     return doc ? toAttendance(doc) : null;
   }
 
+  async findByEmployeeId(employeeId, limit = 14) {
+    if (!mongoose.isValidObjectId(employeeId)) return [];
+    const docs = await AttendanceModel.find({ employeeId }).sort({ timeIn: -1 }).limit(limit).lean();
+    return docs.map(toAttendance);
+  }
+
   async findOpenByEmployeeId(employeeId) {
     if (!mongoose.isValidObjectId(employeeId)) return null;
     const doc = await AttendanceModel.findOne({ employeeId, timeOut: null }).sort({ timeIn: -1 }).lean();
