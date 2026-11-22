@@ -1,0 +1,59 @@
+import PortalLayout from "../../components/employee/PortalLayout";
+import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
+
+const initialOf = (me) => (me?.first_name?.trim()?.[0] || "?").toUpperCase();
+
+/** The rows of the details card at the bottom of the page. */
+const details = (me) => [
+  { label: "First name", value: me.first_name },
+  { label: "Last name", value: me.last_name },
+  { label: "Email", value: me.email },
+  { label: "Position", value: me.position },
+  { label: "Department", value: me.department },
+];
+
+/** The employee's own profile: a banner with their avatar, name and email, and a card of their details. */
+export default function EmployeeProfile() {
+  const { employee: me, isLoading } = useEmployeeAuth();
+
+  return (
+    <PortalLayout>
+      <header className="profile-intro">
+        <h1 className="profile-intro-title">My profile</h1>
+        <p className="profile-intro-text">Your employee record on file.</p>
+      </header>
+
+      <section className="profile-card" aria-label="Profile">
+        <div className="profile-banner" />
+        <div className="profile-head">
+          <div className="profile-avatar" aria-hidden="true">
+            {initialOf(me)}
+          </div>
+          <div className="profile-identity">
+            <h2 className="profile-name">{me ? `${me.first_name} ${me.last_name}` : isLoading ? "Loading…" : "—"}</h2>
+            <p className="profile-sub">{me?.email || "—"}</p>
+          </div>
+          {me && <span className="profile-badge">Active</span>}
+        </div>
+      </section>
+
+      <section className="portal-panel profile-details-card" aria-labelledby="profile-details-heading">
+        <h2 id="profile-details-heading" className="portal-panel-title">
+          My details
+        </h2>
+        {me ? (
+          <dl className="portal-details">
+            {details(me).map(({ label, value }) => (
+              <div key={label} className="portal-detail-row">
+                <dt>{label}</dt>
+                <dd>{value || "—"}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="portal-empty">{isLoading ? "Loading…" : "Your details could not be loaded."}</p>
+        )}
+      </section>
+    </PortalLayout>
+  );
+}

@@ -2,10 +2,21 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import PortalLayout from "../../components/employee/PortalLayout";
+import SidebarIcon from "../../components/SidebarIcon";
 import LeaveCalendar, { dayOf, inclusiveDays } from "../../components/employee/LeaveCalendar";
 import { employeePortal } from "../../container";
 
 const emptyForm = { leaveTypeId: "", startDate: "", endDate: "", reason: "" };
+
+/** An icon for a leave type, picked from its name; anything unrecognised gets the calendar. */
+const iconFor = (name) => {
+  const n = name.toLowerCase();
+  if (/sick|medical|health/.test(n)) return "heart";
+  if (/vacation|annual|holiday|paid/.test(n)) return "sun";
+  if (/emergency|urgent/.test(n)) return "bolt";
+  if (/maternity|paternity|parental|family|bereave/.test(n)) return "users";
+  return "calendar";
+};
 
 const messageOf = (error) => error?.response?.data?.message ?? "Something went wrong. Please try again.";
 
@@ -17,6 +28,7 @@ export default function EmployeeLeave() {
   const [form, setForm] = useState(emptyForm);
   const [pickingEnd, setPickingEnd] = useState(false);
   const [open, setOpen] = useState(false);
+  const [showRequests, setShowRequests] = useState(true);
 
   const closeModal = () => {
     setOpen(false);
@@ -87,97 +99,107 @@ export default function EmployeeLeave() {
     apply.mutate({ ...form, reason: form.reason.trim() });
   };
 
+  const balanceList = balances.data ?? [];
+
   return (
     <PortalLayout>
-      <div className="portal-columns">
-        <div className="portal-column">
-          <section className="portal-panel" aria-labelledby="leave-requests-heading">
-            <h2 id="leave-requests-heading" className="portal-panel-title">
-              My leave requests
-            </h2>
-            {leaves.length === 0 ? (
-              <p className="portal-empty">{requests.isLoading ? "Loading…" : "You have not applied for leave yet."}</p>
-            ) : (
-              <ul className="leave-list">
-                {[...leaves]
-                  .sort((a, b) => b.startDate.localeCompare(a.startDate))
-                  .map((leave) => (
-                    <li key={leave._id} className="leave-item">
-                      <div>
-                        <p className="leave-item-title">{typeName(leave.leaveTypeId)}</p>
-                        <p className="leave-item-meta">
-                          {leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`} ·{" "}
-                          {leave.days} {leave.days === 1 ? "day" : "days"}
-                        </p>
-                        {leave.reason && <p className="leave-item-meta">{leave.reason}</p>}
-                      </div>
-                      <div className="leave-item-side">
-                        <span className={`leave-badge leave-badge-${leave.status}`}>{leave.status}</span>
-                        {leave.status === "pending" && (
-                          <button
-                            type="button"
-                            className="leave-cancel"
-                            onClick={() => cancel.mutate(leave._id)}
-                            disabled={cancel.isPending}
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="portal-panel" aria-labelledby="leave-calendar-heading">
-            <h2 id="leave-calendar-heading" className="portal-panel-title">
-              Leave calendar
-            </h2>
-            <div className="leave-file-row">
-              <button type="button" className="leave-submit" onClick={() => setOpen(true)}>
-                File leave
-              </button>
-            </div>
-            <LeaveCalendar
-              month={month}
-              onMonthChange={setMonth}
-              leaves={leaves}
-              selection={{ start: form.startDate, end: form.endDate }}
-              onPickDay={pickDay}
-            />
-          </section>
-        </div>
-
-        <section className="portal-panel portal-updates" aria-labelledby="leave-available-heading">
-          <h2 id="leave-available-heading" className="portal-panel-title">
-            Available leaves
-          </h2>
-          {(balances.data ?? []).length === 0 ? (
-            <p className="portal-empty">{balances.isLoading ? "Loading…" : "No leave balances have been set up for you yet."}</p>
-          ) : (
-            <ul className="leave-balance-list">
-              {(balances.data ?? []).map((balance) => {
-                const left = balance.availableLeaves;
-                const percent = balance.maxLeaves > 0 ? Math.max(0, Math.min(100, (left / balance.maxLeaves) * 100)) : 0;
-                return (
-                  <li key={balance._id} className="leave-balance-card">
-                    <div className="leave-balance-head">
-                      <p className="leave-item-title">{typeName(balance.leaveTypeId)}</p>
-                      <p className="leave-balance-count">
-                        <strong>{left}</strong> of {balance.maxLeaves} {balance.maxLeaves === 1 ? "day" : "days"} left
-                      </p>
-                    </div>
+      <section aria-labelledby="leave-available-heading" className="leave-available">
+        <h2 id="leave-available-heading" className="portal-panel-title">
+          Available leaves
+        </h2>
+        {balanceList.length === 0 ? (
+          <p className="portal-empty">{balances.isLoading ? "Loading…" : "No leave balances have been set up for you yet."}</p>
+        ) : (
+          <ul className="leave-icon-grid">
+            {balanceList.map((balance) => {
+              const left = balance.availableLeaves;
+              const percent = balance.maxLeaves > 0 ? Math.max(0, Math.min(100, (left / balance.maxLeaves) * 100)) : 0;
+              const name = typeName(balance.leaveTypeId);
+              return (
+                <li key={balance._id} className="leave-icon-card">
+                  <span className="leave-icon-badge">
+                    <SidebarIcon name={iconFor(name)} />
+                  </span>
+                  <div className="leave-icon-body">
+                    <p className="leave-item-title">{name}</p>
+                    <p className="leave-balance-count">
+                      <strong>{left}</strong> of {balance.maxLeaves} {balance.maxLeaves === 1 ? "day" : "days"} left
+                    </p>
                     <div className="leave-balance-bar" role="presentation">
                       <div className="leave-balance-fill" style={{ width: `${percent}%` }} />
                     </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section className="portal-panel" aria-labelledby="leave-calendar-heading">
+        <h2 id="leave-calendar-heading" className="portal-panel-title">
+          Leave calendar
+        </h2>
+        <div className="leave-file-row">
+          <button type="button" className="leave-submit" onClick={() => setOpen(true)}>
+            File leave
+          </button>
+          <button
+            type="button"
+            className="leave-cancel"
+            aria-expanded={showRequests}
+            aria-controls="leave-requests-list"
+            onClick={() => setShowRequests((value) => !value)}
+          >
+            My leave requests
+          </button>
+        </div>
+        <LeaveCalendar
+          month={month}
+          onMonthChange={setMonth}
+          leaves={leaves}
+          selection={{ start: form.startDate, end: form.endDate }}
+          onPickDay={pickDay}
+        />
+
+        {showRequests && (
+        <div id="leave-requests-list" className="leave-requests-block">
+          {leaves.length === 0 ? (
+            <p className="portal-empty">{requests.isLoading ? "Loading…" : "You have not applied for leave yet."}</p>
+          ) : (
+            <ul className="leave-list">
+              {[...leaves]
+                .sort((a, b) => b.startDate.localeCompare(a.startDate))
+                .map((leave) => (
+                  <li key={leave._id} className="leave-item">
+                    <div>
+                      <p className="leave-item-title">{typeName(leave.leaveTypeId)}</p>
+                      <p className="leave-item-meta">
+                        {leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`} ·{" "}
+                        {leave.days} {leave.days === 1 ? "day" : "days"}
+                      </p>
+                      {leave.reason && <p className="leave-item-meta">{leave.reason}</p>}
+                    </div>
+                    <div className="leave-item-side">
+                      <span className={`leave-badge leave-badge-${leave.status}`}>{leave.status}</span>
+                      {leave.status === "pending" && (
+                        <button
+                          type="button"
+                          className="leave-cancel"
+                          onClick={() => cancel.mutate(leave._id)}
+                          disabled={cancel.isPending}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </li>
-                );
-              })}
+                ))}
             </ul>
           )}
-        </section>
-      </div>
+        </div>
+        )}
+      </section>
 
       {open && (
         <div className="leave-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>

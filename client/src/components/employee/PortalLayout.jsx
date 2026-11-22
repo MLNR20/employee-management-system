@@ -2,9 +2,12 @@ import { NavLink } from "react-router-dom";
 import icon from "../../pages/assets/icon.png";
 import SidebarIcon from "../SidebarIcon";
 import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
+import { useSidebarCollapse } from "../../hooks/useSidebarCollapse";
 
 const links = [
   { to: "/employee", label: "Home", icon: "home", end: true },
+  { to: "/employee/profile", label: "Profile", icon: "idCard" },
+  { to: "/employee/attendance", label: "Attendance", icon: "clock" },
   { to: "/employee/leave", label: "Leave", icon: "calendar" },
   { to: "/employee/equipment", label: "Equipment", icon: "box" },
 ];
@@ -15,11 +18,21 @@ const links = [
  */
 export default function PortalLayout({ children }) {
   const { employee: me, logout: signOut } = useEmployeeAuth();
+  const { collapsed, toggle } = useSidebarCollapse();
 
   return (
     <div className="portal-shell">
       <nav className="portal-topbar">
         <div className="portal-brand">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            className="portal-toggle"
+          >
+            <SidebarIcon name="menu" />
+          </button>
           <img src={icon} className="portal-logo" alt="Gallium31 logo" />
           <span className="portal-brand-name">Gallium31 Employee Portal</span>
         </div>
@@ -36,20 +49,35 @@ export default function PortalLayout({ children }) {
                   <NavLink
                     to={link.to}
                     end={link.end}
+                    title={link.label}
                     className={({ isActive }) => `portal-nav-link${isActive ? " portal-nav-link-active" : ""}`}
                   >
                     <SidebarIcon name={link.icon} />
-                    <span>{link.label}</span>
+                    <span className="portal-nav-label">{link.label}</span>
                   </NavLink>
                 </li>
               ))}
             </ul>
           </div>
           <ul className="portal-logout-wrap">
+            <li className="portal-collapse">
+              <button
+                type="button"
+                onClick={toggle}
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!collapsed}
+                className="portal-nav-link"
+              >
+                <span className={`portal-collapse-icon${collapsed ? " portal-collapse-icon-flipped" : ""}`}>
+                  <SidebarIcon name="chevronLeft" />
+                </span>
+                <span className="portal-nav-label">{collapsed ? "Expand" : "Collapse"}</span>
+              </button>
+            </li>
             <li>
-              <button type="button" onClick={signOut} className="portal-nav-link portal-logout">
+              <button type="button" onClick={signOut} title="Logout" className="portal-nav-link portal-logout">
                 <SidebarIcon name="logout" />
-                <span>Logout</span>
+                <span className="portal-nav-label">Logout</span>
               </button>
             </li>
           </ul>

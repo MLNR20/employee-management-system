@@ -55,6 +55,21 @@ export class HttpEmployeePortalRepository {
     return data;
   }
 
+  /**
+   * { today, recent }: today's record (null before timing in) and the latest records, newest first.
+   * A record is { _id, date, timeIn, lunchOut, lunchIn, timeOut, hoursWorked, lateMinutes }.
+   */
+  async getAttendance() {
+    const { data } = await client.get("/employee-portal/attendance");
+    return data;
+  }
+
+  /** @param {"time-in" | "lunch-out" | "lunch-in" | "time-out"} step */
+  async clock(step) {
+    const { data } = await client.post(`/employee-portal/attendance/${step}`);
+    return data;
+  }
+
   /** Leave types an employee can apply for: [{ _id, name, isPaid }] */
   async getLeaveTypes() {
     const { data } = await client.get("/employee-portal/leave-types");
