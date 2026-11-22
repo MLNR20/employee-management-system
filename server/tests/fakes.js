@@ -13,6 +13,7 @@ import { LeaveBalance } from "../src/domain/leave/LeaveBalance.js";
 import { LeaveRequest } from "../src/domain/leave/LeaveRequest.js";
 import { LeaveApproval } from "../src/domain/leave/LeaveApproval.js";
 import { AuditLog } from "../src/domain/audit/AuditLog.js";
+import { Notification } from "../src/domain/notification/Notification.js";
 import { Item } from "../src/domain/inventory/Item.js";
 import { Borrowing } from "../src/domain/inventory/Borrowing.js";
 import { Job } from "../src/domain/job/Job.js";
@@ -385,6 +386,27 @@ export class InMemoryAuditLogRepository extends InMemoryRepository {
 
   async remove() {
     throw new Error("Audit logs are append-only and cannot be removed");
+  }
+}
+
+export class InMemoryNotificationRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Notification(props), [], () => new Error("duplicate"));
+  }
+
+  async countUnread() {
+    return [...this.items.values()].filter((n) => !n.isRead).length;
+  }
+
+  async markAllRead() {
+    let changed = 0;
+    for (const [id, n] of this.items) {
+      if (!n.isRead) {
+        this.items.set(id, new Notification({ ...n, isRead: true }));
+        changed++;
+      }
+    }
+    return changed;
   }
 }
 

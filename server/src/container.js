@@ -9,6 +9,8 @@ import {
 } from "./infrastructure/persistence/mongo/MongoRoleRepository.js";
 import { MongoInventoryRepository } from "./infrastructure/persistence/mongo/MongoInventoryRepository.js";
 import { MongoAuditLogRepository } from "./infrastructure/persistence/mongo/MongoAuditLogRepository.js";
+import { MongoNotificationRepository } from "./infrastructure/persistence/mongo/MongoNotificationRepository.js";
+import { SocketIoNotificationPublisher } from "./infrastructure/realtime/SocketIoNotificationPublisher.js";
 import { MongoLeaveTypeRepository } from "./infrastructure/persistence/mongo/MongoLeaveTypeRepository.js";
 import {
   MongoLeaveBalanceRepository,
@@ -36,6 +38,7 @@ import { MongoBorrowingRepository } from "./infrastructure/persistence/mongo/Mon
 import { createDashboardUseCases } from "./application/dashboard/dashboardUseCases.js";
 import { createEmployeeAuthUseCases } from "./application/employee/employeeAuthUseCases.js";
 import { createAuditLogUseCases } from "./application/audit/auditLogUseCases.js";
+import { createNotificationUseCases } from "./application/notification/notificationUseCases.js";
 import { createEmergencyContactUseCases } from "./application/employee/emergencyContactUseCases.js";
 import { MongoEmergencyContactRepository } from "./infrastructure/persistence/mongo/MongoEmergencyContactRepository.js";
 import { createAttendanceUseCases } from "./application/attendance/attendanceUseCases.js";
@@ -176,6 +179,13 @@ export const leaveRequestUseCases = createLeaveRequestUseCases({
 
 export const auditLogUseCases = createAuditLogUseCases({
   auditLogRepository: new MongoAuditLogRepository(),
+});
+
+// index.js attaches the Socket.IO server to this once the HTTP server exists.
+export const notificationPublisher = new SocketIoNotificationPublisher();
+export const notificationUseCases = createNotificationUseCases({
+  notificationRepository: new MongoNotificationRepository(),
+  notificationPublisher,
 });
 
 export const inventoryUseCases = createInventoryUseCases({ itemRepository, employeeRepository });

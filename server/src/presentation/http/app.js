@@ -19,6 +19,7 @@ import {
   createRoleRouter,
 } from "./routes/hrRoutes.js";
 import { createAuditLogRouter } from "./routes/auditLogRoutes.js";
+import { createNotificationRouter } from "./routes/notificationRoutes.js";
 import { createInventoryRouter } from "./routes/inventoryRoutes.js";
 import { createDashboardRouter } from "./routes/dashboardRoutes.js";
 import { createEmployeeAuthRouter, createEmployeePortalRouter } from "./routes/employeePortalRoutes.js";
@@ -48,6 +49,7 @@ export const createApp = ({
   borrowingUseCases, // used by the employee portal
   employeeAuthUseCases, // optional: without it the employee portal is not served
   auditLogUseCases, // optional: without it nothing is recorded and /audit-logs is not served
+  notificationUseCases, // optional: without it /notifications is not served
   emergencyContactUseCases, // optional: without it /emergency-contacts is not served
   attendanceUseCases, // optional: without it /attendance is not served
   salaryRateUseCases, // optional, with authorizationUseCases: without both /salary-rates is not served
@@ -153,6 +155,7 @@ export const createApp = ({
   }
   app.use("/dashboard", createDashboardRouter({ dashboardUseCases, requireAuth }));
   if (auditLogUseCases) app.use("/audit-logs", createAuditLogRouter({ auditLogUseCases, requireAuth }));
+  if (notificationUseCases) app.use("/notifications", createNotificationRouter({ notificationUseCases, requireAuth }));
 
   app.use(errorHandler);
 

@@ -25,6 +25,8 @@ import { EmploymentType } from "./domain/employmentType/EmploymentType";
 import { HttpEmergencyContactRepository } from "./infrastructure/repositories/HttpEmergencyContactRepository";
 import { SalaryRate } from "./domain/salary/SalaryRate";
 import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAttendanceRepository";
+import { HttpNotificationRepository } from "./infrastructure/repositories/HttpNotificationRepository";
+import { subscribeToNotifications } from "./infrastructure/realtime/notificationSocket";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
 export { setEmployeeSessionExpiredHandler } from "./infrastructure/repositories/HttpEmployeePortalRepository";
@@ -80,5 +82,14 @@ export const dashboardUseCases = {
   attendance: (days) => dashboardRepository.getAttendance(days),
 };
 export const auditLogUseCases = restCrud("audit-logs", AuditLog.fromApi);
+
+const notificationRepository = new HttpNotificationRepository();
+export const notificationUseCases = {
+  listPage: (params) => notificationRepository.getPage(params),
+  unreadCount: () => notificationRepository.getUnreadCount(),
+  markAsRead: (id) => notificationRepository.markAsRead(id),
+  markAllAsRead: () => notificationRepository.markAllAsRead(),
+  subscribe: subscribeToNotifications,
+};
 
 export const leaveRequestUseCases = createLeaveRequestUseCases(new HttpLeaveRequestRepository());

@@ -3,6 +3,7 @@ import icon from './assets/icon.png';
 import { useAuth } from '../context/AuthContext';
 import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import SidebarIcon from './SidebarIcon';
+import NotificationBell from './NotificationBell';
 
 const Navbars=() =>{
 
@@ -35,7 +36,8 @@ const Navbars=() =>{
             <span className="self-center text-xl font-semibold text-gray-700 whitespace-nowrap hidden  sm:hidden lg:block">Gallium31 Employee Management System</span>
           </Link>
         </div>
-        <div className="flex items-center lg:order-2">
+        <div className="flex items-center gap-3 lg:order-2">
+            <NotificationBell />
             <h1 className="font-semibold">{first_name + " " + last_name}</h1>
         </div>
       </div>
