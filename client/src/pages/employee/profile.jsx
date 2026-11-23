@@ -18,11 +18,6 @@ export default function EmployeeProfile() {
 
   return (
     <PortalLayout>
-      <header className="profile-intro">
-        <h1 className="profile-intro-title">My profile</h1>
-        <p className="profile-intro-text">Your employee record on file.</p>
-      </header>
-
       <section className="profile-card" aria-label="Profile">
         <div className="profile-banner" />
         <div className="profile-head">

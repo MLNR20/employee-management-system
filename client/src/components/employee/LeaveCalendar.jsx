@@ -23,8 +23,9 @@ export const inclusiveDays = (start, end) => {
  * @param {{startDate: string, endDate: string, status: string}[]} leaves
  * @param {{start: string, end: string}} selection the days picked so far ("" when none)
  * @param {(day: string) => void} onPickDay
+ * @param {import("react").ReactNode} children shown inside the calendar, under the month (the month's requests)
  */
-export default function LeaveCalendar({ month, onMonthChange, leaves, selection, onPickDay }) {
+export default function LeaveCalendar({ month, onMonthChange, leaves, selection, onPickDay, children }) {
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
   const firstWeekday = new Date(year, monthIndex, 1).getDay();
@@ -97,6 +98,7 @@ export default function LeaveCalendar({ month, onMonthChange, leaves, selection,
         ))}
         {cells}
       </div>
+      {children}
     </div>
   );
 }

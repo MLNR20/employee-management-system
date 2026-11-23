@@ -382,9 +382,6 @@ code {
 @media (max-width: 640px) {
   .profile-details-card .portal-details { grid-template-columns: 1fr; }
 }
-.profile-intro { margin-bottom: 1.25rem; }
-.profile-intro-title { margin: 0; font-size: 1.5rem; font-weight: 700; color: #111827; }
-.profile-intro-text { margin: 0.25rem 0 0; color: #6b7280; }
 .profile-card { overflow: hidden; background: #fff; border: 1px solid #e5e7eb; border-radius: 1rem; }
 .profile-banner { height: 7rem; background-image: linear-gradient(to bottom, #7f1d1d, #b91c1c); }
 .profile-head { position: relative; display: flex; align-items: center; gap: 1rem; min-height: 4.5rem; margin: 0 1.5rem; padding: 0 0 1.25rem 7.25rem; }
@@ -407,14 +404,7 @@ code {
 .leave-icon-body { flex: 1; min-width: 0; }
 .leave-icon-body .leave-balance-count { margin-top: 0.125rem; }
 .leave-icon-body .leave-balance-bar { margin-top: 0.5rem; }
-.leave-drawer-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(17, 24, 39, 0.35); }
-.leave-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 45; display: flex; flex-direction: column; width: 100%; max-width: 26rem; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15); animation: leave-drawer-in 0.2s ease; }
-.leave-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-.leave-drawer-head .portal-panel-title { margin: 0; }
-.leave-drawer-close { width: 2rem; height: 2rem; border: 0; border-radius: 0.5rem; background: transparent; color: #6b7280; font-size: 1.5rem; line-height: 1; cursor: pointer; }
-.leave-drawer-close:hover { background: #f3f4f6; }
-.leave-drawer-body { flex: 1; padding: 0 1.5rem 1.5rem; overflow-y: auto; }
-@keyframes leave-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.leave-requests-block { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; }
 .leave-requests-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; color: #111827; }
 
 /* Employee portal: attendance clock. */

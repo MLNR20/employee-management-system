@@ -1,5 +1,6 @@
 // Sample payroll data to look at: gives the portal user (user@gallium31.com) an hourly rate of 25,000
-// and a time record for every working day from 2026-11-01 to 2026-11-15. Only that one employee is
+// and a time record for every working day from 2026-10-01 to 2026-11-22, which fills the semi-monthly
+// payroll periods (1-15 and 16-end of the month) of October and November. Only that one employee is
 // touched. Safe to run again: a rate or a day's record that already exists is left alone. Run from
 // the server folder:
 //   node scripts/seedPayroll.js            (MONGO_URI comes from .env)
@@ -15,8 +16,8 @@ import { localDay } from "../src/domain/attendance/localTime.js";
 
 const EMAIL = "user@gallium31.com";
 const HOURLY_RATE = 25000;
-const FROM = "2026-11-01";
-const TO = "2026-11-15";
+const FROM = "2026-10-01";
+const TO = "2026-11-22";
 const UTC_OFFSET = config.WORK_UTC_OFFSET_MINUTES;
 
 if (!config.dbConnection) {
@@ -34,6 +35,14 @@ const at = (day, hhmm) => {
 // [time in, lunch out, lunch in, time out]
 const DEFAULT_DAY = ["08:00", "12:00", "13:00", "17:00"];
 const VARIATIONS = {
+  "2026-10-02": ["08:07", "12:00", "13:00", "17:00"],
+  "2026-10-08": ["08:00", "12:00", "13:00", "17:45"],
+  "2026-10-14": ["08:15", "12:10", "13:10", "17:00"],
+  "2026-10-19": ["08:00", "12:00", "13:00", "16:30"],
+  "2026-10-23": ["08:25", "12:00", "13:00", "17:00"],
+  "2026-10-28": ["08:00", "12:00", "13:00", "18:15"],
+  "2026-11-17": ["08:10", "12:00", "13:00", "17:00"],
+  "2026-11-19": ["08:00", "12:00", "13:00", "17:30"],
   "2026-11-04": ["08:12", "12:00", "13:00", "17:00"],
   "2026-11-06": ["08:00", "12:00", "13:00", "18:30"],
   "2026-11-10": ["08:20", "12:05", "13:05", "17:00"],
