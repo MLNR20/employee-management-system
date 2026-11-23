@@ -7,6 +7,7 @@ import EmployeePortal from './pages/employee/portal';
 import EmployeeProfile from './pages/employee/profile';
 import EmployeeAttendance from './pages/employee/attendance';
 import EmployeeLeave from './pages/employee/leave';
+import EmployeeLeaveRequests from './pages/employee/leave-requests';
 import EmployeeEquipment from './pages/employee/equipment';
 import Dashboard from './pages/dashboard';
 import ViewEmployees from "./pages/crud/view_employees";
@@ -49,6 +50,7 @@ function App() {
             <Route path="/employee/profile" element={<EmployeeProtectedRoute><EmployeeProfile /></EmployeeProtectedRoute>} />
             <Route path="/employee/attendance" element={<EmployeeProtectedRoute><EmployeeAttendance /></EmployeeProtectedRoute>} />
             <Route path="/employee/leave" element={<EmployeeProtectedRoute><EmployeeLeave /></EmployeeProtectedRoute>} />
+            <Route path="/employee/leave/requests" element={<EmployeeProtectedRoute><EmployeeLeaveRequests /></EmployeeProtectedRoute>} />
             <Route path="/employee/equipment" element={<EmployeeProtectedRoute><EmployeeEquipment /></EmployeeProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/permissions" element={<ProtectedRoute><RolePermissions /></ProtectedRoute>} />

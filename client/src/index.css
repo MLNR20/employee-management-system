@@ -486,6 +486,7 @@ code {
 .leave-cancel:hover:not(:disabled) { background: #f9fafb; }
 .leave-cancel:disabled { opacity: 0.6; cursor: default; }
 
+.leave-link { display: inline-block; text-decoration: none; }
 .leave-file-row { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
 
 .leave-balance-list { display: flex; flex-direction: column; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
