@@ -2,7 +2,6 @@ import { NavLink } from "react-router-dom";
 import icon from "../../pages/assets/icon.png";
 import SidebarIcon from "../SidebarIcon";
 import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
-import { useSidebarCollapse } from "../../hooks/useSidebarCollapse";
 
 const links = [
   { to: "/employee", label: "Home", icon: "home", end: true },
@@ -18,21 +17,11 @@ const links = [
  */
 export default function PortalLayout({ children }) {
   const { employee: me, logout: signOut } = useEmployeeAuth();
-  const { collapsed, toggle } = useSidebarCollapse();
 
   return (
     <div className="portal-shell">
       <nav className="portal-topbar">
         <div className="portal-brand">
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-expanded={!collapsed}
-            className="portal-toggle"
-          >
-            <SidebarIcon name="menu" />
-          </button>
           <img src={icon} className="portal-logo" alt="Gallium31 logo" />
           <span className="portal-brand-name">Gallium31 Employee Portal</span>
         </div>
@@ -60,20 +49,6 @@ export default function PortalLayout({ children }) {
             </ul>
           </div>
           <ul className="portal-logout-wrap">
-            <li className="portal-collapse">
-              <button
-                type="button"
-                onClick={toggle}
-                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                aria-expanded={!collapsed}
-                className="portal-nav-link"
-              >
-                <span className={`portal-collapse-icon${collapsed ? " portal-collapse-icon-flipped" : ""}`}>
-                  <SidebarIcon name="chevronLeft" />
-                </span>
-                <span className="portal-nav-label">{collapsed ? "Expand" : "Collapse"}</span>
-              </button>
-            </li>
             <li>
               <button type="button" onClick={signOut} title="Logout" className="portal-nav-link portal-logout">
                 <SidebarIcon name="logout" />

@@ -28,7 +28,7 @@ export default function EmployeeLeave() {
   const [form, setForm] = useState(emptyForm);
   const [pickingEnd, setPickingEnd] = useState(false);
   const [open, setOpen] = useState(false);
-  const [showRequests, setShowRequests] = useState(true);
+  const [showRequests, setShowRequests] = useState(false);
 
   const closeModal = () => {
     setOpen(false);
@@ -36,11 +36,15 @@ export default function EmployeeLeave() {
   };
 
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (event) => event.key === "Escape" && closeModal();
+    if (!open && !showRequests) return undefined;
+    const onKey = (event) => {
+      if (event.key !== "Escape") return;
+      if (open) closeModal();
+      else setShowRequests(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, showRequests]);
 
   const types = useQuery({ queryKey: ["employee-portal", "leave-types"], queryFn: employeePortal.getLeaveTypes });
   const balances = useQuery({ queryKey: ["employee-portal", "leave-balances"], queryFn: employeePortal.getLeaveBalances });
@@ -148,8 +152,8 @@ export default function EmployeeLeave() {
             type="button"
             className="leave-cancel"
             aria-expanded={showRequests}
-            aria-controls="leave-requests-list"
-            onClick={() => setShowRequests((value) => !value)}
+            aria-controls="leave-requests-drawer"
+            onClick={() => setShowRequests(true)}
           >
             My leave requests
           </button>
@@ -161,45 +165,58 @@ export default function EmployeeLeave() {
           selection={{ start: form.startDate, end: form.endDate }}
           onPickDay={pickDay}
         />
-
-        {showRequests && (
-        <div id="leave-requests-list" className="leave-requests-block">
-          {leaves.length === 0 ? (
-            <p className="portal-empty">{requests.isLoading ? "Loading…" : "You have not applied for leave yet."}</p>
-          ) : (
-            <ul className="leave-list">
-              {[...leaves]
-                .sort((a, b) => b.startDate.localeCompare(a.startDate))
-                .map((leave) => (
-                  <li key={leave._id} className="leave-item">
-                    <div>
-                      <p className="leave-item-title">{typeName(leave.leaveTypeId)}</p>
-                      <p className="leave-item-meta">
-                        {leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`} ·{" "}
-                        {leave.days} {leave.days === 1 ? "day" : "days"}
-                      </p>
-                      {leave.reason && <p className="leave-item-meta">{leave.reason}</p>}
-                    </div>
-                    <div className="leave-item-side">
-                      <span className={`leave-badge leave-badge-${leave.status}`}>{leave.status}</span>
-                      {leave.status === "pending" && (
-                        <button
-                          type="button"
-                          className="leave-cancel"
-                          onClick={() => cancel.mutate(leave._id)}
-                          disabled={cancel.isPending}
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-            </ul>
-          )}
-        </div>
-        )}
       </section>
+
+      {showRequests && (
+        <>
+          <div className="leave-drawer-backdrop" onMouseDown={() => setShowRequests(false)} />
+          <aside id="leave-requests-drawer" className="leave-drawer" aria-labelledby="leave-requests-heading">
+            <div className="leave-drawer-head">
+              <h2 id="leave-requests-heading" className="portal-panel-title">
+                My leave requests
+              </h2>
+              <button type="button" className="leave-drawer-close" aria-label="Close leave requests" onClick={() => setShowRequests(false)}>
+                ×
+              </button>
+            </div>
+            <div className="leave-drawer-body">
+            {leaves.length === 0 ? (
+              <p className="portal-empty">{requests.isLoading ? "Loading…" : "You have not applied for leave yet."}</p>
+            ) : (
+              <ul className="leave-list">
+                {[...leaves]
+                  .sort((a, b) => b.startDate.localeCompare(a.startDate))
+                  .map((leave) => (
+                    <li key={leave._id} className="leave-item">
+                      <div>
+                        <p className="leave-item-title">{typeName(leave.leaveTypeId)}</p>
+                        <p className="leave-item-meta">
+                          {leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`} ·{" "}
+                          {leave.days} {leave.days === 1 ? "day" : "days"}
+                        </p>
+                        {leave.reason && <p className="leave-item-meta">{leave.reason}</p>}
+                      </div>
+                      <div className="leave-item-side">
+                        <span className={`leave-badge leave-badge-${leave.status}`}>{leave.status}</span>
+                        {leave.status === "pending" && (
+                          <button
+                            type="button"
+                            className="leave-cancel"
+                            onClick={() => cancel.mutate(leave._id)}
+                            disabled={cancel.isPending}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            )}
+            </div>
+          </aside>
+        </>
+      )}
 
       {open && (
         <div className="leave-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>

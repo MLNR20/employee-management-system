@@ -352,7 +352,7 @@ code {
 .portal-logout { color: #dc2626; }
 
 .portal-main { flex: 1; min-width: 0; padding: 1.5rem; }
-.portal-welcome { padding: 2rem; border-radius: 0.75rem; color: #fff; background-image: linear-gradient(to bottom, #7f1d1d, #b91c1c); }
+.portal-welcome { margin-top: 0.5rem; padding: 2rem; border-radius: 0.75rem; color: #fff; background-image: linear-gradient(to bottom, #7f1d1d, #b91c1c); }
 .portal-welcome-kicker { margin: 0; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; }
 .portal-welcome-title { margin: 0.25rem 0 0.5rem; font-size: 2rem; font-weight: 700; }
 .portal-welcome-text { margin: 4rem 0 0; opacity: 0.9; }
@@ -368,25 +368,7 @@ code {
 .portal-detail-row dd { margin: 0; overflow-wrap: anywhere; font-weight: 500; color: #111827; text-align: right; }
 .portal-empty { margin: 0; color: #6b7280; }
 
-/* Collapsible portal sidebar: body.sidebar-collapsed (the same remembered setting as the admin sidebar)
-   shrinks it to icons. Phones keep the full row of links, so the toggle is hidden there. */
-.portal-toggle { display: inline-flex; align-items: center; margin-right: 0.5rem; padding: 0.5rem; border: 0; border-radius: 0.5rem; background: transparent; color: #6b7280; cursor: pointer; }
-.portal-toggle:hover { background: #f3f4f6; }
-.portal-toggle:focus-visible { outline: none; box-shadow: 0 0 0 2px #e5e7eb; }
-.portal-sidebar { transition: width 0.2s ease; }
-.portal-collapse { margin-bottom: 0.25rem; }
-.portal-collapse-icon { display: inline-flex; transition: transform 0.2s ease; }
-.portal-collapse-icon-flipped { transform: rotate(180deg); }
-
-@media (min-width: 641px) {
-  .sidebar-collapsed .portal-sidebar { width: 4.5rem; }
-  .sidebar-collapsed .portal-nav-label,
-  .sidebar-collapsed .portal-nav-heading { display: none; }
-  .sidebar-collapsed .portal-nav-link { justify-content: center; }
-}
-
 @media (max-width: 640px) {
-  .portal-toggle, .portal-collapse { display: none; }
   .portal-body { flex-direction: column; }
   .portal-sidebar { width: auto; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid #e5e7eb; }
   .portal-sidebar .portal-nav-link { width: auto; }
@@ -425,7 +407,14 @@ code {
 .leave-icon-body { flex: 1; min-width: 0; }
 .leave-icon-body .leave-balance-count { margin-top: 0.125rem; }
 .leave-icon-body .leave-balance-bar { margin-top: 0.5rem; }
-.leave-requests-block { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; }
+.leave-drawer-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(17, 24, 39, 0.35); }
+.leave-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 45; display: flex; flex-direction: column; width: 100%; max-width: 26rem; background: #fff; border-left: 1px solid #e5e7eb; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.15); animation: leave-drawer-in 0.2s ease; }
+.leave-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+.leave-drawer-head .portal-panel-title { margin: 0; }
+.leave-drawer-close { width: 2rem; height: 2rem; border: 0; border-radius: 0.5rem; background: transparent; color: #6b7280; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.leave-drawer-close:hover { background: #f3f4f6; }
+.leave-drawer-body { flex: 1; padding: 0 1.5rem 1.5rem; overflow-y: auto; }
+@keyframes leave-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
 .leave-requests-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; color: #111827; }
 
 /* Employee portal: attendance clock. */
