@@ -246,6 +246,32 @@ export default function EmployeeLeave() {
                   <dt>Reason</dt>
                   <dd>{detail.reason || "None given"}</dd>
                 </div>
+                {detail.decision && (
+                  <>
+                    <div className="portal-detail-row">
+                      <dt>{detail.decision.decision === "approved" ? "Approved by" : "Rejected by"}</dt>
+                      <dd>{detail.decision.decidedBy}</dd>
+                    </div>
+                    {detail.decision.decidedAt && (
+                      <div className="portal-detail-row">
+                        <dt>Decided on</dt>
+                        <dd>{new Date(detail.decision.decidedAt).toLocaleDateString()}</dd>
+                      </div>
+                    )}
+                    {detail.decision.remarks && (
+                      <div className="portal-detail-row">
+                        <dt>Remarks</dt>
+                        <dd>{detail.decision.remarks}</dd>
+                      </div>
+                    )}
+                  </>
+                )}
+                {!detail.decision && detail.status === "pending" && (
+                  <div className="portal-detail-row">
+                    <dt>Approval</dt>
+                    <dd>Waiting for an administrator</dd>
+                  </div>
+                )}
               </dl>
               {detail.status === "pending" && (
                 <button

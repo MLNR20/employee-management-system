@@ -19,6 +19,7 @@ export const createEmployeePortalRouter = ({
   leaveTypeUseCases,
   leaveBalanceUseCases,
   leaveRequestUseCases,
+  notificationUseCases, // optional: without it the portal bell routes are not served
   borrowingUseCases,
   attendanceUseCases, // optional: without it the attendance routes are not served
   jobUseCases, // optional, with jobApplicationUseCases: without both the job routes are not served
@@ -46,8 +47,25 @@ export const createEmployeePortalRouter = ({
     res.status(200).json(list(await leaveBalanceUseCases.listForEmployee(req.user.id)));
   });
 
+  // The employee's own notifications, e.g. a report's leave request. Others' are reported as not found.
+  if (notificationUseCases) {
+    router.get("/notifications", async (req, res) => {
+      const { items, total, page, pageSize, totalPages } = await notificationUseCases.listForEmployee(req.user.id, req.query);
+      res.status(200).json({ count: total, data: items.map(toDto), page, pageSize, totalPages });
+    });
+    router.get("/notifications/unread-count", async (req, res) => {
+      res.status(200).json({ count: await notificationUseCases.countUnreadForEmployee(req.user.id) });
+    });
+    router.post("/notifications/read-all", async (req, res) => {
+      res.status(200).json({ updated: await notificationUseCases.markAllReadForEmployee(req.user.id) });
+    });
+    router.patch("/notifications/:id/read", async (req, res) => {
+      res.status(200).json(toDto(await notificationUseCases.markReadForEmployee(req.params.id, req.user.id)));
+    });
+  }
+
   router.get("/leave-requests", async (req, res) => {
-    res.status(200).json(list(await leaveRequestUseCases.listForEmployee(req.user.id)));
+    res.status(200).json(list(await leaveRequestUseCases.listForEmployeeWithDecisions(req.user.id)));
   });
 
   router.post("/leave-requests", async (req, res) => {

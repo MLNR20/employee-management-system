@@ -15,11 +15,15 @@ function timeAgo(date) {
   return date.toLocaleDateString();
 }
 
-/** The navbar bell: an unread badge, and a dropdown of the latest notifications that updates live. */
-export default function NotificationBell() {
+/**
+ * The bell: an unread badge, and a dropdown of the latest notifications that updates live. By default it is the
+ * administrators' navbar bell; the employee portal passes `useData={usePortalNotifications}` for its own.
+ * `useData` is a hook, so a given bell must always be given the same one.
+ */
+export default function NotificationBell({ useData = useNotifications }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef(null);
-  const { unreadCount, notifications, isLoading, isError, markAsRead, markAllAsRead } = useNotifications({ open });
+  const { unreadCount, notifications, isLoading, isError, markAsRead, markAllAsRead } = useData({ open });
 
   // Close on a click outside or Escape.
   useEffect(() => {

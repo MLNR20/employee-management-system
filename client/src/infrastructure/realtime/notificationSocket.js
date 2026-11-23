@@ -8,14 +8,16 @@ import { Notification } from "../../domain/notification/Notification";
  *
  * @param {Object} handlers
  * @param {(notification: Notification) => void} handlers.onNew called for each notification raised while connected
+ * @param {() => string|null} [handlers.getToken] where to read the token (default: the administrator's); the
+ *   employee portal passes the employee token
  * @param {() => void} [handlers.onConnect] called on every (re)connection; anything raised while the connection
  *   was down was never pushed, so this is the moment to reload from the API
  * @returns {() => void} stops listening and closes the connection
  */
-export function subscribeToNotifications({ onNew, onConnect }) {
+export function subscribeToNotifications({ onNew, onConnect, getToken = () => tokenStorage.getAccessToken() }) {
   const socket = io(API_BASE_URL, {
     // A function, so a reconnect sends the token as it is now, after any refresh.
-    auth: (send) => send({ token: tokenStorage.getAccessToken() }),
+    auth: (send) => send({ token: getToken() }),
   });
 
   socket.on("notification:new", (raw) => onNew(Notification.fromApi(raw)));

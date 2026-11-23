@@ -173,6 +173,13 @@ export const leaveBalanceUseCases = createLeaveBalanceUseCases({
   leaveTypeRepository,
 });
 
+// index.js attaches the Socket.IO server to this once the HTTP server exists.
+export const notificationPublisher = new SocketIoNotificationPublisher();
+export const notificationUseCases = createNotificationUseCases({
+  notificationRepository: new MongoNotificationRepository(),
+  notificationPublisher,
+});
+
 export const leaveRequestUseCases = createLeaveRequestUseCases({
   leaveRequestRepository,
   leaveApprovalRepository,
@@ -180,17 +187,11 @@ export const leaveRequestUseCases = createLeaveRequestUseCases({
   employeeRepository,
   leaveTypeRepository,
   administratorRepository,
+  notificationUseCases,
 });
 
 export const auditLogUseCases = createAuditLogUseCases({
   auditLogRepository: new MongoAuditLogRepository(),
-});
-
-// index.js attaches the Socket.IO server to this once the HTTP server exists.
-export const notificationPublisher = new SocketIoNotificationPublisher();
-export const notificationUseCases = createNotificationUseCases({
-  notificationRepository: new MongoNotificationRepository(),
-  notificationPublisher,
 });
 
 export const inventoryUseCases = createInventoryUseCases({ itemRepository, employeeRepository });

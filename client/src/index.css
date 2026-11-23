@@ -340,6 +340,7 @@ code {
 .portal-logo { height: 2.5rem; margin-right: 0.75rem; }
 .portal-brand-name { font-size: 1.25rem; font-weight: 600; color: #6b7280; white-space: nowrap; }
 .portal-user { font-weight: 600; }
+.portal-topbar-end { display: flex; align-items: center; gap: 1rem; }
 
 .portal-body { flex: 1; display: flex; min-height: 0; }
 /* The sidebar stays put under the top bar while the page scrolls; only its own links scroll if the window is short. */

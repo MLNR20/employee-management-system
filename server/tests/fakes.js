@@ -395,13 +395,43 @@ export class InMemoryNotificationRepository extends InMemoryRepository {
   }
 
   async countUnread() {
-    return [...this.items.values()].filter((n) => !n.isRead).length;
+    return [...this.items.values()].filter((n) => !n.isRead && !n.recipientEmployeeId).length;
+  }
+
+  async findPageForEmployee(employeeId, { page, pageSize }) {
+    const mine = [...this.items.values()]
+      .filter((n) => n.recipientEmployeeId === employeeId)
+      .sort((a, b) => b.dateCreated - a.dateCreated);
+    return { items: mine.slice((page - 1) * pageSize, page * pageSize), total: mine.length };
+  }
+
+  async countUnreadForEmployee(employeeId) {
+    return [...this.items.values()].filter((n) => n.recipientEmployeeId === employeeId && !n.isRead).length;
+  }
+
+  async markReadForEmployee(id, employeeId) {
+    const n = this.items.get(id);
+    if (!n || n.recipientEmployeeId !== employeeId) return null;
+    const updated = new Notification({ ...n, isRead: true });
+    this.items.set(id, updated);
+    return updated;
+  }
+
+  async markAllReadForEmployee(employeeId) {
+    let changed = 0;
+    for (const [id, n] of this.items) {
+      if (n.recipientEmployeeId === employeeId && !n.isRead) {
+        this.items.set(id, new Notification({ ...n, isRead: true }));
+        changed++;
+      }
+    }
+    return changed;
   }
 
   async markAllRead() {
     let changed = 0;
     for (const [id, n] of this.items) {
-      if (!n.isRead) {
+      if (!n.isRead && !n.recipientEmployeeId) {
         this.items.set(id, new Notification({ ...n, isRead: true }));
         changed++;
       }

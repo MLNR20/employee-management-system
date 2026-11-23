@@ -20,7 +20,11 @@ const app = createApp({
 // Socket.IO shares the HTTP port, so the app is served from an http.Server rather than app.listen.
 const httpServer = http.createServer(app);
 useCases.notificationPublisher.attach(
-    createSocketServer(httpServer, { authUseCases: useCases.authUseCases, corsOrigins: config.CORS_ORIGINS })
+    createSocketServer(httpServer, {
+        authUseCases: useCases.authUseCases,
+        employeeAuthUseCases: useCases.employeeAuthUseCases,
+        corsOrigins: config.CORS_ORIGINS,
+    })
 );
 
 httpServer.listen(config.PORT, () =>{

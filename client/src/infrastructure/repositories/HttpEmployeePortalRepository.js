@@ -2,6 +2,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../config/env";
 import { employeeTokenStorage } from "../storage/employeeTokenStorage";
 import { InvalidCredentialsError } from "../../domain/errors";
+import { Notification } from "../../domain/notification/Notification";
 
 const client = axios.create({ baseURL: API_BASE_URL });
 
@@ -82,7 +83,10 @@ export class HttpEmployeePortalRepository {
     return data.data;
   }
 
-  /** The employee's own leave: [{ _id, leaveTypeId, startDate, endDate, days, reason, status }] */
+  /**
+   * The employee's own leave: [{ _id, leaveTypeId, startDate, endDate, days, reason, status, decision }].
+   * `decision` is null until an administrator decides, then { decision, decidedBy, decidedAt, remarks }.
+   */
   async getLeaveRequests() {
     const { data } = await client.get("/employee-portal/leave-requests");
     return data.data;
@@ -97,6 +101,26 @@ export class HttpEmployeePortalRepository {
   async cancelLeave(id) {
     const { data } = await client.post(`/employee-portal/leave-requests/${id}/cancel`);
     return data;
+  }
+
+  /** The signed-in employee's own notifications (e.g. a report's leave request), newest first. */
+  async getNotifications({ page = 1, pageSize = 20 } = {}) {
+    const { data } = await client.get("/employee-portal/notifications", { params: { page, pageSize } });
+    return { items: data.data.map(Notification.fromApi), total: data.count };
+  }
+
+  async getNotificationCount() {
+    const { data } = await client.get("/employee-portal/notifications/unread-count");
+    return data.count;
+  }
+
+  async markNotificationRead(id) {
+    const { data } = await client.patch(`/employee-portal/notifications/${id}/read`);
+    return Notification.fromApi(data);
+  }
+
+  async markAllNotificationsRead() {
+    await client.post("/employee-portal/notifications/read-all");
   }
 
   /** { available: [...], borrowed: [...] }: what can be borrowed, and what this employee holds. */

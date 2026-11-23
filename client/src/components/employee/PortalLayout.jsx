@@ -1,6 +1,8 @@
 import { NavLink } from "react-router-dom";
 import icon from "../../pages/assets/icon.png";
 import SidebarIcon from "../SidebarIcon";
+import NotificationBell from "../NotificationBell";
+import { usePortalNotifications } from "../../hooks/usePortalNotifications";
 import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
 
 const links = [
@@ -25,7 +27,10 @@ export default function PortalLayout({ children }) {
           <img src={icon} className="portal-logo" alt="Gallium31 logo" />
           <span className="portal-brand-name">Gallium31 Employee Portal</span>
         </div>
-        <span className="portal-user">{me ? `${me.first_name} ${me.last_name}` : ""}</span>
+        <div className="portal-topbar-end">
+          <NotificationBell useData={usePortalNotifications} />
+          <span className="portal-user">{me ? `${me.first_name} ${me.last_name}` : ""}</span>
+        </div>
       </nav>
 
       <div className="portal-body">

@@ -28,6 +28,7 @@ import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAtte
 import { HttpPayrollRepository } from "./infrastructure/repositories/HttpPayrollRepository";
 import { HttpNotificationRepository } from "./infrastructure/repositories/HttpNotificationRepository";
 import { subscribeToNotifications } from "./infrastructure/realtime/notificationSocket";
+import { employeeTokenStorage } from "./infrastructure/storage/employeeTokenStorage";
 
 export { setSessionExpiredHandler } from "./infrastructure/http/apiClient";
 export { setEmployeeSessionExpiredHandler } from "./infrastructure/repositories/HttpEmployeePortalRepository";
@@ -76,6 +77,13 @@ export const inventoryUseCases = restCrud("inventory", Item.fromApi);
 
 // The employee portal has its own sign-in and token, separate from the administrators'.
 export const employeePortal = new HttpEmployeePortalRepository();
+export const employeeNotifications = {
+  list: (params) => employeePortal.getNotifications(params),
+  unreadCount: () => employeePortal.getNotificationCount(),
+  markAsRead: (id) => employeePortal.markNotificationRead(id),
+  markAllAsRead: () => employeePortal.markAllNotificationsRead(),
+  subscribe: (handlers) => subscribeToNotifications({ ...handlers, getToken: () => employeeTokenStorage.get() }),
+};
 
 const dashboardRepository = new HttpDashboardRepository();
 export const dashboardUseCases = {

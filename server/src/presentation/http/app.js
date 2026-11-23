@@ -149,6 +149,7 @@ export const createApp = ({
         leaveTypeUseCases,
         leaveBalanceUseCases,
         leaveRequestUseCases,
+        notificationUseCases,
         borrowingUseCases,
         attendanceUseCases,
         requireEmployeeAuth,

@@ -16,6 +16,7 @@ import { normalizePageQuery, toPage } from "../../domain/pagination.js";
  * @param {import("../../domain/employee/EmployeeRepository").EmployeeRepository} deps.employeeRepository
  * @param {import("../../domain/leave/LeaveTypeRepository").LeaveTypeRepository} deps.leaveTypeRepository
  * @param {import("../../domain/administrator/AdministratorRepository").AdministratorRepository} deps.administratorRepository
+ * @param {{createNotification: Function}} [deps.notificationUseCases] optional: when set, filing leave notifies the employee's manager
  */
 export const createLeaveRequestUseCases = ({
   leaveRequestRepository,
@@ -24,6 +25,7 @@ export const createLeaveRequestUseCases = ({
   employeeRepository,
   leaveTypeRepository,
   administratorRepository,
+  notificationUseCases,
 }) => {
   const getOrThrow = async (id) => {
     const request = await leaveRequestRepository.findById(id);
@@ -49,6 +51,27 @@ export const createLeaveRequestUseCases = ({
     }
   };
 
+  // Tells the employee's manager (if they have one) that a request is waiting. The request is already saved,
+  // so a failure here is logged and never turned into an error for the employee.
+  const notifyManager = async ({ employee, leaveType, request }) => {
+    if (!notificationUseCases || !employee.managerId) return;
+    try {
+      const name = `${employee.first_name} ${employee.last_name}`.trim();
+      const day = (value) => new Date(value).toISOString().slice(0, 10);
+      const dates = day(request.startDate) === day(request.endDate) ? day(request.startDate) : `${day(request.startDate)} to ${day(request.endDate)}`;
+      await notificationUseCases.createNotification({
+        recipientEmployeeId: employee.managerId,
+        title: "New leave request",
+        subtitle: `${name} · ${leaveType.name}`,
+        body: `${name} filed ${request.days} ${request.days === 1 ? "day" : "days"} of ${leaveType.name} (${dates}).${
+          request.reason ? ` Reason: ${request.reason}` : ""
+        }`,
+      });
+    } catch (error) {
+      console.error("Could not notify the manager of a leave request", error);
+    }
+  };
+
   return {
     listLeaveRequests: () => leaveRequestRepository.findAll(),
 
@@ -66,16 +89,42 @@ export const createLeaveRequestUseCases = ({
       return leaveRequestRepository.findByEmployeeId(employeeId);
     },
 
+    /**
+     * The employee's requests, each with the decision made on it (who, when, remarks) once it has one, so
+     * the portal can show who approved or rejected it. `decision` is null while a request is undecided.
+     */
+    async listForEmployeeWithDecisions(employeeId) {
+      const requests = await this.listForEmployee(employeeId);
+      return Promise.all(
+        requests.map(async (request) => {
+          if (request.status !== LeaveStatus.APPROVED && request.status !== LeaveStatus.REJECTED) {
+            return { ...request, decision: null };
+          }
+          const approvals = await leaveApprovalRepository.findByLeaveRequestId(request.id);
+          const latest = approvals[approvals.length - 1];
+          if (!latest) return { ...request, decision: null };
+          const approver = await administratorRepository.findById(latest.approverId);
+          return {
+            ...request,
+            decision: {
+              decision: latest.decision,
+              decidedBy: approver ? `${approver.first_name} ${approver.last_name}`.trim() || approver.username : "An administrator",
+              decidedAt: latest.dateCreated,
+              remarks: latest.remarks ?? "",
+            },
+          };
+        })
+      );
+    },
+
     /** An employee files leave. It needs a balance for that leave type with enough days left. */
     async fileLeave(input = {}) {
       const { startDate, endDate, days } = validateLeaveRequest(input);
 
-      if (!(await employeeRepository.findById(input.employeeId))) {
-        throw new ValidationError("That employee does not exist");
-      }
-      if (!(await leaveTypeRepository.findById(input.leaveTypeId))) {
-        throw new ValidationError("That leave type does not exist");
-      }
+      const employee = await employeeRepository.findById(input.employeeId);
+      if (!employee) throw new ValidationError("That employee does not exist");
+      const leaveType = await leaveTypeRepository.findById(input.leaveTypeId);
+      if (!leaveType) throw new ValidationError("That leave type does not exist");
 
       const balance = await leaveBalanceRepository.findByEmployeeAndType(
         input.employeeId,
@@ -90,7 +139,7 @@ export const createLeaveRequestUseCases = ({
         );
       }
 
-      return leaveRequestRepository.create({
+      const request = await leaveRequestRepository.create({
         employeeId: input.employeeId,
         leaveTypeId: input.leaveTypeId,
         startDate,
@@ -99,6 +148,9 @@ export const createLeaveRequestUseCases = ({
         reason: input.reason?.trim() ?? "",
         status: LeaveStatus.PENDING,
       });
+
+      await notifyManager({ employee, leaveType, request });
+      return request;
     },
 
     /** Approves a pending request, deducts its days from the balance and records who approved. */
