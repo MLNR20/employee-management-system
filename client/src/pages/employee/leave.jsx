@@ -28,6 +28,7 @@ export default function EmployeeLeave() {
   const [form, setForm] = useState(emptyForm);
   const [pickingEnd, setPickingEnd] = useState(false);
   const [open, setOpen] = useState(false);
+  const [detailId, setDetailId] = useState(null);
 
   const closeModal = () => {
     setOpen(false);
@@ -35,11 +36,15 @@ export default function EmployeeLeave() {
   };
 
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (event) => event.key === "Escape" && closeModal();
+    if (!open && !detailId) return undefined;
+    const onKey = (event) => {
+      if (event.key !== "Escape") return;
+      if (open) closeModal();
+      else setDetailId(null);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, detailId]);
 
   const types = useQuery({ queryKey: ["employee-portal", "leave-types"], queryFn: employeePortal.getLeaveTypes });
   const balances = useQuery({ queryKey: ["employee-portal", "leave-balances"], queryFn: employeePortal.getLeaveBalances });
@@ -97,6 +102,8 @@ export default function EmployeeLeave() {
     if (form.endDate < form.startDate) return enqueueSnackbar("The last day cannot be before the first day.", { variant: "error" });
     apply.mutate({ ...form, reason: form.reason.trim() });
   };
+
+  const detail = leaves.find((leave) => leave._id === detailId);
 
   // The requests that touch the month on show, newest first.
   const monthStart = toDay(new Date(month.getFullYear(), month.getMonth(), 1));
@@ -165,15 +172,21 @@ export default function EmployeeLeave() {
             ) : (
               <ul className="leave-list">
                 {monthLeaves.map((leave) => (
-                  <li key={leave._id} className="leave-item">
-                    <div>
-                      <p className="leave-item-title">{typeName(leave.leaveTypeId)}</p>
-                      <p className="leave-item-meta">
+                  <li key={leave._id} className="leave-item leave-item-clickable">
+                    <button
+                      type="button"
+                      className="leave-item-open"
+                      aria-haspopup="dialog"
+                      aria-label={`View details of ${typeName(leave.leaveTypeId)}, ${leave.startDate}`}
+                      onClick={() => setDetailId(leave._id)}
+                    >
+                      <span className="leave-item-title">{typeName(leave.leaveTypeId)}</span>
+                      <span className="leave-item-meta">
                         {leave.startDate === leave.endDate ? leave.startDate : `${leave.startDate} to ${leave.endDate}`} ·{" "}
                         {leave.days} {leave.days === 1 ? "day" : "days"}
-                      </p>
-                      {leave.reason && <p className="leave-item-meta">{leave.reason}</p>}
-                    </div>
+                      </span>
+                      {leave.reason && <span className="leave-item-meta">{leave.reason}</span>}
+                    </button>
                     <div className="leave-item-side">
                       <span className={`leave-badge leave-badge-${leave.status}`}>{leave.status}</span>
                       {leave.status === "pending" && (
@@ -194,6 +207,63 @@ export default function EmployeeLeave() {
           </div>
         </LeaveCalendar>
       </section>
+
+      {detail && (
+        <>
+          <div className="leave-drawer-backdrop" onMouseDown={() => setDetailId(null)} />
+          <aside className="leave-drawer" role="dialog" aria-modal="true" aria-labelledby="leave-detail-heading">
+            <div className="leave-drawer-head">
+              <h2 id="leave-detail-heading" className="portal-panel-title">
+                Leave details
+              </h2>
+              <button type="button" className="leave-drawer-close" aria-label="Close details" onClick={() => setDetailId(null)}>
+                ×
+              </button>
+            </div>
+            <div className="leave-drawer-body">
+              <p className="leave-drawer-type">{typeName(detail.leaveTypeId)}</p>
+              <span className={`leave-badge leave-badge-${detail.status}`}>{detail.status}</span>
+              <dl className="portal-details leave-drawer-details">
+                <div className="portal-detail-row">
+                  <dt>First day</dt>
+                  <dd>{detail.startDate}</dd>
+                </div>
+                <div className="portal-detail-row">
+                  <dt>Last day</dt>
+                  <dd>{detail.endDate}</dd>
+                </div>
+                <div className="portal-detail-row">
+                  <dt>Days</dt>
+                  <dd>{detail.days}</dd>
+                </div>
+                {(detail.dateCreated || detail.createdAt) && (
+                  <div className="portal-detail-row">
+                    <dt>Filed on</dt>
+                    <dd>{new Date(detail.dateCreated || detail.createdAt).toLocaleDateString()}</dd>
+                  </div>
+                )}
+                <div className="portal-detail-row">
+                  <dt>Reason</dt>
+                  <dd>{detail.reason || "None given"}</dd>
+                </div>
+              </dl>
+              {detail.status === "pending" && (
+                <button
+                  type="button"
+                  className="leave-cancel"
+                  onClick={() => {
+                    cancel.mutate(detail._id);
+                    setDetailId(null);
+                  }}
+                  disabled={cancel.isPending}
+                >
+                  Cancel this request
+                </button>
+              )}
+            </div>
+          </aside>
+        </>
+      )}
 
       {open && (
         <div className="leave-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && closeModal()}>

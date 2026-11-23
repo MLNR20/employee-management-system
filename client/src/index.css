@@ -334,15 +334,16 @@ code {
 }
 
 /* Employee portal: top bar, left sidebar, red welcome card and two columns. */
-.portal-shell { min-height: 100vh; background: #f3f4f6; display: flex; flex-direction: column; }
-.portal-topbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background: #fff; border-bottom: 1px solid #e5e7eb; }
+.portal-shell { --portal-topbar-h: 4.5rem; min-height: 100vh; background: #f3f4f6; display: flex; flex-direction: column; }
+.portal-topbar { position: sticky; top: 0; z-index: 30; box-sizing: border-box; height: var(--portal-topbar-h); display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; background: #fff; border-bottom: 1px solid #e5e7eb; }
 .portal-brand { display: flex; align-items: center; }
 .portal-logo { height: 2.5rem; margin-right: 0.75rem; }
 .portal-brand-name { font-size: 1.25rem; font-weight: 600; color: #6b7280; white-space: nowrap; }
 .portal-user { font-weight: 600; }
 
 .portal-body { flex: 1; display: flex; min-height: 0; }
-.portal-sidebar { width: 14rem; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 0.75rem; background: #fff; border-right: 1px solid #e5e7eb; }
+/* The sidebar stays put under the top bar while the page scrolls; only its own links scroll if the window is short. */
+.portal-sidebar { position: sticky; top: var(--portal-topbar-h); align-self: flex-start; box-sizing: border-box; height: calc(100vh - var(--portal-topbar-h)); overflow-y: auto; width: 14rem; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem 0.75rem; background: #fff; border-right: 1px solid #e5e7eb; }
 .portal-nav { list-style: none; margin: 0; padding: 0; }
 .portal-nav-heading { margin: 0 0 0.5rem; padding: 0 0.5rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #9ca3af; }
 .portal-nav-link { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.5rem; border: 0; border-radius: 0.5rem; background: transparent; color: #6b7280; font-size: 1rem; font-weight: 500; text-decoration: none; cursor: pointer; }
@@ -370,7 +371,7 @@ code {
 
 @media (max-width: 640px) {
   .portal-body { flex-direction: column; }
-  .portal-sidebar { width: auto; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid #e5e7eb; }
+  .portal-sidebar { position: static; align-self: stretch; height: auto; width: auto; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid #e5e7eb; }
   .portal-sidebar .portal-nav-link { width: auto; }
   .portal-columns { grid-template-columns: 1fr; }
 }
@@ -405,6 +406,20 @@ code {
 .leave-icon-body .leave-balance-count { margin-top: 0.125rem; }
 .leave-icon-body .leave-balance-bar { margin-top: 0.5rem; }
 .leave-requests-block { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; }
+.leave-item-clickable { cursor: pointer; }
+.leave-item-clickable:hover { background: #f9fafb; }
+.leave-item-open { display: flex; flex: 1; flex-direction: column; min-width: 0; padding: 0; border: 0; background: transparent; text-align: left; font: inherit; cursor: pointer; }
+.leave-drawer-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(17, 24, 39, 0.6); animation: leave-fade-in 0.2s ease; }
+.leave-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 45; display: flex; flex-direction: column; width: 100%; max-width: 26rem; background: #fff; box-shadow: -8px 0 24px rgba(0, 0, 0, 0.25); animation: leave-drawer-in 0.2s ease; }
+.leave-drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+.leave-drawer-head .portal-panel-title { margin: 0; }
+.leave-drawer-close { width: 2rem; height: 2rem; border: 0; border-radius: 0.5rem; background: transparent; color: #6b7280; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.leave-drawer-close:hover { background: #f3f4f6; }
+.leave-drawer-body { flex: 1; padding: 1.5rem; overflow-y: auto; }
+.leave-drawer-type { margin: 0 0 0.5rem; font-size: 1.25rem; font-weight: 700; color: #111827; }
+.leave-drawer-details { margin: 1.25rem 0; }
+@keyframes leave-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes leave-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .leave-requests-title { margin: 0 0 0.5rem; font-size: 1rem; font-weight: 600; color: #111827; }
 
 /* Employee portal: attendance clock. */
