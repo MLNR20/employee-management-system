@@ -1,0 +1,57 @@
+name: CI
+
+# Runs on every push to master and on every pull request.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# A newer push to the same branch cancels the run still going for the older one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    name: Server tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22 # the server uses process.loadEnvFile, which needs Node 20.12+
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      # The tests use in-memory fakes, so no MongoDB service is needed.
+      - run: npm test
+
+  client:
+    name: Client tests and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - run: npm ci
+      - name: Test
+        run: npm test -- --watchAll=false
+        env:
+          CI: "true"
+      - name: Build
+        run: npm run build
+        env:
+          CI: "false" # same as Render: lint warnings must not fail the build
+          REACT_APP_API_URL: http://localhost:3002
