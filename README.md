@@ -163,7 +163,7 @@ cd server; npm test                              # node --test, in-memory fakes,
 cd client; $env:CI = "true"; npm test -- --watchAll=false
 ```
 
-`.github/workflows/ci.yml` runs two jobs on every push to `master` and every pull request:
+`.github/workflows/ci.yml` runs two jobs on every push to `master` or `main` and every pull request:
 
 1. **Server tests:** `npm ci` then `npm test` on Node 22.
 2. **Client tests and build:** `npm ci`, the Jest tests, then a production build, so a change that breaks

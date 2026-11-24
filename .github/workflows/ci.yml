@@ -1,9 +1,9 @@
 name: CI
 
-# Runs on every push to master and on every pull request.
+# Runs on every push to master or main and on every pull request.
 on:
   push:
-    branches: [master]
+    branches: [master, main]
   pull_request:
 
 # A newer push to the same branch cancels the run still going for the older one.
