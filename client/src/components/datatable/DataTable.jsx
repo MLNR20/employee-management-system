@@ -161,7 +161,7 @@ export default function DataTable({
       </div>
 
       <table
-        className="text-sm w-full text-left text-gray-500"
+        className="text-base w-full text-left text-gray-500"
         style={{ opacity: isFetching ? 0.6 : 1 }}
         aria-busy={isFetching || isLoading}
       >

@@ -7,7 +7,7 @@ export const statusColumn = () => ({
   accessor: (row) => (row.isActive ? "Active" : "Inactive"),
   render: (row) => (
     <span
-      className={`px-2 py-1 rounded-full text-xs font-medium ${
+      className={`px-2 py-1 rounded-full text-sm font-medium ${
         row.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
       }`}
     >
@@ -30,7 +30,7 @@ export const dateColumn = (key, header) => ({
 /** A coloured pill for a label such as a leave status. `tones` maps a value to Tailwind classes. */
 export const Badge = ({ value, tones }) => (
   <span
-    className={`px-2 py-1 rounded-full text-xs font-medium ${tones[value] ?? "bg-gray-100 text-gray-700"}`}
+    className={`px-2 py-1 rounded-full text-sm font-medium ${tones[value] ?? "bg-gray-100 text-gray-700"}`}
     style={{ textTransform: "capitalize" }}
   >
     {value}
