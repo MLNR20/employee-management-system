@@ -4,7 +4,19 @@ import SideBar from "../components/sidebar";
 import Card from "../components/Card";
 import StatCard from "../components/StatCard";
 import LineChart from "../components/LineChart";
-import { useDashboardSummary, useDashboardAttendance } from "../hooks/useEntities";
+import PieChart from "../components/PieChart";
+import UrgentLeaves from "../components/UrgentLeaves";
+import PendingTasks from "../components/PendingTasks";
+import { LeaveStatus } from "../domain/leave/Leave";
+import { useDashboardSummary, useDashboardAttendance, useLeaveRequests } from "../hooks/useEntities";
+
+// Pending is the urgent slice, so it takes the warm colour; the rest are calmer.
+const taskStatuses = [
+  { key: LeaveStatus.PENDING, label: "Pending", color: "#eb6834" },
+  { key: LeaveStatus.APPROVED, label: "Approved", color: "#2a78d6" },
+  { key: LeaveStatus.REJECTED, label: "Rejected", color: "#8a5cc2" },
+  { key: LeaveStatus.CANCELLED, label: "Cancelled", color: "#9ca3af" },
+];
 
 // Categorical slots 1 and 2 of the reference palette: an adjacent pair that stays apart for colour-blind readers.
 const series = [
@@ -22,6 +34,12 @@ export default function Dashboard() {
   const [days, setDays] = useState(14);
   const { data: summary } = useDashboardSummary();
   const { data: attendance = [], isLoading, error } = useDashboardAttendance(days);
+  const { data: leaveRequests = [], isLoading: leaveLoading, error: leaveError } = useLeaveRequests();
+
+  const taskSlices = taskStatuses.map((item) => ({
+    ...item,
+    value: leaveRequests.filter((request) => request.status === item.key).length,
+  }));
 
   return (
     <div>
@@ -34,34 +52,71 @@ export default function Dashboard() {
           <StatCard label="Absent Today" value={summary?.absent ?? "-"} icon="xCircle" accent="red" />
         </div>
 
-        <Card
-          title="Present vs Absent"
-          className="mt-6"
-          actions={
-            <select
-              aria-label="Period"
-              value={days}
-              onChange={(e) => setDays(Number(e.target.value))}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
-            >
-              {ranges.map((range) => (
-                <option key={range.days} value={range.days}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
-          }
-        >
+        <div className="grid grid-cols-1 gap-6 mt-6 xl:grid-cols-5">
+          <Card
+            title="Present vs Absent"
+            className="xl:col-span-3"
+            actions={
+              <select
+                aria-label="Period"
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value))}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5"
+              >
+                {ranges.map((range) => (
+                  <option key={range.days} value={range.days}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+            }
+          >
+            <p className="mb-4 text-sm text-gray-500">
+              Working days only. An employee counts as absent on any day covered by their approved leave; every other
+              active employee counts as present.
+            </p>
+            {isLoading ? (
+              <p className="text-sm text-gray-500 p-4">Loading...</p>
+            ) : error ? (
+              <p className="text-sm text-red-600 p-4">Something went wrong loading the data.</p>
+            ) : (
+              <LineChart title="Present vs absent employees" series={series} points={attendance} />
+            )}
+          </Card>
+
+          <div className="flex flex-col gap-6 xl:col-span-2">
+            <Card title="Pending Tasks">
+              <p className="mb-4 text-sm text-gray-500">Leave requests waiting for a decision.</p>
+              {leaveLoading ? (
+                <p className="text-sm text-gray-500 p-4">Loading...</p>
+              ) : leaveError ? (
+                <p className="text-sm text-red-600 p-4">Something went wrong loading the leave requests.</p>
+              ) : (
+                <PendingTasks requests={leaveRequests} />
+              )}
+            </Card>
+
+            <Card title="Urgent Notifications">
+              <p className="mb-4 text-sm text-gray-500">Leave approved by a manager that is under way or coming up.</p>
+              {leaveLoading ? (
+                <p className="text-sm text-gray-500 p-4">Loading...</p>
+              ) : leaveError ? (
+                <p className="text-sm text-red-600 p-4">Something went wrong loading the leave requests.</p>
+              ) : (
+                <UrgentLeaves requests={leaveRequests} />
+              )}
+            </Card>
+          </div>
+        </div>
+
+        <Card title="Urgent Tasks" className="mt-6">
           <p className="mb-4 text-sm text-gray-500">
-            Working days only. An employee counts as absent on any day covered by their approved leave; every other
-            active employee counts as present.
+            All leave requests by status. Pending requests are waiting for a manager's decision.
           </p>
-          {isLoading ? (
+          {leaveLoading ? (
             <p className="text-sm text-gray-500 p-4">Loading...</p>
-          ) : error ? (
-            <p className="text-sm text-red-600 p-4">Something went wrong loading the data.</p>
           ) : (
-            <LineChart title="Present vs absent employees" series={series} points={attendance} />
+            <PieChart title="Leave requests by status" slices={taskSlices} />
           )}
         </Card>
       </div>
