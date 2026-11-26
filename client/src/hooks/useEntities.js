@@ -26,6 +26,7 @@ import {
   documentChecklistUseCases,
   offboardingUseCases,
 } from "../container";
+import { allows } from "../domain/role/access";
 
 export const {
   useList: useEmployees,
@@ -134,6 +135,12 @@ export const useMyPermissions = () =>
     staleTime: 60 * 1000,
     retry: false,
   });
+
+/** { can(permission or list), isLoading, isError }: for screens that check several permissions. */
+export const useAccess = () => {
+  const { data, isLoading, isError } = useMyPermissions();
+  return { can: (required) => allows(data, required), isLoading, isError };
+};
 
 /** { allowed, isLoading } for one permission such as "salary-rates:view". Not allowed until it is known. */
 export const useCan = (permission) => {

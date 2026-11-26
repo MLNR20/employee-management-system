@@ -2,7 +2,8 @@ import { Link, NavLink } from "react-router-dom";
 import { initFlowbite } from "flowbite";
 import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useMyPermissions } from "../hooks/useEntities";
+import { useAccess } from "../hooks/useEntities";
+import { resourceAccess } from "../domain/role/access";
 import { resources } from "../resources";
 import SidebarIcon, { resourceIcons } from "./SidebarIcon";
 
@@ -12,7 +13,7 @@ const resourceLink = (resource) => ({
   to: resource.basePath,
   label: resource.title,
   icon: resourceIcons[resource.key],
-  permission: resource.permission, // when set, only administrators holding it see the link
+  permission: resourceAccess(resource).view, // only administrators holding it see the link
 });
 
 const sectionKeys = [
@@ -28,9 +29,9 @@ const sections = [
   {
     label: "Employees",
     items: [
-      { to: "/dashboard", label: "Dashboard", icon: "home" },
-      { to: "/employees", label: "Employees", icon: "users" },
-      { to: "/offboarding", label: "Offboarding", icon: "userMinus" },
+      { to: "/dashboard", label: "Dashboard", icon: "home", permission: "dashboard:view" },
+      { to: "/employees", label: "Employees", icon: "users", permission: "employees:view" },
+      { to: "/offboarding", label: "Offboarding", icon: "userMinus", permission: "employees:view" },
     ],
   },
   ...sectionKeys.map(({ label, keys }) => ({
@@ -42,7 +43,10 @@ const sections = [
 // The permission matrix is a page of its own (not a resource list), so it is added by hand,
 // straight after Roles and Role Assignments.
 const organization = sections.find((section) => section.label === "Organization");
-organization?.items.push({ to: "/permissions", label: "Permissions", icon: "lock" });
+organization?.items.push(
+  { to: "/permissions", label: "Permissions", icon: "lock", permission: "roles:view" },
+  { to: "/administrators", label: "Administrators", icon: "userPlus", permission: "role-assignments:create" }
+);
 
 // Payroll is a page of its own (not a resource list), HR only like the salary rates it is built from.
 const timeAndPay = sections.find((section) => section.label === "Time & Pay");
@@ -50,7 +54,12 @@ timeAndPay?.items.push({ to: "/payroll", label: "Payroll", icon: "banknotes", pe
 
 // The per-employee document checklist is a page of its own, so it leads the Onboarding section.
 const onboarding = sections.find((section) => section.label === "Onboarding");
-onboarding?.items.unshift({ to: "/documents/checklist", label: "Document Checklist", icon: "checkCircle" });
+onboarding?.items.unshift({
+  to: "/documents/checklist",
+  label: "Document Checklist",
+  icon: "checkCircle",
+  permission: "documents:view",
+});
 
 const placed = new Set(sectionKeys.flatMap(({ keys }) => keys));
 const unplaced = resources.filter((r) => !placed.has(r.key));
@@ -60,12 +69,12 @@ const SideBar=()=> {
 
   const { logout } = useAuth();
 
-  // Links that need a permission (HR's salary rates) stay hidden until it is known the administrator has it.
-  const { data: permissions = [] } = useMyPermissions();
+  // Links stay hidden until it is known the administrator holds their permission.
+  const { can } = useAccess();
   const visibleSections = sections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => !item.permission || permissions.includes(item.permission)),
+      items: section.items.filter((item) => can(item.permission)),
     }))
     .filter((section) => section.items.length > 0);
 
@@ -111,6 +120,12 @@ const SideBar=()=> {
                         ))}
                         </div>
                         <ul className="pt-4 mt-4 border-t border-gray-200 font-medium">
+                        <li>
+                            <NavLink to="/account" title="Change password" className="sidebar-link flex items-center p-2 text-gray-500 rounded-lg hover:bg-gray-100 group">
+                                <SidebarIcon name="lock" />
+                                <span className="sidebar-label flex-1 ms-3 whitespace-nowrap">Change password</span>
+                            </NavLink>
+                        </li>
                         <li>
                             <Link to="/login/" onClick={logout} title="Logout" className="sidebar-link flex items-center p-2 text-red-600 rounded-lg hover:bg-gray-100 group">
                                 <SidebarIcon name="logout" />

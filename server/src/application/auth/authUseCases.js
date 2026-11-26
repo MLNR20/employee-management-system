@@ -4,6 +4,7 @@ import {
   ValidationError,
 } from "../../domain/errors.js";
 import { toPublicAdministrator } from "../../domain/administrator/Administrator.js";
+import { assertValidPassword, assertValidPasswordChange } from "../../domain/passwordRules.js";
 
 const isNonEmptyString = (value) => typeof value === "string" && value.length > 0;
 
@@ -16,6 +17,8 @@ const isNonEmptyString = (value) => typeof value === "string" && value.length > 
  * @param {{accessFor: (administratorId: string) => Promise<{roles: string[], permissions: string[]}>}} [deps.accessResolver]
  *   looks up the administrator's active roles and permissions, which are put in every access token issued.
  *   Without it tokens carry no roles or permissions.
+ * @param {(administrator: import("../../domain/administrator/Administrator").Administrator) => Promise<unknown>} [deps.onSeeded]
+ *   called when the first administrator has just been created, to give them access
  */
 const NO_ACCESS = { roles: [], permissions: [] };
 
@@ -25,6 +28,7 @@ export const createAuthUseCases = ({
   tokenService,
   seedAdministrator = {},
   accessResolver,
+  onSeeded,
 }) => ({
   async login({ username, password } = {}) {
     // Type checks stop objects like {"$ne": null} from reaching the query.
@@ -101,6 +105,7 @@ export const createAuthUseCases = ({
         "Send all required fields: username, password, first name, last name, email"
       );
     }
+    assertValidPassword(password);
 
     const admin = await administratorRepository.create({
       username,
@@ -113,6 +118,20 @@ export const createAuthUseCases = ({
     return toPublicAdministrator(admin);
   },
 
+  /**
+   * An administrator changes their own password, proving they know the current one. Every session
+   * ends: the refresh token is revoked, and access tokens run out within their short lifetime.
+   */
+  async changePassword(administratorId, input = {}) {
+    assertValidPasswordChange(input);
+    const admin = await administratorRepository.findById(administratorId);
+    if (!admin) throw new InvalidTokenError("Session is no longer valid");
+    if (!(await passwordHasher.compare(input.currentPassword, admin.passwordHash))) {
+      throw new InvalidCredentialsError("Your current password is incorrect.");
+    }
+    await administratorRepository.setPasswordHash(admin.id, await passwordHasher.hash(input.newPassword));
+  },
+
   /** Creates the configured seed administrator on a fresh install. */
   async ensureAdministratorsExist() {
     if ((await administratorRepository.count()) > 0) return { created: false };
@@ -122,13 +141,14 @@ export const createAuthUseCases = ({
       return { created: false };
     }
 
-    await administratorRepository.create({
+    const administrator = await administratorRepository.create({
       username,
       first_name,
       last_name,
       email,
       passwordHash: await passwordHasher.hash(password),
     });
+    await onSeeded?.(administrator);
     return { created: true };
   },
 

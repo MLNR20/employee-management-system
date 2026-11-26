@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import PageLayout from "../../components/PageLayout";
-import { useRoles, useUpdateRole, usePermissionCatalog } from "../../hooks/useEntities";
+import { useAccess, useRoles, useUpdateRole, usePermissionCatalog } from "../../hooks/useEntities";
 import { permissionKey } from "../../domain/role/Role";
 import {
   allKeys,
@@ -38,6 +38,8 @@ export default function RolePermissions() {
   const { data: roles = [], isLoading: loadingRoles } = useRoles();
   const { data: catalog = [], isLoading: loadingCatalog } = usePermissionCatalog();
   const update = useUpdateRole();
+  const { can } = useAccess();
+  const mayEdit = can("roles:edit");
 
   const [selectedId, setSelectedId] = useState(null);
   const [draft, setDraft] = useState(() => new Set());
@@ -150,7 +152,8 @@ export default function RolePermissions() {
                 </button>
                 <button
                   type="button"
-                  disabled={!dirty || update.isPending}
+                  disabled={!mayEdit || !dirty || update.isPending}
+                  title={mayEdit ? undefined : "Your roles do not let you change permissions"}
                   onClick={save}
                   className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2 disabled:opacity-50"
                 >
@@ -235,9 +238,11 @@ export default function RolePermissions() {
     <PageLayout
       title="Roles & Permissions"
       actions={
-        <Link to="/roles/add" className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5">
-          Add Role
-        </Link>
+        can("roles:create") && (
+          <Link to="/roles/add" className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5">
+            Add Role
+          </Link>
+        )
       }
     >
       {body}

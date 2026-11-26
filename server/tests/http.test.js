@@ -99,6 +99,14 @@ before(async () => {
   });
   const administratorUseCases = createAdministratorUseCases({ administratorRepository });
 
+  await administratorRepository.create({
+    username: "root",
+    first_name: "Root",
+    last_name: "Admin",
+    email: "root@example.com",
+    passwordHash: await new BcryptPasswordHasher(4).hash("root-pass-1"),
+  });
+
   const app = createApp({
     authUseCases,
     employeeUseCases,
@@ -185,8 +193,18 @@ test("GET /health answers without authentication", async () => {
   assert.equal(typeof body.uptime, "number");
 });
 
+const rootToken = async () =>
+  (await call("POST", "/admin/login", { body: { username: "root", password: "root-pass-1" } })).body.token;
+
+test("registering an administrator needs a signed-in administrator", async () => {
+  const anonymous = await call("POST", "/admin/register", { body: { ...alice, username: "mallory", email: "m@example.com" } });
+  assert.equal(anonymous.status, 401);
+  const { body } = await call("GET", "/administrators/", { token: await rootToken() });
+  assert.deepEqual(body.data.map((admin) => admin.username), ["root"], "no account was made");
+});
+
 test("full session: register, login, use, refresh, logout", async () => {
-  assert.equal((await call("POST", "/admin/register", { body: alice })).status, 200);
+  assert.equal((await call("POST", "/admin/register", { token: await rootToken(), body: alice })).status, 200);
 
   const login = await call("POST", "/admin/login", {
     body: { username: "alice", password: "pass-word1!" },
@@ -231,11 +249,12 @@ test("login failures are 400 and registering twice reports code 11000", async ()
   const bad = await call("POST", "/admin/login", { body: { username: "alice", password: "wrong" } });
   assert.equal(bad.status, 400);
 
-  const duplicate = await call("POST", "/admin/register", { body: alice });
+  const token = await rootToken();
+  const duplicate = await call("POST", "/admin/register", { token, body: alice });
   assert.equal(duplicate.status, 400);
   assert.equal(duplicate.body.code, 11000);
 
-  const incomplete = await call("POST", "/admin/register", { body: { username: "x" } });
+  const incomplete = await call("POST", "/admin/register", { token, body: { username: "x" } });
   assert.equal(incomplete.status, 400);
 });
 

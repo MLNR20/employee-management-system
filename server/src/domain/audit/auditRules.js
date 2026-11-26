@@ -22,6 +22,10 @@ export const describeRequest = ({ method, url, status }) => {
   const succeeded = status < 400;
   const base = { method: verb, path };
 
+  if (resource === "employee-portal" && second === "password") {
+    return succeeded ? { ...base, resource, action: "password_change" } : null;
+  }
+
   if (resource === "employee-auth") {
     if (second !== "login") return null;
     return { ...base, resource, action: succeeded ? "login" : "login_failed" };
@@ -32,6 +36,7 @@ export const describeRequest = ({ method, url, status }) => {
     if (!succeeded) return null;
     if (second === "logout") return { ...base, resource, action: "logout" };
     if (second === "register") return { ...base, resource, action: "register" };
+    if (second === "password") return { ...base, resource, action: "password_change" };
     return null; // e.g. /admin/refresh
   }
 

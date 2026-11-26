@@ -140,5 +140,11 @@ export const createAdministratorListRouter =({ administratorUseCases, requireAut
     res.status(200).json({ count: administrators.length, data: administrators.map(toDto) });
   });
 
+  // Sets a new password for an administrator who forgot theirs.
+  router.post("/:id/password", async (req, res) => {
+    await administratorUseCases.resetPassword(req.params.id, req.body?.newPassword, req.user.id);
+    res.status(204).end();
+  });
+
   return router;
 };

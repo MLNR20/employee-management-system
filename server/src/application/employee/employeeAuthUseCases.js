@@ -1,4 +1,5 @@
-import { InvalidCredentialsError } from "../../domain/errors.js";
+import { InvalidCredentialsError, InvalidTokenError } from "../../domain/errors.js";
+import { assertValidPasswordChange } from "../../domain/passwordRules.js";
 
 const isNonEmptyString = (value) => typeof value === "string" && value.trim() !== "";
 
@@ -36,6 +37,23 @@ export const createEmployeeAuthUseCases = ({ employeeRepository, passwordHasher,
         last_name: employee.last_name,
       }),
     };
+  },
+
+  /**
+   * An employee changes their own portal password, proving they know the current one. Portal tokens
+   * cannot be revoked, so one issued earlier keeps working until it expires.
+   */
+  async changePassword(employeeId, input = {}) {
+    assertValidPasswordChange(input);
+    const employee = await employeeRepository.findById(employeeId);
+    const credentials = employee && (await employeeRepository.findCredentialsByEmail(employee.email));
+    if (!credentials) throw new InvalidTokenError("This account is no longer active");
+
+    const matches =
+      credentials.passwordHash && (await passwordHasher.compare(input.currentPassword, credentials.passwordHash));
+    if (!matches) throw new InvalidCredentialsError("Your current password is incorrect.");
+
+    await employeeRepository.setPassword(employeeId, await passwordHasher.hash(input.newPassword));
   },
 
   /** Verifies an employee access token; throws the same errors as administrator tokens. */

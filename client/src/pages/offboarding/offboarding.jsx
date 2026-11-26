@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import PageLayout from "../../components/PageLayout";
 import EmployeeChecklist from "../../components/EmployeeChecklist";
 import RehireTag from "../../components/RehireTag";
-import { useEmployees, useOffboarding, useOffboardingAction } from "../../hooks/useEntities";
+import { useAccess, useEmployees, useOffboarding, useOffboardingAction } from "../../hooks/useEntities";
 import {
   NOTES_MAX,
   OffboardingStatus,
@@ -199,6 +199,8 @@ function History({ entries }) {
 function EmployeeOffboarding({ employeeId }) {
   const { data, isLoading, error } = useOffboarding(employeeId);
   const action = useOffboardingAction();
+  const { can } = useAccess();
+  const mayChange = can("employees:edit");
 
   if (isLoading) return <p className="text-gray-500">Loading...</p>;
   if (error) return <p className="text-red-600">{error.response?.data?.message ?? "Could not load the offboarding."}</p>;
@@ -210,6 +212,15 @@ function EmployeeOffboarding({ employeeId }) {
       { employeeId, name, details },
       { onSuccess: () => success && Swal.fire(success, "", "success"), onError: showError }
     );
+
+  if (!separation && !mayChange) {
+    return (
+      <div className="space-y-6">
+        <p className="text-gray-500">This employee is not being offboarded.</p>
+        <History entries={history} />
+      </div>
+    );
+  }
 
   if (!separation) {
     return (
@@ -267,30 +278,39 @@ function EmployeeOffboarding({ employeeId }) {
         </span>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Details and rehire tag</h2>
-        {/* Keyed on the stored values, so the form refills after a save but not on a background refresh. */}
-        <SeparationForm
-          key={JSON.stringify([separation, rehireStatus])}
-          initial={{ ...blank, ...separation, rehireStatus }}
-          completed={completed}
-          submitLabel="Save details"
-          isSubmitting={action.isPending}
-          onSubmit={({ separationType, lastWorkingDay, reason, rehireStatus: tag, rehireNotes }) =>
-            run("update", { separationType, lastWorkingDay, reason, rehireStatus: tag, rehireNotes }, "Saved")
-          }
-        />
-      </section>
+      {mayChange ? (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold text-gray-900">Details and rehire tag</h2>
+          {/* Keyed on the stored values, so the form refills after a save but not on a background refresh. */}
+          <SeparationForm
+            key={JSON.stringify([separation, rehireStatus])}
+            initial={{ ...blank, ...separation, rehireStatus }}
+            completed={completed}
+            submitLabel="Save details"
+            isSubmitting={action.isPending}
+            onSubmit={({ separationType, lastWorkingDay, reason, rehireStatus: tag, rehireNotes }) =>
+              run("update", { separationType, lastWorkingDay, reason, rehireStatus: tag, rehireNotes }, "Saved")
+            }
+          />
+        </section>
+      ) : (
+        <section className="text-sm text-gray-700">
+          {separation.reason && <p>Reason for leaving: {separation.reason}</p>}
+          {separation.rehireNotes && <p>Rehire notes: {separation.rehireNotes}</p>}
+        </section>
+      )}
 
       <Clearance clearance={clearance} />
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-900">Offboarding documents</h2>
-        <EmployeeChecklist employeeId={employeeId} stage="offboarding" />
-      </section>
+      {can("documents:view") && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold text-gray-900">Offboarding documents</h2>
+          <EmployeeChecklist employeeId={employeeId} stage="offboarding" />
+        </section>
+      )}
 
       <section className="flex flex-wrap items-center gap-2">
-        {!completed && (
+        {mayChange && !completed && (
           <>
             <button type="button" disabled={action.isPending || !rehireStatus} onClick={complete}
               style={{ opacity: rehireStatus ? 1 : 0.5 }} className={`${buttonClass} bg-green-700 hover:bg-green-800`}>
@@ -302,7 +322,7 @@ function EmployeeOffboarding({ employeeId }) {
             {!rehireStatus && <span className="text-sm text-gray-500">Save a rehire tag to complete.</span>}
           </>
         )}
-        {completed && rehireStatus === RehireStatus.REHIREABLE && (
+        {mayChange && completed && rehireStatus === RehireStatus.REHIREABLE && (
           <button type="button" disabled={action.isPending} onClick={rehire} className={`${buttonClass} bg-green-700 hover:bg-green-800`}>
             Rehire
           </button>

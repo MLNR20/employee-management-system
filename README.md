@@ -6,7 +6,7 @@ payroll, inventory, onboarding and offboarding documents, roles and permissions,
 
 - **Server:** Node 22, Express 5, MongoDB (Mongoose), Socket.IO for live notifications
 - **Client:** React 19 (Create React App), React Router 7, TanStack Query, Tailwind CSS + Flowbite
-- **Tests:** 187 server tests (`node --test`) and 40 client tests (Jest), run by GitHub Actions on every push
+- **Tests:** 206 server tests (`node --test`) and 43 client tests (Jest), run by GitHub Actions on every push
 
 ## Offboarding and the rehire tag
 
@@ -92,14 +92,43 @@ All server settings are environment variables, read in `server/src/infrastructur
 | Variable | Purpose |
 | --- | --- |
 | `MONGO_URI` | MongoDB connection string (required) |
-| `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, `EMPLOYEE_JWT_SECRET` | Token signing secrets. The defaults are for development only |
-| `USERNAME`, `PASSWORD`, `FIRST_NAME`, `LAST_NAME`, `EMAIL` | First administrator, created when the database has none |
+| `JWT_SECRET`, `REFRESH_TOKEN_SECRET`, `EMPLOYEE_JWT_SECRET` | Token signing secrets, three different random values. There are no defaults: see below |
+| `USERNAME`, `PASSWORD`, `FIRST_NAME`, `LAST_NAME`, `EMAIL` | First administrator, created with full access when the database has none |
 | `CORS_ORIGINS` | Browser origins allowed to call the API (comma-separated; empty allows any) |
 | `TRUST_PROXY` | Number of reverse proxies in front of the API (Render: 1) |
 | `RATE_LIMIT_*`, `AUTH_RATE_LIMIT_*` | Per-IP limits: general API, and the stricter one for sign-in |
 | `WORK_UTC_OFFSET_MINUTES` | The workplace clock for shifts and lateness (default 480, UTC+8) |
 
 The client has one setting, `REACT_APP_API_URL`, which Create React App bakes in at build time.
+
+A signing secret that is missing, publicly known or the same as another is replaced by a random one when
+the server starts, with a warning. The server stays safe, but everyone is signed out at each restart. To
+generate a value (run it once per secret):
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+On Windows the system already defines `USERNAME`, which takes priority over the one in `server/.env`.
+
+## Access and passwords
+
+- **Permissions are enforced on every administrator route.** Which permission each route needs is listed in
+  one file, `server/src/presentation/http/middleware/permissionPolicy.js`. A route in a guarded group that
+  has no rule there is refused. Employment types share the Departments permissions; offboarding, emergency
+  contacts and job openings use the Employees ones; managing administrator accounts needs
+  `role-assignments:create`.
+- **A new administrator can do nothing** until given a role under **Role Assignments**. Changes to roles
+  reach a signed-in administrator when the access token renews (up to 15 minutes), or at the next sign-in.
+- **No anonymous registration.** Signed-in administrators add others on the **Administrators** page.
+- **Somebody can always manage access.** If, at start-up, no active administrator can edit roles and assign
+  them, the server gives the `Administrator` role, with every permission, to the configured first
+  administrator (matched by email, then username) or else the oldest one, and logs who. To choose someone
+  yourself, run this from `server` with `MONGO_URI` set: `node scripts/grantFullAccess.js <username>`.
+- **Passwords** are 8 to 72 characters. Administrators change their own under **Change password** (which
+  signs them out everywhere) and reset a colleague's on the Administrators page. Employees change theirs on
+  their portal profile; an administrator resets it on the Edit Employee screen. A portal token already
+  issued keeps working until it expires (8 hours by default).
 
 ## How the code is organised
 
@@ -140,7 +169,7 @@ Things worth knowing:
 - **Two sign-in systems.** Administrators and employees have separate tokens, signed with separate secrets,
   so an employee token can never act as an administrator. Employee routes live under `/employee-portal`.
 - **Roles and permissions.** A role grants permission strings such as `salary-rates:view`.
-  `requirePermission` checks the `permissions` claim inside the access token, so no database lookup
+  The permission policy checks the `permissions` claim inside the access token, so no database lookup
   is needed per request. Access tokens last 15 minutes; refresh tokens rotate.
 - **Audit log.** The audit middleware records who changed what.
 - **Notifications.** When someone files leave, the manager is notified: the use case calls the

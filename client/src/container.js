@@ -8,6 +8,7 @@ import { HttpLeaveRequestRepository } from "./infrastructure/repositories/HttpLe
 import { HttpPermissionRepository } from "./infrastructure/repositories/HttpPermissionRepository";
 import { HttpDocumentRepository } from "./infrastructure/repositories/HttpDocumentRepository";
 import { HttpOffboardingRepository } from "./infrastructure/repositories/HttpOffboardingRepository";
+import { HttpAccountRepository } from "./infrastructure/repositories/HttpAccountRepository";
 import { WorkShift, ShiftAssignment } from "./domain/shift/WorkShift";
 import { DocumentRequirement, EmployeeDocument } from "./domain/document/Document";
 import { createAuthUseCases } from "./application/auth/authUseCases";
@@ -69,6 +70,13 @@ export const documentChecklistUseCases = {
   checklist: (employeeId, stage) => documentRepository.getChecklist(employeeId, stage),
   verify: (documentId) => documentRepository.verify(documentId),
   reject: (documentId, remarks) => documentRepository.reject(documentId, remarks),
+};
+
+const accountRepository = new HttpAccountRepository();
+export const accountUseCases = {
+  register: (account) => accountRepository.register(account),
+  changePassword: (passwords) => accountRepository.changePassword(passwords),
+  resetPassword: (administratorId, newPassword) => accountRepository.resetPassword(administratorId, newPassword),
 };
 
 const offboardingRepository = new HttpOffboardingRepository();

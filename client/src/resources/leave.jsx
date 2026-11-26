@@ -20,6 +20,7 @@ import {
   useLeaveApprovals,
   useEmployees,
   useAdministrators,
+  useAccess,
 } from "../hooks/useEntities";
 import { LeaveStatus, dateOnly } from "../domain/leave/Leave";
 import { statusColumn, dateColumn, Badge, nameOf } from "./shared";
@@ -123,6 +124,8 @@ const buttonClass = "focus:outline-none text-white font-medium rounded-lg text-s
 /** Approve / reject / cancel for a pending request; decided requests show who decided. */
 function LeaveRequestActions({ row }) {
   const decide = useDecideLeaveRequest();
+  const { can } = useAccess();
+  const may = (action) => can(`leave-requests:${action}`);
 
   const run = (action, title, withRemarks) =>
     Swal.fire({
@@ -141,19 +144,27 @@ function LeaveRequestActions({ row }) {
       );
     });
 
-  if (row.status !== LeaveStatus.PENDING) return <span className="text-gray-400">-</span>;
+  if (row.status !== LeaveStatus.PENDING || !["approve", "reject", "cancel"].some(may)) {
+    return <span className="text-gray-400">-</span>;
+  }
 
   return (
     <div className="flex flex-row gap-2">
-      <button className={`${buttonClass} bg-green-700 hover:bg-green-800`} onClick={() => run("approve", "Approve this leave?", true)}>
-        Approve
-      </button>
-      <button className={`${buttonClass} bg-red-700 hover:bg-red-800`} onClick={() => run("reject", "Reject this leave?", true)}>
-        Reject
-      </button>
-      <button className="focus:outline-none text-gray-800 border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2" onClick={() => run("cancel", "Cancel this request?", false)}>
-        Cancel
-      </button>
+      {may("approve") && (
+        <button className={`${buttonClass} bg-green-700 hover:bg-green-800`} onClick={() => run("approve", "Approve this leave?", true)}>
+          Approve
+        </button>
+      )}
+      {may("reject") && (
+        <button className={`${buttonClass} bg-red-700 hover:bg-red-800`} onClick={() => run("reject", "Reject this leave?", true)}>
+          Reject
+        </button>
+      )}
+      {may("cancel") && (
+        <button className="focus:outline-none text-gray-800 border border-gray-300 hover:bg-gray-50 font-medium rounded-lg text-sm px-4 py-2" onClick={() => run("cancel", "Cancel this request?", false)}>
+          Cancel
+        </button>
+      )}
     </div>
   );
 }

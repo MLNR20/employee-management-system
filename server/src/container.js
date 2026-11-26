@@ -47,6 +47,7 @@ import { createSalaryRateUseCases } from "./application/salary/salaryRateUseCase
 import { createPayrollUseCases } from "./application/payroll/payrollUseCases.js";
 import { MongoSalaryRateRepository } from "./infrastructure/persistence/mongo/MongoSalaryRateRepository.js";
 import { createAuthorizationUseCases } from "./application/role/authorizationUseCases.js";
+import { createAccessUseCases } from "./application/role/accessUseCases.js";
 import { createJobUseCases } from "./application/job/jobUseCases.js";
 import { createJobApplicationUseCases } from "./application/job/jobApplicationUseCases.js";
 import { MongoJobRepository } from "./infrastructure/persistence/mongo/MongoJobRepository.js";
@@ -72,6 +73,14 @@ const passwordHasher = new BcryptPasswordHasher();
 
 export const authorizationUseCases = createAuthorizationUseCases({ roleAssignmentRepository, roleRepository });
 
+export const accessUseCases = createAccessUseCases({
+  administratorRepository,
+  roleRepository,
+  roleAssignmentRepository,
+  authorizationUseCases,
+  preferred: config.seedAdministrator,
+});
+
 export const authUseCases = createAuthUseCases({
   administratorRepository,
   passwordHasher,
@@ -83,9 +92,10 @@ export const authUseCases = createAuthUseCases({
     refreshTtl: config.REFRESH_TOKEN_TTL,
   }),
   seedAdministrator: config.seedAdministrator,
+  onSeeded: () => accessUseCases.ensureAccessManager(),
 });
 
-export const administratorUseCases = createAdministratorUseCases({ administratorRepository });
+export const administratorUseCases = createAdministratorUseCases({ administratorRepository, passwordHasher });
 
 const salaryRateRepository = new MongoSalaryRateRepository();
 

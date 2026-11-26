@@ -1,7 +1,7 @@
 import express from "express";
 
 /** Thin HTTP adapter: parse the request, call a use case, shape the response. */
-export const createAdminRouter = ({ authUseCases }) => {
+export const createAdminRouter = ({ authUseCases, requireAuth }) => {
   const router = express.Router();
 
   // Called by the login/register pages on load to seed the first administrator.
@@ -29,9 +29,17 @@ export const createAdminRouter = ({ authUseCases }) => {
     res.status(204).end();
   });
 
-  router.post("/register", async (req, res) => {
+  // A signed-in administrator creates accounts for others; the permission policy limits who may.
+  // The first account comes from the server's configuration (see ensureAdministratorsExist).
+  router.post("/register", requireAuth, async (req, res) => {
     const administrator = await authUseCases.register(req.body);
     res.status(200).json(administrator);
+  });
+
+  // Changing your own password ends every session: sign in again with the new one.
+  router.post("/password", requireAuth, async (req, res) => {
+    await authUseCases.changePassword(req.user.id, req.body);
+    res.status(204).end();
   });
 
   return router;

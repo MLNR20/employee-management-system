@@ -32,8 +32,12 @@ httpServer.listen(config.PORT, () =>{
 })
 
 // Log connection status
-mongoose.connect(config.dbConnection).then(()=>{
+mongoose.connect(config.dbConnection).then(async ()=>{
     console.log('App connected to database');
+    // Permissions are enforced, so somebody must always be able to grant them.
+    await useCases.authUseCases.ensureAdministratorsExist();
+    const { granted } = await useCases.accessUseCases.ensureAccessManager();
+    if (granted) console.log(`No administrator could manage access: gave full access to "${granted}"`);
     // Creates the standard onboarding or offboarding checklist when that stage has no requirements yet.
     return useCases.documentRequirementUseCases.ensureDefaultRequirements().then(({ created }) => {
         if (created) console.log(`Created ${created} default document requirements`);

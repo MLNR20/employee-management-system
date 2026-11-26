@@ -370,6 +370,13 @@ export class InMemoryAdministratorRepository extends AdministratorRepository {
     return admin;
   }
 
+  async setPasswordHash(id, passwordHash) {
+    const admin = this.admins.get(id);
+    if (!admin) return;
+    this.admins.set(id, new Administrator({ ...admin, passwordHash }));
+    this.refreshHashes.set(id, null);
+  }
+
   async setRefreshTokenHash(id, hash) {
     this.refreshHashes.set(id, hash);
   }

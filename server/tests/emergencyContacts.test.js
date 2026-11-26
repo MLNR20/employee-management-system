@@ -82,8 +82,12 @@ before(async () => {
   });
   base = `http://localhost:${server.address().port}`;
 
-  await call("POST", "/admin/register", {
-    body: { username: "alice", password: "pass-word1!", first_name: "Alice", last_name: "Smith", email: "alice@example.com" },
+  await administratorRepository.create({
+    username: "alice",
+    first_name: "Alice",
+    last_name: "Smith",
+    email: "alice@example.com",
+    passwordHash: await new BcryptPasswordHasher(4).hash("pass-word1!"),
   });
   token = (await call("POST", "/admin/login", { body: { username: "alice", password: "pass-word1!" } })).body.token;
 });

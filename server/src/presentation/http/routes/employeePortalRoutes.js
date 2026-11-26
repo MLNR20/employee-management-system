@@ -16,6 +16,7 @@ export const createEmployeeAuthRouter = ({ employeeAuthUseCases }) => {
 
 /** What the signed-in employee may see about themselves. Everything here needs an employee token. */
 export const createEmployeePortalRouter = ({
+  employeeAuthUseCases, // optional: without it the password route is not served
   employeeUseCases,
   leaveTypeUseCases,
   leaveBalanceUseCases,
@@ -46,6 +47,14 @@ export const createEmployeePortalRouter = ({
   });
 
   const list = (items) => ({ count: items.length, data: items.map(toDto) });
+
+  // The employee is the signed-in one, and must send their current password.
+  if (employeeAuthUseCases) {
+    router.post("/password", async (req, res) => {
+      await employeeAuthUseCases.changePassword(req.user.id, req.body);
+      res.status(204).end();
+    });
+  }
 
   // Leave. The employee is always the signed-in one: ids in the body or the URL never pick someone else.
   router.get("/leave-types", async (req, res) => {

@@ -1,6 +1,7 @@
 import Swal from "sweetalert2";
 import { Badge } from "../resources/shared";
 import {
+  useAccess,
   useCreateEmployeeDocument,
   useDocumentChecklist,
   useReviewDocument,
@@ -43,6 +44,10 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
   const create = useCreateEmployeeDocument();
   const update = useUpdateEmployeeDocument();
   const review = useReviewDocument();
+  const { can } = useAccess();
+  const mayVerify = can("documents:verify");
+  // A first copy creates a record; a new copy of one edits it.
+  const mayReceive = (document) => can(document ? "documents:edit" : "documents:create");
 
   // Records a copy as received: a new record when there is none, otherwise a new copy of the old one.
   const receive = async ({ requirement, document }) => {
@@ -137,17 +142,17 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
                     <td className="px-4 py-3 text-gray-600">{document?.remarks || ""}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-row gap-2">
-                        {canReceive(state) && (
+                        {canReceive(state) && mayReceive(document) && (
                           <button type="button" className={`${buttonClass} bg-blue-700 hover:bg-blue-800`} onClick={() => receive(item)}>
                             {state === "rejected" || state === "expired" ? "New copy" : "Mark received"}
                           </button>
                         )}
-                        {canVerify(state) && (
+                        {canVerify(state) && mayVerify && (
                           <button type="button" className={`${buttonClass} bg-green-700 hover:bg-green-800`} onClick={() => verify(item)}>
                             Verify
                           </button>
                         )}
-                        {canReject(state) && (
+                        {canReject(state) && mayVerify && (
                           <button type="button" className={`${buttonClass} bg-red-700 hover:bg-red-800`} onClick={() => reject(item)}>
                             Reject
                           </button>

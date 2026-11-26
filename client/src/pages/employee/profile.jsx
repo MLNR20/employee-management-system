@@ -1,4 +1,7 @@
+import { useState } from "react";
 import PortalLayout from "../../components/employee/PortalLayout";
+import ChangePasswordForm from "../../components/ChangePasswordForm";
+import { employeePortal } from "../../container";
 import { useEmployeeAuth } from "../../context/EmployeeAuthContext";
 
 const initialOf = (me) => (me?.first_name?.trim()?.[0] || "?").toUpperCase();
@@ -12,9 +15,16 @@ const details = (me) => [
   { label: "Department", value: me.department },
 ];
 
-/** The employee's own profile: a banner with their avatar, name and email, and a card of their details. */
+/** The employee's own profile: their name and email, their details, and changing their password. */
 export default function EmployeeProfile() {
   const { employee: me, isLoading } = useEmployeeAuth();
+  const [changed, setChanged] = useState(false);
+
+  const changePassword = async (passwords) => {
+    setChanged(false);
+    await employeePortal.changePassword(passwords);
+    setChanged(true);
+  };
 
   return (
     <PortalLayout>
@@ -47,6 +57,18 @@ export default function EmployeeProfile() {
           </dl>
         ) : (
           <p className="portal-empty">{isLoading ? "Loading…" : "Your details could not be loaded."}</p>
+        )}
+      </section>
+
+      <section className="portal-panel profile-details-card" aria-labelledby="profile-password-heading">
+        <h2 id="profile-password-heading" className="portal-panel-title">
+          Change password
+        </h2>
+        <ChangePasswordForm onSubmit={changePassword} />
+        {changed && (
+          <p className="text-sm text-green-700" role="status">
+            Password changed. Use it next time you sign in.
+          </p>
         )}
       </section>
     </PortalLayout>

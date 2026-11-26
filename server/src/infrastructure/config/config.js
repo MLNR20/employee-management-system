@@ -1,3 +1,5 @@
+import { resolveSecrets } from "./secrets.js";
+
 // Reads server/.env when it exists (Node 20.12+). Variables already in the environment, such as the ones
 // docker-compose passes, take priority over the file.
 try {
@@ -7,6 +9,9 @@ try {
 }
 
 //MONGO_URI=mongodb://admin:secret@mongodb:27017/employees?authSource=admin
+
+// Never a built-in default: see secrets.js.
+const secrets = resolveSecrets(process.env);
 
 export const config = {
     PORT: process.env.PORT || 3002,
@@ -22,10 +27,10 @@ export const config = {
     },
 
     // Auth tokens: short-lived access token + long-lived, rotating refresh token.
-    JWT_SECRET: process.env.JWT_SECRET || 'secret123',
-    REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || 'refresh-secret123',
+    JWT_SECRET: secrets.JWT_SECRET,
+    REFRESH_TOKEN_SECRET: secrets.REFRESH_TOKEN_SECRET,
     // Employee portal tokens use their own secret so they can never be used as administrator tokens.
-    EMPLOYEE_JWT_SECRET: process.env.EMPLOYEE_JWT_SECRET || 'employee-secret123',
+    EMPLOYEE_JWT_SECRET: secrets.EMPLOYEE_JWT_SECRET,
     EMPLOYEE_TOKEN_TTL: process.env.EMPLOYEE_TOKEN_TTL || '8h',
     ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || '15m',
     REFRESH_TOKEN_TTL: process.env.REFRESH_TOKEN_TTL || '7d',

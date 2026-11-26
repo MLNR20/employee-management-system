@@ -12,6 +12,13 @@ import { statusColumn, dateColumn } from "./shared";
 
 export const employmentTypeResource = {
   key: "employment-types",
+  // Employment types are organization settings: they share the Departments permissions.
+  access: {
+    view: "departments:view",
+    create: "departments:create",
+    edit: "departments:edit",
+    remove: "departments:delete",
+  },
   title: "Employment Types",
   singular: "Employment Type",
   basePath: "/employment-types",

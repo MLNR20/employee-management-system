@@ -28,6 +28,11 @@ export class AdministratorRepository {
     throw new Error("AdministratorRepository.create not implemented");
   }
 
+  /** Replaces the password hash and revokes the refresh token, so open sessions cannot be renewed. */
+  async setPasswordHash(id, passwordHash) {
+    throw new Error("AdministratorRepository.setPasswordHash not implemented");
+  }
+
   /** Stores (or clears, with null) the fingerprint of the one valid refresh token. */
   async setRefreshTokenHash(id, hash) {
     throw new Error("AdministratorRepository.setRefreshTokenHash not implemented");

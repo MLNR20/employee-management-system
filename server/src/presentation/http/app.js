@@ -12,6 +12,7 @@ import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shi
 import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "./routes/documentRoutes.js";
 import { createOffboardingRouter } from "./routes/offboardingRoutes.js";
 import { createRequirePermission } from "./middleware/permissionMiddleware.js";
+import { createPermissionPolicy } from "./middleware/permissionPolicy.js";
 import {
   createAdministratorListRouter,
   createLeaveBalanceRouter,
@@ -32,7 +33,14 @@ import { createCorsMiddleware } from "./middleware/corsMiddleware.js";
 import { createApiRateLimiter, createAuthRateLimiter } from "./middleware/rateLimitMiddleware.js";
 
 // Endpoints an attacker can hammer to guess credentials or tokens; they get the stricter limit.
-const AUTH_ATTEMPT_PATHS = ["/admin/login", "/admin/register", "/admin/refresh", "/employee-auth/login"];
+const AUTH_ATTEMPT_PATHS = [
+  "/admin/login",
+  "/admin/register",
+  "/admin/refresh",
+  "/admin/password",
+  "/employee-auth/login",
+  "/employee-portal/password",
+];
 
 /** Builds the Express app from use cases. It owns no state, so tests can pass fakes. */
 export const createApp = ({
@@ -56,7 +64,7 @@ export const createApp = ({
   attendanceUseCases, // optional: without it /attendance is not served
   salaryRateUseCases, // optional, with authorizationUseCases: without both /salary-rates is not served
   payrollUseCases, // optional, with authorizationUseCases: without both /payroll is not served
-  authorizationUseCases,
+  authorizationUseCases, // optional only for tests: without it administrators' permissions are not enforced
   workShiftUseCases, // optional: without it /work-shifts is not served
   shiftAssignmentUseCases, // optional: without it /shift-assignments is not served
   documentRequirementUseCases, // optional: without it /document-requirements is not served
@@ -90,7 +98,13 @@ export const createApp = ({
   app.use(express.json());
   if (auditLogUseCases) app.use(createAuditMiddleware(auditLogUseCases));
 
-  app.use("/admin", createAdminRouter({ authUseCases }));
+  // Role permissions, checked before any administrator route (see middleware/permissionPolicy.js).
+  if (authorizationUseCases) {
+    const requirePermission = createRequirePermission(authorizationUseCases);
+    app.use(createPermissionPolicy({ requireAuth, requirePermission }));
+  }
+
+  app.use("/admin", createAdminRouter({ authUseCases, requireAuth }));
   app.use(
     "/employees",
     createEmployeeRouter({
@@ -146,6 +160,7 @@ export const createApp = ({
     app.use(
       "/employee-portal",
       createEmployeePortalRouter({
+        employeeAuthUseCases,
         employeeUseCases,
         jobUseCases,
         jobApplicationUseCases,

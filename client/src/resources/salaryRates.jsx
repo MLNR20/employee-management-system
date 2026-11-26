@@ -25,6 +25,7 @@ export const salaryRateResource = {
   addLabel: "Assign Rate",
   basePath: "/salary-rates",
   permission: "salary-rates:view",
+  access: { create: "salary-rates:assign" },
   hooks: {
     useList: useSalaryRates,
     usePage: useSalaryRatesPage,

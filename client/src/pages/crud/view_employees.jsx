@@ -4,7 +4,7 @@ import Card from "../../components/Card";
 import StatCard from "../../components/StatCard";
 import ExportButtons from "../../components/ExportButtons";
 import DataTable from "../../components/datatable/DataTable";
-import { useEmployeesPage, useEmployeeSummary, useRemoveEmployee } from "../../hooks/useEntities";
+import { useAccess, useEmployeesPage, useEmployeeSummary, useRemoveEmployee } from "../../hooks/useEntities";
 import { useServerTable } from "../../hooks/useServerTable";
 import { employeeUseCases } from "../../container";
 import Swal from "sweetalert2";
@@ -83,6 +83,7 @@ export default function View_Employees() {
   const { data: page, isLoading, isFetching, error } = useEmployeesPage(table.params);
   const { data: summary } = useEmployeeSummary();
   const removeEmployee = useRemoveEmployee();
+  const { can } = useAccess();
 
   const counts = { total: summary?.total ?? 0, active: summary?.active ?? 0, inactive: summary?.inactive ?? 0 };
 
@@ -115,18 +116,22 @@ export default function View_Employees() {
       header: "Operations",
       render: (e) => (
         <div className="flex flex-row gap-2">
-          <button
-            className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5"
-            onClick={() => confirmDelete(e.id)}
-          >
-            Delete
-          </button>
-          <Link
-            to={`/employees/edit/${e.id}`}
-            className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5"
-          >
-            Edit
-          </Link>
+          {can("employees:delete") && (
+            <button
+              className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5"
+              onClick={() => confirmDelete(e.id)}
+            >
+              Delete
+            </button>
+          )}
+          {can("employees:edit") && (
+            <Link
+              to={`/employees/edit/${e.id}`}
+              className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5"
+            >
+              Edit
+            </Link>
+          )}
           <Link
             to={`/offboarding?employee=${e.id}`}
             className="focus:outline-none text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5"
@@ -152,12 +157,14 @@ export default function View_Employees() {
           title="Employees Management"
           actions={
             <div className="flex flex-row gap-2">
-              <Link
-                to="/employees/add"
-                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5"
-              >
-                Create Employee
-              </Link>
+              {can("employees:create") && (
+                <Link
+                  to="/employees/add"
+                  className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5"
+                >
+                  Create Employee
+                </Link>
+              )}
               <ExportButtons getTable={async () => exportTable(await employeeUseCases.list())} />
             </div>
           }

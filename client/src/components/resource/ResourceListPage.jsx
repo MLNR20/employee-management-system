@@ -3,6 +3,8 @@ import Swal from "sweetalert2";
 import PageLayout from "../PageLayout";
 import DataTable from "../datatable/DataTable";
 import { useServerTable } from "../../hooks/useServerTable";
+import { useAccess } from "../../hooks/useEntities";
+import { resourceAccess } from "../../domain/role/access";
 
 const noExtras = () => ({});
 const noHook = () => null;
@@ -19,8 +21,12 @@ export default function ResourceListPage({ resource }) {
   const { data: page, isLoading, isFetching, error } = hooks.usePage(table.params);
   const remove = (hooks.useRemove ?? noHook)();
   const extras = (resource.useExtras ?? noExtras)(); // e.g. lookup lists for readable columns
-  const canEdit = Boolean(hooks.useUpdate);
-  const canDelete = Boolean(hooks.useRemove);
+  // Buttons show when the resource supports the action and the administrator may take it.
+  const { can } = useAccess();
+  const access = resourceAccess(resource);
+  const canCreate = Boolean(hooks.useCreate) && can(access.create);
+  const canEdit = Boolean(hooks.useUpdate) && can(access.edit);
+  const canDelete = Boolean(hooks.useRemove) && can(access.remove);
 
   const confirmDelete = (id) =>
     Swal.fire({
@@ -80,7 +86,7 @@ export default function ResourceListPage({ resource }) {
     <PageLayout
       title={title}
       actions={
-        hooks.useCreate && (
+        canCreate && (
           <Link
             to={`${basePath}/add`}
             className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5"

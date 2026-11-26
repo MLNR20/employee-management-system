@@ -50,6 +50,10 @@ export class HttpEmployeePortalRepository {
     return employeeTokenStorage.has();
   }
 
+  async changePassword({ currentPassword, newPassword }) {
+    await client.post("/employee-portal/password", { currentPassword, newPassword });
+  }
+
   /** { _id, first_name, last_name, email, position, department } */
   async getMe() {
     const { data } = await client.get("/employee-portal/me");

@@ -53,6 +53,11 @@ export class MongoAdministratorRepository extends AdministratorRepository {
     }
   }
 
+  async setPasswordHash(id, passwordHash) {
+    if (!mongoose.isValidObjectId(id)) return;
+    await AdministratorModel.updateOne({ _id: id }, { password: passwordHash, refreshTokenHash: null });
+  }
+
   async setRefreshTokenHash(id, hash) {
     if (!mongoose.isValidObjectId(id)) return;
     await AdministratorModel.updateOne({ _id: id }, { refreshTokenHash: hash });
