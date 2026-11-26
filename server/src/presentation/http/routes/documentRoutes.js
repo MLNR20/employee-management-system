@@ -1,7 +1,7 @@
 import express from "express";
 import { createCrudRouter, toDto } from "./crudRouter.js";
 
-/** The onboarding checklist itself: the documents every new hire must hand in. */
+/** The lines of the checklists: the documents collected when an employee joins or leaves. */
 export const createDocumentRequirementRouter = ({ documentRequirementUseCases, requireAuth }) => {
   const router = express.Router();
   router.use(requireAuth);
@@ -30,9 +30,13 @@ export const createEmployeeDocumentRouter = ({ employeeDocumentUseCases, require
 
   // Registered before the CRUD routes so "checklist" is not read as a document id.
   router.get("/checklist/:employeeId", async (req, res) => {
-    const { employeeId, items, summary } = await employeeDocumentUseCases.checklist(req.params.employeeId);
+    const { employeeId, stage, items, summary } = await employeeDocumentUseCases.checklist(
+      req.params.employeeId,
+      req.query.stage // "onboarding" (default) or "offboarding"
+    );
     res.status(200).json({
       employeeId,
+      stage,
       summary,
       data: items.map(({ requirement, document, state }) => ({
         requirement: toDto(requirement),

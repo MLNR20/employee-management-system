@@ -108,7 +108,7 @@ export class LeaveTypeInUseError extends DomainError {
 }
 
 export class EmployeeInUseError extends DomainError {
-  constructor(message = "This employee has leave history. Mark them inactive instead of deleting.") {
+  constructor(message = "This employee has leave history. Offboard them instead of deleting.") {
     super(message);
   }
 }

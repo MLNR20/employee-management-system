@@ -1,5 +1,5 @@
 import { createCrudUseCases } from "../shared/crudUseCases.js";
-import { EmployeeInUseError, NotFoundError, ValidationError } from "../../domain/errors.js";
+import { EmployeeInUseError, InvalidStateError, NotFoundError, ValidationError } from "../../domain/errors.js";
 import { isMissing } from "../../domain/pickFields.js";
 import { assertValidEmployee, pickEmployeeFields } from "../../domain/employee/employeeRules.js";
 
@@ -91,6 +91,38 @@ export const createEmployeeUseCases = ({
     }
   };
 
+  /**
+   * A non-rehireable former employee must not come back as a "new" record: no other record may be given
+   * one of their government ID numbers. `employeeId` is undefined while adding.
+   */
+  const assertNotNonRehireable = async (employeeId, input) => {
+    const matches = await employeeRepository.findNonRehireableByGovernmentIds(pickEmployeeFields(input));
+    if (matches.some((match) => match.id !== employeeId)) {
+      throw new InvalidStateError("A government ID number here belongs to a former employee tagged non-rehireable");
+    }
+  };
+
+  /**
+   * The general edit form cannot take an employee in or out of the company: leaving goes through
+   * offboarding, so that everyone who leaves is tagged, and coming back goes through rehiring.
+   */
+  const assertStatusChangeAllowed = async (employeeId, isActive) => {
+    if (isActive === undefined) return;
+    const employee = await employeeRepository.findById(employeeId);
+    if (!employee) return; // the update itself reports it as not found
+
+    const wantsActive = String(isActive) === "true";
+    const isNowActive = employee.isActive !== false;
+    if (isNowActive && !wantsActive) {
+      throw new InvalidStateError(
+        "Offboard this employee to deactivate them. That is where they are tagged rehireable or non-rehireable."
+      );
+    }
+    if (!isNowActive && wantsActive && employee.separation) {
+      throw new InvalidStateError("This employee was offboarded. Use Rehire on the Offboarding page.");
+    }
+  };
+
   return {
     listEmployees: crud.list,
     listEmployeesPage: crud.listPage,
@@ -101,6 +133,7 @@ export const createEmployeeUseCases = ({
       assertValidEmployee(input);
       await assertValidManager(undefined, input.managerId);
       await assertValidEmploymentType(undefined, input.employmentTypeId);
+      await assertNotNonRehireable(undefined, input);
 
       const employee = await crud.add(input);
       await storePortalPassword(employee.id, input.portalPassword);
@@ -112,6 +145,8 @@ export const createEmployeeUseCases = ({
       // Only a manager that was sent is checked: leaving the field out keeps the current one.
       await assertValidManager(id, input.managerId);
       await assertValidEmploymentType(id, input.employmentTypeId);
+      await assertStatusChangeAllowed(id, input.isActive);
+      await assertNotNonRehireable(id, input);
 
       const employee = await crud.update(id, input);
       await storePortalPassword(id, input.portalPassword);
@@ -126,8 +161,9 @@ export const createEmployeeUseCases = ({
 
     /**
      * An employee with filed leave keeps that history, one who still holds inventory items must return
-     * them, and one who manages others must have those people moved to another manager first, so none
-     * of them can be deleted (mark them inactive instead). Their unused leave balances are deleted with them.
+     * them, one who manages others must have those people moved to another manager first, and one with an
+     * offboarding keeps their rehire tag, so none of them can be deleted (offboard them instead). Their
+     * unused leave balances are deleted with them.
      */
     async deleteEmployee(id) {
       const history = await leaveRequestRepository.findByEmployeeId(id);
@@ -137,6 +173,10 @@ export const createEmployeeUseCases = ({
       }
       if (await employeeRepository.existsWithManager(id)) {
         throw new EmployeeInUseError("This employee manages other employees; give them another manager first");
+      }
+      const employee = await employeeRepository.findById(id);
+      if (employee?.separation || employee?.separationHistory?.length) {
+        throw new EmployeeInUseError("This employee has an offboarding record, which must be kept. They cannot be deleted.");
       }
 
       await crud.remove(id);

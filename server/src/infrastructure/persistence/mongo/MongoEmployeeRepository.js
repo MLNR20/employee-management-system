@@ -4,6 +4,8 @@ import { DuplicateEmployeeError } from "../../../domain/errors.js";
 import mongoose from "mongoose";
 import { EmployeeModel } from "./models/employeeModel.js";
 import { toBaseProps } from "./models/baseSchema.js";
+import { GOVERNMENT_ID_FIELDS } from "../../../domain/employee/governmentIds.js";
+import { RehireStatus } from "../../../domain/employee/separationRules.js";
 
 const toEmployee = (doc) =>
   new Employee({
@@ -22,6 +24,9 @@ const toEmployee = (doc) =>
     pagibigNumber: doc.pagibigNumber,
     managerId: doc.managerId ? String(doc.managerId) : null,
     employmentTypeId: doc.employmentTypeId ? String(doc.employmentTypeId) : null,
+    rehireStatus: doc.rehireStatus ?? "",
+    separation: doc.separation ?? null,
+    separationHistory: doc.separationHistory ?? [],
   });
 
 export class MongoEmployeeRepository extends MongoRepository {
@@ -48,6 +53,13 @@ export class MongoEmployeeRepository extends MongoRepository {
   async existsWithManager(managerId) {
     if (!mongoose.isValidObjectId(managerId)) return false;
     return Boolean(await EmployeeModel.exists({ managerId }));
+  }
+
+  async findNonRehireableByGovernmentIds(ids) {
+    const matches = GOVERNMENT_ID_FIELDS.filter((field) => ids[field]).map((field) => ({ [field]: ids[field] }));
+    if (matches.length === 0) return [];
+    const docs = await EmployeeModel.find({ rehireStatus: RehireStatus.NON_REHIREABLE, $or: matches }).lean();
+    return docs.map(toEmployee);
   }
 
   async findCredentialsByEmail(email) {

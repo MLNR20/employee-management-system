@@ -16,6 +16,9 @@ export class Employee extends Entity {
     pagibigNumber,
     managerId = null,
     employmentTypeId = null,
+    rehireStatus = "",
+    separation = null,
+    separationHistory = [],
     ...base
   } = {}) {
     super(base);
@@ -35,5 +38,11 @@ export class Employee extends Entity {
     this.managerId = managerId;
     // How this employee is employed (an EmploymentType id), or null when none has been assigned.
     this.employmentTypeId = employmentTypeId;
+    // "rehireable" or "non_rehireable" (a RehireStatus) once tagged during offboarding, else "".
+    this.rehireStatus = rehireStatus;
+    // The current offboarding (see separationRules), or null for an employee who is not leaving.
+    this.separation = separation;
+    // Earlier offboardings of an employee who was rehired, oldest first.
+    this.separationHistory = separationHistory;
   }
 }

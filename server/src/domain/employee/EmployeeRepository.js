@@ -30,4 +30,13 @@ export class EmployeeRepository extends Repository {
   /** @returns {Promise<boolean>} whether anyone reports directly to this employee */
   async existsWithManager(managerId) {
     throw new Error("EmployeeRepository.existsWithManager not implemented");
-  }}
+  }
+
+  /**
+   * @param {object} ids government ID numbers by field name; blank ones match nothing
+   * @returns {Promise<import("./Employee").Employee[]>} non-rehireable employees holding any of them
+   */
+  async findNonRehireableByGovernmentIds(ids) {
+    throw new Error("EmployeeRepository.findNonRehireableByGovernmentIds not implemented");
+  }
+}

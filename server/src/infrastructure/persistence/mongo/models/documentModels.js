@@ -6,6 +6,7 @@ const documentRequirementsSchema = createEntitySchema({
   description: { type: String, trim: true, default: "" },
   isRequired: { type: Boolean, default: true },
   hasExpiry: { type: Boolean, default: false },
+  stage: { type: String, enum: ["onboarding", "offboarding"], default: "onboarding" },
   // The name without case or surrounding spaces, so two requirements cannot differ only by those.
   nameKey: { type: String, required: true, unique: true },
 });

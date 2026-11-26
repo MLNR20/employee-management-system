@@ -1,12 +1,30 @@
 # Employee Management System
 
 A full-stack HR system: an **administrator back office** (employees, departments, leave, attendance,
-payroll, inventory, onboarding documents, roles and permissions, audit log) and a separate
+payroll, inventory, onboarding and offboarding documents, roles and permissions, audit log) and a separate
 **employee portal** (profile, attendance, leave requests, borrowed equipment, job openings).
 
 - **Server:** Node 22, Express 5, MongoDB (Mongoose), Socket.IO for live notifications
 - **Client:** React 19 (Create React App), React Router 7, TanStack Query, Tailwind CSS + Flowbite
-- **Tests:** 175 server tests (`node --test`) and 37 client tests (Jest), run by GitHub Actions on every push
+- **Tests:** 187 server tests (`node --test`) and 40 client tests (Jest), run by GitHub Actions on every push
+
+## Offboarding and the rehire tag
+
+Employees leave through the **Offboarding** page, in two steps:
+
+1. **Start:** how they are leaving and their last working day. They stay active during the notice period,
+   and their offboarding document checklist opens.
+2. **Complete:** on or after the last working day. HR must tag them **rehireable** or **non-rehireable**
+   (non-rehireable needs a reason), and nobody may still report to them. They become inactive and lose
+   portal access. Documents can still be collected afterwards.
+
+The page also shows clearance: required documents verified, equipment returned, direct reports moved and
+leave decided. A rehireable employee can be rehired, which keeps the earlier offboarding as history. A
+non-rehireable one cannot be rehired or deleted, and their government ID numbers cannot be used on another
+record. The employee edit form can no longer switch an active employee to inactive.
+
+The checklist lines are managed under **Document Requirements**. The server adds the standard onboarding or
+offboarding lines on start-up when that checklist has none.
 
 ## Repository layout
 

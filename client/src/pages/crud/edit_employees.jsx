@@ -11,7 +11,9 @@ import Swal from "sweetalert2";
 import GovernmentIdFields from "../../components/GovernmentIdFields";
 import PortalPasswordField, { validatePortalPassword } from "../../components/PortalPasswordField";
 import { governmentIdValues, validateGovernmentIds } from "../../domain/employee/governmentIds";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import RehireTag from "../../components/RehireTag";
+import { employmentStage } from "../../domain/employee/separation";
 import { validatePersonName } from "../../validation/personName";
 import ManagerSelect from "../../components/ManagerSelect";
 import EmploymentTypeSelect from "../../components/EmploymentTypeSelect";
@@ -441,36 +443,32 @@ export default function Edit_Employees() {
                   </div>
                 </div>
 
-                <label
-                  htmlFor="website"
-                  className="block mb-2 text-sm font-medium text-gray-900"
-                >
-                  Status
-                </label>
-                <select
-                  id="status"
-                  value={status}
-                  onChange={(e) =>{
-                     setStatus(e.target.value)
-                     setErrors((prevErrors) => {
-                            const newErrors = { ...prevErrors };
-                            delete newErrors.status;
-                            return newErrors;
-                          });
-
-                  }
-                    }
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                >
-                  <option selected>Choose a status</option>
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
-                   {errors.status && (
-                      <label className="text-sm text-red-500">
-                        {errors.status}
-                      </label>
-                    )}
+                {/* Leaving and returning go through Offboarding, which tags the employee. Only someone who
+                    is inactive without an offboarding can still be switched back to active here. */}
+                <p className="block mb-2 text-sm font-medium text-gray-900">Active</p>
+                {employee && employmentStage(employee) === "inactive" ? (
+                  <select
+                    id="status"
+                    aria-label="Active"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                ) : (
+                  <p className="text-sm text-gray-900">{status === "false" ? "No" : "Yes"}</p>
+                )}
+                {employee && (
+                  <p className="flex flex-wrap items-center gap-2 mt-2 text-sm">
+                    <span className="text-gray-500">Rehire tag:</span>
+                    <RehireTag employee={employee} />
+                    <Link to={`/offboarding?employee=${id}`} className="text-blue-700 font-medium hover:underline">
+                      {employee.separation ? "Open offboarding" : "Offboard this employee"}
+                    </Link>
+                  </p>
+                )}
                 <GovernmentIdFields
                   values={ids}
                   errors={errors}

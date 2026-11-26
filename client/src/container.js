@@ -7,6 +7,7 @@ import { HttpDepartmentRepository } from "./infrastructure/repositories/HttpDepa
 import { HttpLeaveRequestRepository } from "./infrastructure/repositories/HttpLeaveRequestRepository";
 import { HttpPermissionRepository } from "./infrastructure/repositories/HttpPermissionRepository";
 import { HttpDocumentRepository } from "./infrastructure/repositories/HttpDocumentRepository";
+import { HttpOffboardingRepository } from "./infrastructure/repositories/HttpOffboardingRepository";
 import { WorkShift, ShiftAssignment } from "./domain/shift/WorkShift";
 import { DocumentRequirement, EmployeeDocument } from "./domain/document/Document";
 import { createAuthUseCases } from "./application/auth/authUseCases";
@@ -65,9 +66,19 @@ export const employeeDocumentUseCases = restCrud("employee-documents", EmployeeD
 
 const documentRepository = new HttpDocumentRepository();
 export const documentChecklistUseCases = {
-  checklist: (employeeId) => documentRepository.getChecklist(employeeId),
+  checklist: (employeeId, stage) => documentRepository.getChecklist(employeeId, stage),
   verify: (documentId) => documentRepository.verify(documentId),
   reject: (documentId, remarks) => documentRepository.reject(documentId, remarks),
+};
+
+const offboardingRepository = new HttpOffboardingRepository();
+export const offboardingUseCases = {
+  get: (employeeId) => offboardingRepository.get(employeeId),
+  start: (employeeId, details) => offboardingRepository.start(employeeId, details),
+  update: (employeeId, changes) => offboardingRepository.update(employeeId, changes),
+  complete: (employeeId) => offboardingRepository.complete(employeeId),
+  cancel: (employeeId) => offboardingRepository.cancel(employeeId),
+  rehire: (employeeId) => offboardingRepository.rehire(employeeId),
 };
 
 export const leaveTypeUseCases = restCrud("leave-types", LeaveType.fromApi);

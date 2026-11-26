@@ -11,6 +11,8 @@ import Swal from "sweetalert2";
 import { Link } from "react-router-dom";
 import { ManagerName } from "../../components/ManagerSelect";
 import { EmploymentTypeName } from "../../components/EmploymentTypeSelect";
+import RehireTag from "../../components/RehireTag";
+import { rehireTagLabel } from "../../domain/employee/separation";
 
 const columns = [
   { key: "index", header: "#", sortable: false, searchable: false, render: (_, index) => index + 1 },
@@ -44,6 +46,13 @@ const columns = [
     ),
   },
   {
+    key: "rehireStatus",
+    header: "Rehire Tag",
+    sortKey: "rehireStatus",
+    accessor: (e) => rehireTagLabel(e),
+    render: (e) => <RehireTag employee={e} />,
+  },
+  {
     key: "hireDate",
     header: "Hire Date",
     sortKey: "hireDate",
@@ -55,7 +64,7 @@ const columns = [
 const exportTable = (employees) => ({
   filename: "employees",
   title: "Employees",
-  headers: ["Employment Code", "Full Name", "Email", "Position", "Salary", "Department", "Status", "Hire Date"],
+  headers: ["Employment Code", "Full Name", "Email", "Position", "Salary", "Department", "Status", "Rehire Tag", "Hire Date"],
   rows: employees.map((e) => [
     e.employmentCode,
     e.fullName,
@@ -64,6 +73,7 @@ const exportTable = (employees) => ({
     e.salary,
     e.department,
     e.isActive ? "Active" : "Inactive",
+    rehireTagLabel(e),
     e.hireDate ? new Date(e.hireDate).toLocaleDateString() : "",
   ]),
 });
@@ -91,7 +101,9 @@ export default function View_Employees() {
       removeEmployee.mutate(id, {
         onSuccess: () =>
           Swal.fire("Employee Deleted!", "The employee has been removed.", "success"),
-        onError: (err) => console.log(err),
+        // Deleting is refused for anyone with history, e.g. an offboarding: say why.
+        onError: (err) =>
+          Swal.fire("Could not delete", err.response?.data?.message ?? "Something went wrong.", "error"),
       });
     });
   };
@@ -114,6 +126,12 @@ export default function View_Employees() {
             className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5"
           >
             Edit
+          </Link>
+          <Link
+            to={`/offboarding?employee=${e.id}`}
+            className="focus:outline-none text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5"
+          >
+            Offboarding
           </Link>
         </div>
       ),

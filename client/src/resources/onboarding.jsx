@@ -144,7 +144,7 @@ export const shiftAssignmentResource = {
   ],
 };
 
-// --- Document requirements: the lines of the onboarding checklist --------------------------------
+// --- Document requirements: the lines of the onboarding and offboarding checklists ---------------
 
 export const documentRequirementResource = {
   key: "document-requirements",
@@ -162,7 +162,13 @@ export const documentRequirementResource = {
   },
   columns: () => [
     { key: "name", header: "Document", sortKey: "name" },
-    { key: "description", header: "What to bring", sortKey: "description" },
+    { key: "description", header: "Details", sortKey: "description" },
+    {
+      key: "stage",
+      header: "Checklist",
+      sortKey: "stage",
+      accessor: (r) => (r.stage === "offboarding" ? "Offboarding" : "Onboarding"),
+    },
     {
       key: "isRequired",
       header: "Required",
@@ -181,9 +187,20 @@ export const documentRequirementResource = {
   ],
   fields: [
     { name: "name", label: "Document", type: "text", required: true, hint: "Every document name is unique." },
-    { name: "description", label: "What to bring", type: "textarea" },
+    {
+      name: "stage",
+      label: "Checklist",
+      type: "select",
+      required: true,
+      default: "onboarding",
+      options: [
+        { value: "onboarding", label: "Onboarding" },
+        { value: "offboarding", label: "Offboarding" },
+      ],
+    },
+    { name: "description", label: "Details", type: "textarea" },
     { name: "isRequired", label: "Required (an optional document does not block the checklist)", type: "checkbox", default: true },
     { name: "hasExpiry", label: "Expires (its expiry date must be recorded before it can be verified)", type: "checkbox", default: false },
-    { name: "isActive", label: "Active (shown on every employee's checklist)", type: "checkbox", default: true },
+    { name: "isActive", label: "Active (shown on the checklist)", type: "checkbox", default: true },
   ],
 };

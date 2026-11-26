@@ -30,6 +30,7 @@ const sections = [
     items: [
       { to: "/dashboard", label: "Dashboard", icon: "home" },
       { to: "/employees", label: "Employees", icon: "users" },
+      { to: "/offboarding", label: "Offboarding", icon: "userMinus" },
     ],
   },
   ...sectionKeys.map(({ label, keys }) => ({

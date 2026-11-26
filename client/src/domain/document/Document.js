@@ -2,14 +2,15 @@ import { Entity, baseProps } from "../Entity";
 
 const toDate = (value) => (value ? new Date(value) : null);
 
-/** One line of the onboarding checklist: a document every new hire has to hand in. */
+/** One line of a document checklist, for employees joining ("onboarding") or leaving ("offboarding"). */
 export class DocumentRequirement extends Entity {
-  constructor({ name, description = "", isRequired = true, hasExpiry = false, ...base } = {}) {
+  constructor({ name, description = "", isRequired = true, hasExpiry = false, stage = "onboarding", ...base } = {}) {
     super(base);
     this.name = name;
     this.description = description;
     this.isRequired = isRequired;
     this.hasExpiry = hasExpiry;
+    this.stage = stage;
   }
 
   static fromApi(raw = {}) {
@@ -19,6 +20,7 @@ export class DocumentRequirement extends Entity {
       description: raw.description,
       isRequired: raw.isRequired,
       hasExpiry: raw.hasExpiry,
+      stage: raw.stage,
     });
   }
 }

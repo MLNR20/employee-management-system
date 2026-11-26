@@ -16,6 +16,8 @@ export class Employee extends Entity {
     pagibigNumber,
     managerId = null,
     employmentTypeId = null,
+    rehireStatus = "",
+    separation = null,
     ...base
   } = {}) {
     super(base);
@@ -33,6 +35,8 @@ export class Employee extends Entity {
     this.pagibigNumber = pagibigNumber;
     this.managerId = managerId; // id of the employee this one reports to, or null
     this.employmentTypeId = employmentTypeId; // id of the employee's EmploymentType, or null
+    this.rehireStatus = rehireStatus; // "rehireable", "non_rehireable" or "" (not tagged)
+    this.separation = separation; // the current offboarding, or null
   }
 
   get fullName() {
@@ -57,6 +61,8 @@ export class Employee extends Entity {
       pagibigNumber: raw.pagibigNumber,
       managerId: raw.managerId ?? null,
       employmentTypeId: raw.employmentTypeId ?? null,
+      rehireStatus: raw.rehireStatus ?? "",
+      separation: raw.separation ?? null,
     });
   }
 }

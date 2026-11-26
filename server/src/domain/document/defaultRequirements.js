@@ -1,7 +1,8 @@
-// The standard onboarding checklist, created on first run when no requirements exist yet.
-// HR can rename, add, deactivate or delete lines afterwards (the government numbers are Philippine).
+// The standard onboarding and offboarding checklists. Each is created on start-up when no requirement
+// of its stage exists yet. HR can rename, add, deactivate or delete lines afterwards (the government
+// forms and numbers are Philippine).
 
-export const DEFAULT_REQUIREMENTS = [
+const ONBOARDING = [
   { name: "Signed employment contract", description: "Contract signed by both the employee and the company." },
   { name: "Valid government-issued ID", description: "Photocopy of one valid ID with photo and signature.", hasExpiry: true },
   { name: "NBI clearance", description: "Original, issued within the last 6 months.", hasExpiry: true },
@@ -18,4 +19,21 @@ export const DEFAULT_REQUIREMENTS = [
     description: "Only if the employee has worked before.",
     isRequired: false,
   },
+];
+
+const OFFBOARDING = [
+  { name: "Resignation letter or notice of termination", description: "The signed letter or notice, showing the last working day." },
+  { name: "Exit clearance form", description: "Signed by every department that has to release the employee." },
+  { name: "Company property return acknowledgment", description: "Laptop, ID, access cards, keys and other issued items." },
+  { name: "Work turnover report", description: "Pending work, files and account hand-over, accepted by the manager." },
+  { name: "Exit interview form", description: "Feedback collected before the employee leaves.", isRequired: false },
+  { name: "Final pay computation", description: "Last salary, pro-rated 13th month pay, leave conversion and deductions." },
+  { name: "Signed release, waiver and quitclaim", description: "Signed when the final pay is released." },
+  { name: "BIR Form 2316", description: "Certificate of compensation paid and tax withheld, given to the employee." },
+  { name: "Certificate of Employment", description: "Issued to the departing employee." },
+];
+
+export const DEFAULT_REQUIREMENTS = [
+  ...ONBOARDING.map((requirement) => ({ ...requirement, stage: "onboarding" })),
+  ...OFFBOARDING.map((requirement) => ({ ...requirement, stage: "offboarding" })),
 ];

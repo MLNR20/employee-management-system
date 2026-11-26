@@ -28,6 +28,10 @@ export function assertValidEmployee(input) {
   if (!isMissing(input.employmentTypeId) && typeof input.employmentTypeId !== "string") {
     throw new ValidationError("employmentTypeId must be the id of an employment type");
   }
+  // Checked strictly: the database would also read "no" or 0 as false and slip past the offboarding rule.
+  if (input.isActive !== undefined && ![true, false, "true", "false"].includes(input.isActive)) {
+    throw new ValidationError("isActive must be true or false");
+  }
   assertValidPortalPassword(input.portalPassword);
 }
 

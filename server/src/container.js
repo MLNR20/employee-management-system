@@ -54,6 +54,7 @@ import { MongoJobApplicationRepository } from "./infrastructure/persistence/mong
 import { createWorkShiftUseCases } from "./application/shift/workShiftUseCases.js";
 import { createShiftAssignmentUseCases } from "./application/shift/shiftAssignmentUseCases.js";
 import { MongoWorkShiftRepository, MongoShiftAssignmentRepository } from "./infrastructure/persistence/mongo/MongoShiftRepositories.js";
+import { createOffboardingUseCases } from "./application/employee/offboardingUseCases.js";
 import { createDocumentRequirementUseCases, createEmployeeDocumentUseCases } from "./application/document/documentUseCases.js";
 import { MongoDocumentRequirementRepository, MongoEmployeeDocumentRepository } from "./infrastructure/persistence/mongo/MongoDocumentRepositories.js";
 
@@ -127,6 +128,14 @@ export const employeeDocumentUseCases = createEmployeeDocumentUseCases({
   employeeDocumentRepository,
   documentRequirementRepository,
   employeeRepository,
+  utcOffsetMinutes,
+});
+
+export const offboardingUseCases = createOffboardingUseCases({
+  employeeRepository,
+  employeeDocumentUseCases,
+  itemRepository,
+  leaveRequestRepository,
   utcOffsetMinutes,
 });
 

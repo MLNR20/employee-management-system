@@ -1,8 +1,9 @@
 import { ValidationError } from "../errors.js";
 import { isMissing, pickFields } from "../pickFields.js";
 import { DocumentStatus } from "./EmployeeDocument.js";
+import { DocumentStage } from "./DocumentRequirement.js";
 
-const REQUIREMENT_ALLOWED = ["name", "description", "isRequired", "hasExpiry", "isActive"];
+const REQUIREMENT_ALLOWED = ["name", "description", "isRequired", "hasExpiry", "stage", "isActive"];
 const DOCUMENT_ALLOWED = ["employeeId", "requirementId", "status", "receivedAt", "expiryDate", "remarks"];
 
 // Only these can be set by hand. Verified and rejected come from the review actions, which record who decided.
@@ -17,6 +18,13 @@ export const requirementNameKey = (name) => String(name).trim().toLowerCase();
 export function assertValidRequirement(input) {
   if (isMissing(input.name) || String(input.name).trim() === "") {
     throw new ValidationError("Send all required fields: name");
+  }
+  if (input.stage !== undefined) assertValidStage(input.stage);
+}
+
+export function assertValidStage(stage) {
+  if (!Object.values(DocumentStage).includes(stage)) {
+    throw new ValidationError(`stage must be one of: ${Object.values(DocumentStage).join(", ")}`);
   }
 }
 

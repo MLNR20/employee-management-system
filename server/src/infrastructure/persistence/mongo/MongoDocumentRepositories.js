@@ -14,6 +14,7 @@ const toRequirement = (doc) =>
     description: doc.description ?? "",
     isRequired: doc.isRequired,
     hasExpiry: doc.hasExpiry,
+    stage: doc.stage, // missing on requirements saved before stages existed: the entity defaults it
   });
 
 const toEmployeeDocument = (doc) =>

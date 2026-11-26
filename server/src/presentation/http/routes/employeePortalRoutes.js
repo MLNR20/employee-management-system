@@ -1,5 +1,6 @@
 import express from "express";
 import { toDto } from "./crudRouter.js";
+import { InvalidTokenError } from "../../../domain/errors.js";
 
 /** POST /employee-auth/login: email and portal password in, an employee access token out. */
 export const createEmployeeAuthRouter = ({ employeeAuthUseCases }) => {
@@ -28,6 +29,15 @@ export const createEmployeePortalRouter = ({
 }) => {
   const router = express.Router();
   router.use(requireEmployeeAuth);
+
+  // An offboarded (or otherwise inactive) employee loses access at once, even while their token is still valid.
+  if (employeeUseCases) {
+    router.use(async (req, res, next) => {
+      const employee = await employeeUseCases.getEmployee(req.user.id);
+      if (employee.isActive === false) throw new InvalidTokenError("This account is no longer active");
+      next();
+    });
+  }
 
   router.get("/me", async (req, res) => {
     const employee = await employeeUseCases.getEmployee(req.user.id);

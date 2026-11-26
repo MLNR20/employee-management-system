@@ -8,8 +8,8 @@ export class HttpDocumentRepository {
   }
 
   /** @returns {{summary: object, items: Array<{requirement: DocumentRequirement, document: EmployeeDocument | null, state: string}>}} */
-  async getChecklist(employeeId) {
-    const { data } = await this.client.get(`/employee-documents/checklist/${employeeId}`);
+  async getChecklist(employeeId, stage = "onboarding") {
+    const { data } = await this.client.get(`/employee-documents/checklist/${employeeId}`, { params: { stage } });
     return {
       summary: data.summary,
       items: data.data.map(({ requirement, document, state }) => ({

@@ -11,20 +11,23 @@ import { isMissing } from "../../domain/pickFields.js";
 import { localDay } from "../../domain/attendance/localTime.js";
 import { DocumentStatus } from "../../domain/document/EmployeeDocument.js";
 import { DEFAULT_REQUIREMENTS } from "../../domain/document/defaultRequirements.js";
+import { DocumentStage } from "../../domain/document/DocumentRequirement.js";
 import {
   assertValidEmployeeDocument,
   assertValidRequirement,
+  assertValidStage,
   checklistState,
   pickEmployeeDocumentFields,
   pickRequirementFields,
 } from "../../domain/document/documentRules.js";
 
-const REQUIREMENT_FIELDS = ["name", "description", "isRequired", "hasExpiry"];
+const REQUIREMENT_FIELDS = ["name", "description", "isRequired", "hasExpiry", "stage"];
 const DOCUMENT_FIELDS = ["employeeId", "requirementId", "status", "receivedAt", "expiryDate", "remarks"];
 
 /**
- * The checklist of documents a new hire must hand in. Every line is unique by name, and a line that
- * employees already have documents for cannot be deleted (mark it inactive instead).
+ * The lines of the onboarding and offboarding document checklists. Every line is unique by name, and a
+ * line that employees already have documents for cannot be deleted (mark it inactive instead) or moved
+ * to the other checklist.
  *
  * @param {Object} deps
  * @param {import("../../domain/document/DocumentRepositories").DocumentRequirementRepository} deps.documentRequirementRepository
@@ -61,6 +64,11 @@ export const createDocumentRequirementUseCases = ({ documentRequirementRepositor
 
       assertValidRequirement(merged);
       await assertUniqueName(merged.name, id);
+      if (merged.stage !== existing.stage && (await employeeDocumentRepository.existsForRequirement(id))) {
+        throw new DocumentRequirementInUseError(
+          "Employees have documents recorded for this requirement, so it cannot move to another checklist."
+        );
+      }
       return crud.update(id, merged);
     },
 
@@ -69,11 +77,23 @@ export const createDocumentRequirementUseCases = ({ documentRequirementRepositor
       return crud.remove(id);
     },
 
-    /** Creates the standard checklist on a fresh install, when there are no requirements at all. */
+    /**
+     * Creates the standard checklist of every stage that has no requirements at all: both on a fresh
+     * install, and the offboarding one on an install that predates it. A standard line whose name is
+     * already taken is skipped.
+     */
     async ensureDefaultRequirements() {
-      if ((await documentRequirementRepository.findAll()).length > 0) return { created: 0 };
-      for (const requirement of DEFAULT_REQUIREMENTS) await documentRequirementRepository.create(requirement);
-      return { created: DEFAULT_REQUIREMENTS.length };
+      const existing = await documentRequirementRepository.findAll();
+      const stagesInUse = new Set(existing.map((requirement) => requirement.stage));
+
+      let created = 0;
+      for (const requirement of DEFAULT_REQUIREMENTS) {
+        if (stagesInUse.has(requirement.stage)) continue;
+        if (await documentRequirementRepository.findByName(requirement.name)) continue;
+        await documentRequirementRepository.create(requirement);
+        created++;
+      }
+      return { created };
     },
   };
 };
@@ -109,6 +129,17 @@ export const createEmployeeDocumentUseCases = ({
     return employee;
   };
 
+  /** The employee's records on one checklist, inactive requirements included. */
+  const stageRecords = async (employeeId, stage) => {
+    const [requirements, documents] = await Promise.all([
+      documentRequirementRepository.findAll(),
+      employeeDocumentRepository.findByEmployeeId(employeeId),
+    ]);
+    return documents
+      .map((document) => ({ document, requirement: requirements.find((r) => r.id === document.requirementId) }))
+      .filter(({ requirement }) => requirement?.stage === stage);
+  };
+
   const review = async (id, reviewerId, changes) =>
     employeeDocumentRepository.update(id, { ...changes, reviewedBy: reviewerId, reviewedAt: now() });
 
@@ -123,11 +154,16 @@ export const createEmployeeDocumentUseCases = ({
       assertValidEmployeeDocument(input);
 
       const employee = await findEmployee(input.employeeId);
-      if (employee.isActive === false) throw new NotFoundError("Employee not found");
 
       const requirement = await documentRequirementRepository.findById(input.requirementId);
+      const offboarding = requirement?.stage === DocumentStage.OFFBOARDING;
+      // Offboarding documents are often collected after the employee has left; nothing else is.
+      if (!offboarding && employee.isActive === false) throw new NotFoundError("Employee not found");
       if (!requirement || requirement.isActive === false) {
         throw new ValidationError("That document requirement does not exist or is not active");
+      }
+      if (offboarding && !employee.separation) {
+        throw new InvalidStateError("Start this employee's offboarding first");
       }
 
       if (await employeeDocumentRepository.findByEmployeeAndRequirement(input.employeeId, input.requirementId)) {
@@ -185,17 +221,41 @@ export const createEmployeeDocumentUseCases = ({
       return review(id, reviewerId, { status: DocumentStatus.REJECTED, remarks: remarks.trim() });
     },
 
+    /** What is recorded on one checklist, by requirement name, to keep as history. */
+    async snapshotStageDocuments(employeeId, stage) {
+      const records = await stageRecords(employeeId, stage);
+      return records.map(({ document, requirement }) => ({
+        requirement: requirement.name,
+        status: document.status,
+        receivedAt: document.receivedAt,
+        expiryDate: document.expiryDate,
+        reviewedBy: document.reviewedBy,
+        reviewedAt: document.reviewedAt,
+        remarks: document.remarks,
+      }));
+    },
+
+    /** Clears one checklist of an employee. */
+    async removeStageDocuments(employeeId, stage) {
+      for (const { document } of await stageRecords(employeeId, stage)) {
+        await employeeDocumentRepository.remove(document.id);
+      }
+    },
+
     /**
-     * The employee's onboarding checklist: one line for every active requirement with what they have
-     * handed in (or none), plus the counts. It is complete when every required line is verified.
+     * One of the employee's checklists (onboarding unless another stage is asked for): one line for every
+     * active requirement of that stage with what is recorded (or none), plus the counts. It is complete
+     * when every required line is verified.
      */
-    async checklist(employeeId) {
+    async checklist(employeeId, stage = DocumentStage.ONBOARDING) {
+      assertValidStage(stage);
       await findEmployee(employeeId);
 
-      const [requirements, documents] = await Promise.all([
+      const [active, documents] = await Promise.all([
         documentRequirementRepository.findActive(),
         employeeDocumentRepository.findByEmployeeId(employeeId),
       ]);
+      const requirements = active.filter((requirement) => requirement.stage === stage);
       const today = localDay(now(), utcOffsetMinutes);
 
       const items = requirements.map((requirement) => {
@@ -208,6 +268,7 @@ export const createEmployeeDocumentUseCases = ({
 
       return {
         employeeId,
+        stage,
         items,
         summary: {
           total: items.length,

@@ -24,6 +24,7 @@ import {
   documentRequirementUseCases,
   employeeDocumentUseCases,
   documentChecklistUseCases,
+  offboardingUseCases,
 } from "../container";
 
 export const {
@@ -176,13 +177,42 @@ export const {
   useUpdate: useUpdateEmployeeDocument,
 } = createCrudHooks("employee-documents", employeeDocumentUseCases);
 
-/** One employee's onboarding checklist. It sits under the "employee-documents" key, so any change to their documents refreshes it. */
-export const useDocumentChecklist = (employeeId) =>
+/**
+ * One employee's onboarding or offboarding checklist. It sits under the "employee-documents" key, so any
+ * change to their documents refreshes it.
+ */
+export const useDocumentChecklist = (employeeId, stage = "onboarding") =>
   useQuery({
-    queryKey: ["employee-documents", "checklist", employeeId],
-    queryFn: () => documentChecklistUseCases.checklist(employeeId),
+    queryKey: ["employee-documents", "checklist", employeeId, stage],
+    queryFn: () => documentChecklistUseCases.checklist(employeeId, stage),
     enabled: Boolean(employeeId),
   });
+
+/**
+ * One employee's offboarding, with what is still outstanding. Always fetched afresh when opened, since
+ * documents, equipment, leave and reporting lines all change it from other screens.
+ */
+export const useOffboarding = (employeeId) =>
+  useQuery({
+    queryKey: ["offboarding", employeeId],
+    queryFn: () => offboardingUseCases.get(employeeId),
+    enabled: Boolean(employeeId),
+    staleTime: 0,
+  });
+
+/** Runs one offboarding step: "start", "update", "complete", "cancel" or "rehire". */
+export const useOffboardingAction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ employeeId, name, details }) => offboardingUseCases[name](employeeId, details),
+    onSuccess: () => {
+      // The step changes the employee, may clear documents and changes today's headcount.
+      for (const key of ["offboarding", "employees", "employee-documents", "dashboard"]) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+};
 
 /** HR verifies or rejects a received document (rejecting needs the reason). */
 export const useReviewDocument = () => {
@@ -190,7 +220,10 @@ export const useReviewDocument = () => {
   return useMutation({
     mutationFn: ({ id, action, remarks }) =>
       action === "reject" ? documentChecklistUseCases.reject(id, remarks) : documentChecklistUseCases.verify(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["employee-documents"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employee-documents"] });
+      queryClient.invalidateQueries({ queryKey: ["offboarding"] });
+    },
   });
 };
 

@@ -10,6 +10,7 @@ import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
 import { createPayrollRouter } from "./routes/payrollRoutes.js";
 import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shiftRoutes.js";
 import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "./routes/documentRoutes.js";
+import { createOffboardingRouter } from "./routes/offboardingRoutes.js";
 import { createRequirePermission } from "./middleware/permissionMiddleware.js";
 import {
   createAdministratorListRouter,
@@ -60,6 +61,7 @@ export const createApp = ({
   shiftAssignmentUseCases, // optional: without it /shift-assignments is not served
   documentRequirementUseCases, // optional: without it /document-requirements is not served
   employeeDocumentUseCases, // optional: without it /employee-documents is not served
+  offboardingUseCases, // optional: without it /offboarding is not served
   jobUseCases, // optional: without it /jobs is not served
   jobApplicationUseCases, // optional, with jobUseCases: without both /job-applications and the portal job routes are not served
   getHealth = () => ({}), // optional: extra fields for GET /health, e.g. the database state
@@ -119,6 +121,7 @@ export const createApp = ({
   if (employeeDocumentUseCases) {
     app.use("/employee-documents", createEmployeeDocumentRouter({ employeeDocumentUseCases, requireAuth }));
   }
+  if (offboardingUseCases) app.use("/offboarding", createOffboardingRouter({ offboardingUseCases, requireAuth }));
   if (salaryRateUseCases && authorizationUseCases) {
     const requirePermission = createRequirePermission(authorizationUseCases);
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));

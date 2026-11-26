@@ -1,5 +1,24 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { OffboardingStatus, RehireStatus, SeparationType } from "../../../../domain/employee/separationRules.js";
+
+// One offboarding. Written only by the offboarding use cases.
+const separationSchema = new mongoose.Schema(
+  {
+    status: { type: String, enum: Object.values(OffboardingStatus), required: true },
+    separationType: { type: String, enum: Object.values(SeparationType), required: true },
+    lastWorkingDay: { type: String, required: true }, // "YYYY-MM-DD"
+    reason: { type: String, default: "" },
+    rehireNotes: { type: String, default: "" },
+    startedBy: { type: String, default: null }, // administrator ids
+    startedAt: { type: Date, default: null },
+    updatedBy: { type: String, default: null },
+    updatedAt: { type: Date, default: null },
+    completedBy: { type: String, default: null },
+    completedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
 
 const employeesSchema = createEntitySchema({
   // The employee's company-issued employment code (employee number). Optional.
@@ -52,7 +71,11 @@ const employeesSchema = createEntitySchema({
   // The employee this one reports to. Points back at the same collection; null for someone at the top.
   managerId: { type: mongoose.Schema.Types.ObjectId, ref: "employees", default: null },
   // How the employee is employed (Regular, Contractual...). Null when none is assigned.
-  employmentTypeId: { type: mongoose.Schema.Types.ObjectId, ref: "employmenttypes", default: null }
+  employmentTypeId: { type: mongoose.Schema.Types.ObjectId, ref: "employmenttypes", default: null },
+  // Whether the employee may be hired again; blank until tagged during offboarding.
+  rehireStatus: { type: String, enum: ["", ...Object.values(RehireStatus)], default: "" },
+  separation: { type: separationSchema, default: null },
+  separationHistory: { type: [mongoose.Schema.Types.Mixed], default: [] }
 });
 
 employeesSchema.index({ managerId: 1 });

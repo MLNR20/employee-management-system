@@ -137,6 +137,13 @@ export class InMemoryEmployeeRepository extends InMemoryRepository {
   async existsWithManager(managerId) {
     return [...this.items.values()].some((e) => e.managerId === managerId);
   }
+  async findNonRehireableByGovernmentIds(ids) {
+    const fields = ["sssNumber", "tinNumber", "philhealthNumber", "pagibigNumber"];
+    return [...this.items.values()].filter(
+      (e) => e.rehireStatus === "non_rehireable" && fields.some((field) => ids[field] && e[field] === ids[field])
+    );
+  }
+
   async findCredentialsByEmail(email) {
     const employee = [...this.items.values()].find((e) => e.email === String(email).trim().toLowerCase());
     if (!employee) return null;
