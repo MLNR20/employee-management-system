@@ -2,13 +2,15 @@ import { Link } from "react-router-dom";
 import { useAdministrators, useEmployees, useLeaveApprovals, useLeaveTypes } from "../hooks/useEntities";
 import { LeaveStatus, dateOnly } from "../domain/leave/Leave";
 import { nameOf } from "../resources/shared";
+import { ListSkeleton, SkeletonBar } from "./Skeleton";
 
 const SHOWN = 6;
 
 /** "Approved by Jane Doe on 3/4/2025", read from the approval record the manager's decision created. */
 function ApprovedBy({ request, administrators }) {
-  const { data: approvals = [] } = useLeaveApprovals(request.id);
+  const { data: approvals = [], isLoading } = useLeaveApprovals(request.id);
   const approval = approvals[approvals.length - 1];
+  if (isLoading) return <SkeletonBar width="10rem" style={{ height: "1rem" }} />;
   if (!approval) return <span>Approved</span>;
 
   return (
@@ -26,14 +28,19 @@ function ApprovedBy({ request, administrators }) {
  * requests: LeaveRequest[]   every leave request; this component picks the ones to show
  */
 export default function UrgentLeaves({ requests }) {
-  const { data: employees = [] } = useEmployees();
-  const { data: leaveTypes = [] } = useLeaveTypes();
-  const { data: administrators = [] } = useAdministrators();
+  const { data: employees = [], isLoading: loadingEmployees } = useEmployees();
+  const { data: leaveTypes = [], isLoading: loadingTypes } = useLeaveTypes();
+  const { data: administrators = [], isLoading: loadingAdministrators } = useAdministrators();
 
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = requests
     .filter((request) => request.status === LeaveStatus.APPROVED && dateOnly(request.endDate) >= today)
     .sort((a, b) => dateOnly(a.startDate).localeCompare(dateOnly(b.startDate)));
+
+  // Wait for the names, so nobody shows as "(removed)" while they load.
+  if (upcoming.length > 0 && (loadingEmployees || loadingTypes || loadingAdministrators)) {
+    return <ListSkeleton rows={Math.min(upcoming.length, SHOWN)} label="Loading the urgent notifications" />;
+  }
 
   if (upcoming.length === 0) {
     return <p className="text-sm text-gray-500 p-4">No manager-approved leave is coming up.</p>;

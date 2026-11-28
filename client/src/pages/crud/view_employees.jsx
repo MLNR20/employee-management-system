@@ -81,11 +81,12 @@ const exportTable = (employees) => ({
 export default function View_Employees() {
   const table = useServerTable();
   const { data: page, isLoading, isFetching, isPlaceholderData, error } = useEmployeesPage(table.params);
-  const { data: summary } = useEmployeeSummary();
+  const { data: summary, isLoading: loadingSummary } = useEmployeeSummary();
   const removeEmployee = useRemoveEmployee();
   const { can } = useAccess();
 
-  const counts = { total: summary?.total ?? 0, active: summary?.active ?? 0, inactive: summary?.inactive ?? 0 };
+  // A dash, not a zero, when the counts could not be read.
+  const counts = { total: summary?.total ?? "-", active: summary?.active ?? "-", inactive: summary?.inactive ?? "-" };
 
   const confirmDelete = (id) => {
     Swal.fire({
@@ -149,9 +150,9 @@ export default function View_Employees() {
       <Navbar_DS />
       <div className="p-8 main-content">
         <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-3">
-          <StatCard label="Total Employees" value={counts.total} icon="users" />
-          <StatCard label="Active" value={counts.active} icon="checkCircle" accent="green" />
-          <StatCard label="Inactive" value={counts.inactive} icon="xCircle" accent="red" />
+          <StatCard label="Total Employees" value={counts.total} loading={loadingSummary} icon="users" />
+          <StatCard label="Active" value={counts.active} loading={loadingSummary} icon="checkCircle" accent="green" />
+          <StatCard label="Inactive" value={counts.inactive} loading={loadingSummary} icon="xCircle" accent="red" />
         </div>
         <Card
           title="Employees Management"

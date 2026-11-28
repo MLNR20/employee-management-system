@@ -7,6 +7,7 @@ import LineChart from "../components/LineChart";
 import PieChart from "../components/PieChart";
 import UrgentLeaves from "../components/UrgentLeaves";
 import PendingTasks from "../components/PendingTasks";
+import { ChartSkeleton, ListSkeleton, PieSkeleton } from "../components/Skeleton";
 import { LeaveStatus } from "../domain/leave/Leave";
 import { useDashboardSummary, useDashboardAttendance, useLeaveRequests } from "../hooks/useEntities";
 
@@ -32,8 +33,8 @@ const ranges = [
 
 export default function Dashboard() {
   const [days, setDays] = useState(14);
-  const { data: summary } = useDashboardSummary();
-  const { data: attendance = [], isLoading, error } = useDashboardAttendance(days);
+  const { data: summary, isLoading: loadingSummary } = useDashboardSummary();
+  const { data: attendance = [], isLoading, isPlaceholderData, error } = useDashboardAttendance(days);
   const { data: leaveRequests = [], isLoading: leaveLoading, error: leaveError } = useLeaveRequests();
 
   const taskSlices = taskStatuses.map((item) => ({
@@ -47,9 +48,9 @@ export default function Dashboard() {
       <Navbar_DS />
       <div className="p-8 main-content">
         <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-3">
-          <StatCard label="Total Employees" value={summary?.total ?? "-"} icon="users" />
-          <StatCard label="Present Today" value={summary?.present ?? "-"} icon="checkCircle" accent="green" />
-          <StatCard label="Absent Today" value={summary?.absent ?? "-"} icon="xCircle" accent="red" />
+          <StatCard label="Total Employees" value={summary?.total ?? "-"} loading={loadingSummary} icon="users" />
+          <StatCard label="Present Today" value={summary?.present ?? "-"} loading={loadingSummary} icon="checkCircle" accent="green" />
+          <StatCard label="Absent Today" value={summary?.absent ?? "-"} loading={loadingSummary} icon="xCircle" accent="red" />
         </div>
 
         <div className="grid grid-cols-1 gap-6 mt-6 xl:grid-cols-5">
@@ -75,8 +76,9 @@ export default function Dashboard() {
               Working days only. An employee counts as absent on any day covered by their approved leave; every other
               active employee counts as present.
             </p>
-            {isLoading ? (
-              <p className="text-sm text-gray-500 p-4">Loading...</p>
+            {/* Also while another period loads: the days on hand are the previous range's. */}
+            {isLoading || isPlaceholderData ? (
+              <ChartSkeleton label="Loading the attendance chart" />
             ) : error ? (
               <p className="text-sm text-red-600 p-4">Something went wrong loading the data.</p>
             ) : (
@@ -88,7 +90,7 @@ export default function Dashboard() {
             <Card title="Pending Tasks">
               <p className="mb-4 text-sm text-gray-500">Leave requests waiting for a decision.</p>
               {leaveLoading ? (
-                <p className="text-sm text-gray-500 p-4">Loading...</p>
+                <ListSkeleton label="Loading the pending tasks" />
               ) : leaveError ? (
                 <p className="text-sm text-red-600 p-4">Something went wrong loading the leave requests.</p>
               ) : (
@@ -99,7 +101,7 @@ export default function Dashboard() {
             <Card title="Urgent Notifications">
               <p className="mb-4 text-sm text-gray-500">Leave approved by a manager that is under way or coming up.</p>
               {leaveLoading ? (
-                <p className="text-sm text-gray-500 p-4">Loading...</p>
+                <ListSkeleton label="Loading the urgent notifications" />
               ) : leaveError ? (
                 <p className="text-sm text-red-600 p-4">Something went wrong loading the leave requests.</p>
               ) : (
@@ -114,7 +116,7 @@ export default function Dashboard() {
             All leave requests by status. Pending requests are waiting for a manager's decision.
           </p>
           {leaveLoading ? (
-            <p className="text-sm text-gray-500 p-4">Loading...</p>
+            <PieSkeleton slices={taskStatuses.length} label="Loading the leave chart" />
           ) : (
             <PieChart title="Leave requests by status" slices={taskSlices} />
           )}

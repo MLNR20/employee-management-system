@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEmployees, useLeaveTypes } from "../hooks/useEntities";
 import { LeaveStatus, dateOnly } from "../domain/leave/Leave";
 import { nameOf } from "../resources/shared";
+import { ListSkeleton } from "./Skeleton";
 
 const SHOWN = 6;
 
@@ -12,12 +13,17 @@ const SHOWN = 6;
  * requests: LeaveRequest[]   every leave request; this component picks the pending ones
  */
 export default function PendingTasks({ requests }) {
-  const { data: employees = [] } = useEmployees();
-  const { data: leaveTypes = [] } = useLeaveTypes();
+  const { data: employees = [], isLoading: loadingEmployees } = useEmployees();
+  const { data: leaveTypes = [], isLoading: loadingTypes } = useLeaveTypes();
 
   const pending = requests
     .filter((request) => request.status === LeaveStatus.PENDING)
     .sort((a, b) => new Date(a.dateCreated ?? 0) - new Date(b.dateCreated ?? 0));
+
+  // Wait for the names, so nobody shows as "(removed)" while they load.
+  if (pending.length > 0 && (loadingEmployees || loadingTypes)) {
+    return <ListSkeleton rows={Math.min(pending.length, SHOWN)} label="Loading the pending tasks" />;
+  }
 
   if (pending.length === 0) {
     return <p className="text-sm text-gray-500 p-4">Nothing is waiting for a decision.</p>;

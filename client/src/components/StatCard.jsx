@@ -1,5 +1,6 @@
 import Card from "./Card";
 import SidebarIcon from "./SidebarIcon";
+import { SkeletonBar } from "./Skeleton";
 
 const accents = {
   default: { value: "text-gray-900", badge: "bg-blue-100 text-blue-700" },
@@ -10,9 +11,9 @@ const accents = {
 /**
  * A small icon Card showing one number under a label, with the icon in a rounded-corner badge:
  * <StatCard label="Active" value={12} icon="checkCircle" accent="green" />
- * icon is a name from SidebarIcon.
+ * icon is a name from SidebarIcon. While `loading`, a placeholder stands in for the number.
  */
-export default function StatCard({ label, value, icon, accent = "default" }) {
+export default function StatCard({ label, value, icon, accent = "default", loading = false }) {
   const colors = accents[accent] ?? accents.default;
 
   return (
@@ -23,9 +24,12 @@ export default function StatCard({ label, value, icon, accent = "default" }) {
             <SidebarIcon name={icon} />
           </span>
         )}
-        <div>
+        <div aria-busy={loading}>
           <p className="text-sm text-gray-500">{label}</p>
-          <p className={`text-3xl font-bold ${colors.value}`}>{value}</p>
+          {/* The placeholder is as tall as the number, so the card does not grow when it arrives. */}
+          <p className={`text-3xl font-bold ${colors.value}`}>
+            {loading ? <SkeletonBar width="4rem" style={{ height: "2.25rem" }} /> : value}
+          </p>
         </div>
       </div>
     </Card>

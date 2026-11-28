@@ -110,6 +110,8 @@ export default function Payroll() {
   const { data: report, isLoading, isPlaceholderData, error } = usePayroll(period);
 
   const rows = report?.data ?? [];
+  // The totals on hand while another period loads belong to the old one.
+  const loadingTotals = isLoading || isPlaceholderData;
   const open = rows.find((row) => row.employeeId === openId);
 
   const tableColumns = [
@@ -138,10 +140,10 @@ export default function Payroll() {
       <Navbar_DS />
       <div className="p-8 main-content">
         <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard label="Employees" value={report?.totals.employees ?? "-"} icon="users" />
-          <StatCard label="Hours worked" value={report ? money(report.totals.hoursWorked) : "-"} icon="clock" />
-          <StatCard label="Gross pay" value={report ? money(report.totals.grossPay) : "-"} icon="banknotes" accent="green" />
-          <StatCard label="Net pay" value={report ? money(report.totals.netPay) : "-"} icon="banknotes" accent="green" />
+          <StatCard label="Employees" value={report?.totals.employees ?? "-"} loading={loadingTotals} icon="users" />
+          <StatCard label="Hours worked" value={report ? money(report.totals.hoursWorked) : "-"} loading={loadingTotals} icon="clock" />
+          <StatCard label="Gross pay" value={report ? money(report.totals.grossPay) : "-"} loading={loadingTotals} icon="banknotes" accent="green" />
+          <StatCard label="Net pay" value={report ? money(report.totals.netPay) : "-"} loading={loadingTotals} icon="banknotes" accent="green" />
         </div>
 
         <Card

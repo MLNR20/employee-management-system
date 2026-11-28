@@ -7,7 +7,7 @@ payroll, inventory, onboarding and offboarding documents, roles and permissions,
 - **Server:** Node 22, Express 5, MongoDB (Mongoose), Socket.IO for live notifications
 - **Client:** React 19 (Create React App), React Router 7, TanStack Query, Tailwind CSS + Flowbite
 - **Tests:** 232 server tests (`node --test`; 5 of them need a local MongoDB and are skipped without one)
-  and 52 client tests (Jest), run by GitHub Actions on every push
+  and 54 client tests (Jest), run by GitHub Actions on every push
 
 ## Offboarding and the rehire tag
 
