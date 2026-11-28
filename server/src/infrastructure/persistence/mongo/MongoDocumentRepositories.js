@@ -91,9 +91,17 @@ export class MongoEmployeeDocumentRepository extends MongoRepository {
 
   async removeForEmployee(employeeId) {
     if (!mongoose.isValidObjectId(employeeId)) return;
-    await EmployeeDocumentModel.deleteMany({ employeeId });
+    await EmployeeDocumentModel.softDelete({ employeeId });
   }
 }
+
+const totals = async (match) => {
+  const [row] = await DocumentFileModel.aggregate([
+    { $match: match },
+    { $group: { _id: null, count: { $sum: 1 }, bytes: { $sum: "$size" } } },
+  ]);
+  return { count: row?.count ?? 0, bytes: row?.bytes ?? 0 };
+};
 
 export class MongoDocumentFileRepository {
   async save({ employeeId, name, contentType, size, data }) {
@@ -107,16 +115,27 @@ export class MongoDocumentFileRepository {
     const doc = await DocumentFileModel.findById(id);
     if (!doc) return null;
     const { employeeId, name, contentType, size, data } = doc;
-    return { id: String(doc._id), employeeId: String(employeeId), name, contentType, size, data };
+    // A plain Buffer: Mongoose's own subclass carries the whole document with it.
+    return { id: String(doc._id), employeeId: String(employeeId), name, contentType, size, data: Buffer.from(data) };
   }
 
   async remove(id) {
     if (!mongoose.isValidObjectId(id)) return;
-    await DocumentFileModel.deleteOne({ _id: id });
+    await DocumentFileModel.softDelete({ _id: id });
   }
 
   async removeForEmployee(employeeId) {
     if (!mongoose.isValidObjectId(employeeId)) return;
-    await DocumentFileModel.deleteMany({ employeeId });
+    await DocumentFileModel.softDelete({ employeeId });
+  }
+
+  async usage(employeeId) {
+    if (!mongoose.isValidObjectId(employeeId)) return { count: 0, bytes: 0 };
+    // An aggregation is not filtered by the soft delete plugin, so it asks for live files itself.
+    return totals({ employeeId: new mongoose.Types.ObjectId(String(employeeId)), deletedAt: null });
+  }
+
+  async totalBytes() {
+    return (await totals({})).bytes; // removed files still take up room
   }
 }

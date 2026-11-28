@@ -90,7 +90,7 @@ export default function View_Employees() {
   const confirmDelete = (id) => {
     Swal.fire({
       title: "Are you sure?",
-      text: "Their documents, uploaded files, shift schedule, job applications and contacts are deleted too. This cannot be undone.",
+      text: "They disappear from the system, with their documents, files, shift schedule, job applications and contacts. The database keeps the records, but there is no restore button.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",

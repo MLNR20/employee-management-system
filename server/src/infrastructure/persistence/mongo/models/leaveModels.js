@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { softDeletePlugin } from "./softDelete.js";
 
 const objectIdRef = (ref) => ({ type: mongoose.Schema.Types.ObjectId, ref, required: true });
 
@@ -12,7 +13,8 @@ const leaveBalancesSchema = createEntitySchema({
   availableLeaves: { type: Number, required: true, min: 0 },
 });
 
-leaveBalancesSchema.index({ employeeId: 1, leaveTypeId: 1 }, { unique: true });
+leaveBalancesSchema.plugin(softDeletePlugin);
+leaveBalancesSchema.index({ employeeId: 1, leaveTypeId: 1, deletedAt: 1 }, { unique: true });
 
 export const LeaveBalanceModel = mongoose.model("leavebalances", leaveBalancesSchema);
 

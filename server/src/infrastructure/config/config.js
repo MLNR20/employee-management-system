@@ -1,4 +1,5 @@
 import { resolveSecrets } from "./secrets.js";
+import { resolveFileLimits } from "../../domain/document/fileLimits.js";
 
 // Reads server/.env when it exists (Node 20.12+). Variables already in the environment, such as the ones
 // docker-compose passes, take priority over the file.
@@ -34,6 +35,9 @@ export const config = {
     EMPLOYEE_TOKEN_TTL: process.env.EMPLOYEE_TOKEN_TTL || '8h',
     ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || '15m',
     REFRESH_TOKEN_TTL: process.env.REFRESH_TOKEN_TTL || '7d',
+
+    // How much can be uploaded as document files (see domain/document/fileLimits.js).
+    DOCUMENT_FILE_LIMITS: resolveFileLimits(process.env),
 
     // The workplace clock for shifts, lateness and the working day: UTC plus this many minutes.
     // Default 480 = UTC+8 (Philippines, no daylight saving).

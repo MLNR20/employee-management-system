@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { softDeletePlugin } from "./softDelete.js";
 
 // createdAt (from the base schema) is the date the notification was created.
 const notificationsSchema = createEntitySchema({
@@ -11,6 +12,7 @@ const notificationsSchema = createEntitySchema({
   recipientEmployeeId: { type: mongoose.Schema.Types.ObjectId, ref: "employees", default: null },
 });
 
+notificationsSchema.plugin(softDeletePlugin);
 notificationsSchema.index({ isRead: 1, createdAt: -1 });
 notificationsSchema.index({ recipientEmployeeId: 1, isRead: 1, createdAt: -1 });
 

@@ -12,6 +12,7 @@ import { localDay } from "../../domain/attendance/localTime.js";
 import { DocumentStatus } from "../../domain/document/EmployeeDocument.js";
 import { DEFAULT_REQUIREMENTS } from "../../domain/document/defaultRequirements.js";
 import { checkUpload } from "../../domain/document/fileRules.js";
+import { DEFAULT_FILE_LIMITS, assertWithinLimits } from "../../domain/document/fileLimits.js";
 import { DocumentStage } from "../../domain/document/DocumentRequirement.js";
 import {
   assertValidEmployeeDocument,
@@ -109,6 +110,7 @@ export const createDocumentRequirementUseCases = ({ documentRequirementRepositor
  * @param {import("../../domain/employee/EmployeeRepository").EmployeeRepository} deps.employeeRepository
  * @param {import("../../domain/document/DocumentRepositories").DocumentFileRepository} [deps.documentFileRepository]
  *   without it no files can be uploaded
+ * @param {typeof DEFAULT_FILE_LIMITS} [deps.fileLimits] how much can be uploaded
  * @param {number} [deps.utcOffsetMinutes] the workplace clock, used for "today" when checking expiry
  * @param {() => Date} [deps.now]
  */
@@ -116,6 +118,7 @@ export const createEmployeeDocumentUseCases = ({
   employeeDocumentRepository,
   documentRequirementRepository,
   documentFileRepository,
+  fileLimits = DEFAULT_FILE_LIMITS,
   employeeRepository,
   utcOffsetMinutes = 0,
   now = () => new Date(),
@@ -148,10 +151,30 @@ export const createEmployeeDocumentUseCases = ({
     if (file) await documentFileRepository?.remove(file.id);
   };
 
+  // Uploads are stored one at a time, so that two at once cannot both squeeze under a limit.
+  // (That holds for one server process.)
+  let uploads = Promise.resolve();
+  const oneAtATime = (task) => {
+    const run = uploads.then(task);
+    uploads = run.catch(() => {});
+    return run;
+  };
+
+  /** What the employee's files come to, and the limits they are held to. */
+  const fileUsage = async (employeeId) => {
+    if (!documentFileRepository) return null;
+    const [usage, totalBytes] = await Promise.all([
+      documentFileRepository.usage(employeeId),
+      documentFileRepository.totalBytes(),
+    ]);
+    return { ...fileLimits, ...usage, totalBytes };
+  };
+
   const review = async (id, reviewerId, changes) =>
     employeeDocumentRepository.update(id, { ...changes, reviewedBy: reviewerId, reviewedAt: now() });
 
   return {
+    fileLimits,
     listEmployeeDocuments: crud.list,
     listEmployeeDocumentsPage: crud.listPage,
     getEmployeeDocument: crud.get,
@@ -163,33 +186,43 @@ export const createEmployeeDocumentUseCases = ({
     },
 
     /**
-     * Stores a scanned copy on a record, replacing any earlier one. A new copy counts as handed in and
-     * has to be checked: the record becomes received and any earlier review is cleared.
+     * Stores a scanned copy on a record, replacing any earlier one, within the file limits. A new copy
+     * counts as handed in and has to be checked: the record becomes received and any earlier review is
+     * cleared.
      * @param {{name?: string, data?: Buffer}} upload
      */
     async attachFile(id, upload, administratorId) {
       if (!documentFileRepository) throw new ValidationError("File uploads are not enabled");
-      const document = await crud.get(id);
-      const file = checkUpload(upload);
+      await crud.get(id); // an unknown record is reported before anything about the file
+      const file = checkUpload(upload, fileLimits.maxFileBytes);
 
-      const stored = await documentFileRepository.save({ ...file, employeeId: document.employeeId });
-      const { data, ...details } = file;
-      let updated;
-      try {
-        updated = await employeeDocumentRepository.update(id, {
-          file: { id: stored.id, ...details, uploadedBy: administratorId, uploadedAt: now() },
-          status: DocumentStatus.RECEIVED,
-          receivedAt: now(),
-          reviewedBy: null,
-          reviewedAt: null,
-          remarks: "",
-        });
-      } catch (error) {
-        await documentFileRepository.remove(stored.id); // never leave a file nothing points at
-        throw error;
-      }
-      await removeStoredFile(document.file);
-      return updated;
+      return oneAtATime(async () => {
+        const document = await crud.get(id); // as it is now, after any upload ahead of this one
+        const { usage, totalBytes } = {
+          usage: await documentFileRepository.usage(document.employeeId),
+          totalBytes: await documentFileRepository.totalBytes(),
+        };
+        assertWithinLimits({ size: file.size, replacing: document.file, usage, totalBytes }, fileLimits);
+
+        const stored = await documentFileRepository.save({ ...file, employeeId: document.employeeId });
+        const { data, ...details } = file;
+        let updated;
+        try {
+          updated = await employeeDocumentRepository.update(id, {
+            file: { id: stored.id, ...details, uploadedBy: administratorId, uploadedAt: now() },
+            status: DocumentStatus.RECEIVED,
+            receivedAt: now(),
+            reviewedBy: null,
+            reviewedAt: null,
+            remarks: "",
+          });
+        } catch (error) {
+          await documentFileRepository.remove(stored.id); // never leave a live file nothing points at
+          throw error;
+        }
+        await removeStoredFile(document.file);
+        return updated;
+      });
     },
 
     /** Takes the uploaded copy off a record. A verified record has to be checked again. */
@@ -339,6 +372,7 @@ export const createEmployeeDocumentUseCases = ({
         employeeId,
         stage,
         items,
+        files: await fileUsage(employeeId),
         summary: {
           total: items.length,
           required: required.length,

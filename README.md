@@ -6,7 +6,8 @@ payroll, inventory, onboarding and offboarding documents, roles and permissions,
 
 - **Server:** Node 22, Express 5, MongoDB (Mongoose), Socket.IO for live notifications
 - **Client:** React 19 (Create React App), React Router 7, TanStack Query, Tailwind CSS + Flowbite
-- **Tests:** 221 server tests (`node --test`) and 45 client tests (Jest), run by GitHub Actions on every push
+- **Tests:** 232 server tests (`node --test`; 5 of them need a local MongoDB and are skipped without one)
+  and 47 client tests (Jest), run by GitHub Actions on every push
 
 ## Offboarding and the rehire tag
 
@@ -31,8 +32,18 @@ offboarding lines on start-up when that checklist has none.
 - **Departments and positions** are managed under Organization, and the employee forms list them. Employees
   store the names as text, so renaming one does not change the employees who already hold it; the edit form
   shows the old name as "no longer listed". A department with positions cannot be deleted.
-- **Document files:** each checklist line takes one PDF, PNG or JPEG of up to 5 MB, checked by its content.
-  Files are stored in MongoDB (collection `documentfiles`), so they count against the database's storage.
+- **Document files:** each checklist line takes one PDF, PNG or JPEG, checked by its content. Files are
+  stored in MongoDB (collection `documentfiles`) and limited as below; the checklist shows the usage.
+
+  | Limit | Default | Setting |
+  | --- | --- | --- |
+  | One file | 5 MB (15 at most) | `DOCUMENT_MAX_FILE_MB` |
+  | Current files per employee | 25 | `DOCUMENT_MAX_FILES_PER_EMPLOYEE` |
+  | Current files per employee, together | 50 MB | `DOCUMENT_MAX_MB_PER_EMPLOYEE` |
+  | Everything stored, removed files included | 400 MB | `DOCUMENT_MAX_TOTAL_MB` |
+
+  Replacing or removing a file frees the employee's share but not the storage, since the old file is kept.
+  Uploads are checked one at a time, which holds the limits on a single server process.
 - **Deductions** (Time & Pay) are a fixed amount, a percent of pay or a bracket table, taken from gross pay
   or from what is left after the gross ones. Amounts are per payroll cut-off. **None are built in:** enter
   the current government rates and tax tables yourself. Payroll uses the deductions in force when the
@@ -42,9 +53,16 @@ offboarding lines on start-up when that checklist has none.
   and any lines HR adds. It is not stored, and it does not know about 13th month or salary already paid.
   Check it before paying, and attach the export to the "Final pay computation" document.
 - **Deleting an employee** is for a record made by mistake. Anyone with leave, attendance, pay rate,
-  equipment or offboarding history cannot be deleted. Otherwise their documents, files, schedule, job
-  applications, notifications, leave balances and contacts are deleted with them. Records orphaned by
-  earlier deletions are not cleaned up.
+  equipment or offboarding history cannot be deleted. Records orphaned by earlier deletions are not
+  cleaned up.
+- **Soft delete:** employees, and their documents, files, shift schedule, job applications, notifications,
+  leave balances and emergency contacts, are never erased. Deleting one sets `deletedAt`, and the app then
+  behaves as if it were gone. There is no restore screen: clear `deletedAt` in the database. Other things
+  (departments, attendance, inventory and so on) are still deleted outright. At start-up the server
+  replaces the older unique indexes, so a deleted record does not block a new one with the same email.
+
+  To run the database tests, name an empty throwaway database starting with `ems_test_` (it is dropped
+  afterwards): `$env:MONGO_TEST_URI = "mongodb://127.0.0.1:27017/ems_test_local"`, then `npm test`.
 
 ## Repository layout
 

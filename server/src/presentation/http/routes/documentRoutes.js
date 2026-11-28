@@ -1,14 +1,23 @@
 import express from "express";
 import { createCrudRouter, toDto } from "./crudRouter.js";
 import { ValidationError } from "../../../domain/errors.js";
-import { MAX_FILE_BYTES } from "../../../domain/document/fileRules.js";
+import { DEFAULT_FILE_LIMITS, inMegabytes } from "../../../domain/document/fileLimits.js";
 
-// The upload is the request body itself, whatever type it claims: the use case checks the content.
-const rawBody = express.raw({ type: () => true, limit: MAX_FILE_BYTES });
-const readUpload = (req, res, next) =>
-  rawBody(req, res, (error) =>
-    next(error?.type === "entity.too.large" ? new ValidationError("The file is larger than 5 MB") : error)
-  );
+/**
+ * Reads an upload: the request body itself, whatever type it claims (the use case checks the content).
+ * A body over the limit is refused without being read into memory.
+ */
+const createUploadReader = (maxBytes) => {
+  const rawBody = express.raw({ type: () => true, limit: maxBytes });
+  return (req, res, next) =>
+    rawBody(req, res, (error) =>
+      next(
+        error?.type === "entity.too.large"
+          ? new ValidationError(`The file is larger than ${inMegabytes(maxBytes)}`)
+          : error
+      )
+    );
+};
 
 /** The lines of the checklists: the documents collected when an employee joins or leaves. */
 export const createDocumentRequirementRouter = ({ documentRequirementUseCases, requireAuth }) => {
@@ -36,10 +45,13 @@ export const createDocumentRequirementRouter = ({ documentRequirementUseCases, r
 export const createEmployeeDocumentRouter = ({ employeeDocumentUseCases, requireAuth }) => {
   const router = express.Router();
   router.use(requireAuth);
+  const readUpload = createUploadReader(
+    employeeDocumentUseCases.fileLimits?.maxFileBytes ?? DEFAULT_FILE_LIMITS.maxFileBytes
+  );
 
   // Registered before the CRUD routes so "checklist" is not read as a document id.
   router.get("/checklist/:employeeId", async (req, res) => {
-    const { employeeId, stage, items, summary } = await employeeDocumentUseCases.checklist(
+    const { employeeId, stage, items, summary, files } = await employeeDocumentUseCases.checklist(
       req.params.employeeId,
       req.query.stage // "onboarding" (default) or "offboarding"
     );
@@ -47,6 +59,7 @@ export const createEmployeeDocumentRouter = ({ employeeDocumentUseCases, require
       employeeId,
       stage,
       summary,
+      files,
       data: items.map(({ requirement, document, state }) => ({
         requirement: toDto(requirement),
         document: document ? toDto(document) : null,

@@ -12,6 +12,7 @@ export class HttpDocumentRepository {
     const { data } = await this.client.get(`/employee-documents/checklist/${employeeId}`, { params: { stage } });
     return {
       summary: data.summary,
+      files: data.files ?? null, // the file limits and how much of them is used
       items: data.data.map(({ requirement, document, state }) => ({
         requirement: DocumentRequirement.fromApi(requirement),
         document: document ? EmployeeDocument.fromApi(document) : null,

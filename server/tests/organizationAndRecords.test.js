@@ -13,7 +13,8 @@ import { createOffboardingUseCases } from "../src/application/employee/offboardi
 import { createEmployeeDocumentRouter } from "../src/presentation/http/routes/documentRoutes.js";
 import { errorHandler } from "../src/presentation/http/middleware/errorHandler.js";
 import { DEFAULT_ORGANIZATION } from "../src/domain/department/defaultOrganization.js";
-import { checkUpload, MAX_FILE_BYTES } from "../src/domain/document/fileRules.js";
+import { checkUpload } from "../src/domain/document/fileRules.js";
+import { DEFAULT_FILE_LIMITS } from "../src/domain/document/fileLimits.js";
 import {
   InMemoryAttendanceRepository,
   InMemoryBorrowingRepository,
@@ -120,7 +121,7 @@ test("an employee with attendance, pay rates or borrowing history cannot be dele
   }
 });
 
-test("deleting a record made by mistake leaves nothing behind, and nobody else's records go", async () => {
+test("deleting a record made by mistake takes its other records out of use, and nobody else's", async () => {
   const { employees, hire, shifts, documents, files, applications, notifications } = records();
   const mistake = await hire("mistake");
   const other = await hire("other");
@@ -137,7 +138,7 @@ test("deleting a record made by mistake leaves nothing behind, and nobody else's
   for (const repository of [shifts, documents, applications]) {
     assert.deepEqual((await repository.findAll()).map((r) => r.employeeId), [other.id]);
   }
-  assert.deepEqual([...files.files.values()].map((f) => f.employeeId), [other.id]);
+  assert.deepEqual(files.live().map((f) => f.employeeId), [other.id]);
   assert.deepEqual((await notifications.findAll()).map((n) => n.recipientEmployeeId), [other.id]);
   await assert.rejects(employees.deleteEmployee(mistake.id), /not found/);
 });
@@ -145,6 +146,7 @@ test("deleting a record made by mistake leaves nothing behind, and nobody else's
 // --- Uploaded document copies ----------------------------------------------------------------------
 
 const PDF = Buffer.from("%PDF-1.7\nfirst");
+const MAX_FILE_BYTES = DEFAULT_FILE_LIMITS.maxFileBytes;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
 
 test("a file is accepted by what it contains, and its name is made safe", () => {
@@ -226,7 +228,8 @@ test("upload, download, replace, review and delete a document copy", async () =>
     assert.equal(replaced.body.status, "received");
     assert.equal(replaced.body.reviewedBy, null);
     assert.equal(replaced.body.file.contentType, "image/png");
-    assert.equal(documentFileRepository.files.size, 1);
+    assert.equal(documentFileRepository.live().length, 1);
+    assert.equal(documentFileRepository.files.size, 2, "the replaced file is kept");
     assert.equal((await fetch(`${base}/files/${uploaded.body.file.id}`)).status, 404);
 
     // A body cannot point a record at a file.
@@ -240,12 +243,12 @@ test("upload, download, replace, review and delete a document copy", async () =>
     await useCases.verifyDocument(record.id, ADMIN);
     const removed = await fetch(`${base}/${record.id}/file`, { method: "DELETE" });
     assert.equal((await removed.json()).status, "received");
-    assert.equal(documentFileRepository.files.size, 0);
+    assert.equal(documentFileRepository.live().length, 0);
     assert.equal((await fetch(`${base}/${record.id}/file`, { method: "DELETE" })).status, 404);
 
     await put(PDF);
     await useCases.deleteEmployeeDocument(record.id);
-    assert.equal(documentFileRepository.files.size, 0);
+    assert.equal(documentFileRepository.live().length, 0);
   } finally {
     server.close();
   }
@@ -265,7 +268,7 @@ test("upload, download, replace, review and delete a document copy", async () =>
   await offboarding.start(employee.id, leave, ADMIN);
   await handIn();
   await offboarding.cancel(employee.id);
-  assert.equal(documentFileRepository.files.size, 0);
+  assert.equal(documentFileRepository.live().length, 0);
 
   await offboarding.start(employee.id, leave, ADMIN);
   const kept = await handIn();

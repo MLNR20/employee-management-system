@@ -161,6 +161,7 @@ export const employeeDocumentUseCases = createEmployeeDocumentUseCases({
   employeeDocumentRepository,
   documentRequirementRepository,
   documentFileRepository,
+  fileLimits: config.DOCUMENT_FILE_LIMITS,
   employeeRepository,
   utcOffsetMinutes,
 });

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { softDeletePlugin } from "./softDelete.js";
 import { OffboardingStatus, RehireStatus, SeparationType } from "../../../../domain/employee/separationRules.js";
 
 // One offboarding. Written only by the offboarding use cases.
@@ -40,7 +41,6 @@ const employeesSchema = createEntitySchema({
   email: {
     type: String,
     required: true,
-    unique: true,
     lowercase: true,
     trim: true
   },
@@ -78,6 +78,9 @@ const employeesSchema = createEntitySchema({
   separationHistory: { type: [mongoose.Schema.Types.Mixed], default: [] }
 });
 
+employeesSchema.plugin(softDeletePlugin);
+// Unique among employees who are not deleted: a deleted record does not hold on to its email.
+employeesSchema.index({ email: 1, deletedAt: 1 }, { unique: true });
 employeesSchema.index({ managerId: 1 });
 employeesSchema.index({ employmentTypeId: 1 });
 

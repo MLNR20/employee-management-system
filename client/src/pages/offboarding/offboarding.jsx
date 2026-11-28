@@ -263,7 +263,7 @@ function EmployeeOffboarding({ employeeId, employeeName }) {
     }
   };
   const cancel = async () => {
-    if (await confirm("Cancel this offboarding?", "The documents recorded for it are discarded.", "Cancel offboarding", "#d33")) {
+    if (await confirm("Cancel this offboarding?", "The documents recorded for it are taken off the checklist.", "Cancel offboarding", "#d33")) {
       run("cancel");
     }
   };

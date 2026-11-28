@@ -682,26 +682,40 @@ export class InMemoryDocumentRequirementRepository extends InMemoryRepository {
   }
 }
 
-/** Uploaded document copies, held in a map. */
+/** Uploaded document copies, held in a map. Removed ones stay in it, marked, as in MongoDB. */
 export class InMemoryDocumentFileRepository {
   files = new Map();
 
+  live() {
+    return [...this.files.values()].filter((file) => !file.deletedAt);
+  }
+
   async save(file) {
     const id = newId();
-    this.files.set(id, { ...file, id });
+    this.files.set(id, { ...file, id, deletedAt: null });
     return { id };
   }
 
   async findById(id) {
-    return this.files.get(id) ?? null;
+    return this.live().find((file) => file.id === id) ?? null;
   }
 
   async remove(id) {
-    this.files.delete(id);
+    const file = this.files.get(id);
+    if (file) file.deletedAt ??= new Date();
   }
 
   async removeForEmployee(employeeId) {
-    for (const [id, file] of this.files) if (file.employeeId === employeeId) this.files.delete(id);
+    for (const file of this.live()) if (file.employeeId === employeeId) file.deletedAt = new Date();
+  }
+
+  async usage(employeeId) {
+    const mine = this.live().filter((file) => file.employeeId === employeeId);
+    return { count: mine.length, bytes: mine.reduce((sum, file) => sum + file.size, 0) };
+  }
+
+  async totalBytes() {
+    return [...this.files.values()].reduce((sum, file) => sum + file.size, 0);
   }
 }
 

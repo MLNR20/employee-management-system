@@ -88,9 +88,12 @@ export class MongoRepository extends Repository {
     }
   }
 
+  /** Deletes for good, unless the model soft deletes (see models/softDelete.js). */
   async remove(id) {
     if (!mongoose.isValidObjectId(id)) return false;
-    return Boolean(await this.model.findOneAndDelete({ _id: id, ...this.baseFilter }));
+    const filter = { _id: id, ...this.baseFilter };
+    if (this.model.softDelete) return (await this.model.softDelete(filter)).modifiedCount > 0;
+    return Boolean(await this.model.findOneAndDelete(filter));
   }
 
   #searchFilter(search) {

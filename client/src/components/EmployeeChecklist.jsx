@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
 import { Badge } from "../resources/shared";
 import DocumentFileLink from "./DocumentFileLink";
-import { ACCEPTED_FILES, fileError } from "../domain/document/fileRules";
+import { ACCEPTED_FILES, describeFileUsage, fileError } from "../domain/document/fileRules";
 import {
   useAccess,
   useCreateEmployeeDocument,
@@ -68,7 +68,7 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
 
   // Uploading counts as handing the document in. An expired or rejected one needs its new expiry date.
   const upload = async ({ requirement, document, state }, file) => {
-    const problem = fileError(file);
+    const problem = fileError(file, checklist.files?.maxFileBytes);
     if (problem) return Swal.fire("Cannot upload", problem, "error");
 
     const needsExpiry = requirement.hasExpiry && (!document?.expiryDate || state === "expired" || state === "rejected");
@@ -77,14 +77,15 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
 
     const record = document
       ? expiryDate && { expiryDate }
-      : { employeeId, requirementId: requirement.id, status: "received", ...(expiryDate && { expiryDate }) };
+      : // Pending until the upload succeeds, so a refused file never counts as handed in.
+        { employeeId, requirementId: requirement.id, status: "pending", ...(expiryDate && { expiryDate }) };
     return files.mutate({ id: document?.id, file, record }, { onError: showError("Could not upload") });
   };
 
   const removeFile = ({ document }) =>
     Swal.fire({
       title: "Remove this file?",
-      text: "The uploaded copy is deleted. The document record stays.",
+      text: "It is taken off this document. The database keeps it, so it still counts towards the system's storage limit.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -115,6 +116,7 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
 
   const { summary } = checklist;
   const percent = summary.required ? Math.round((summary.requiredVerified / summary.required) * 100) : 0;
+  const fileUsage = checklist.files && describeFileUsage(checklist.files);
 
   return (
     <>
@@ -135,6 +137,17 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
           <div className="h-2 rounded-full bg-green-600" style={{ width: `${percent}%` }} />
         </div>
       </div>
+
+      {fileUsage && (
+        <div className="mb-3 text-sm">
+          <p className="text-gray-500">{fileUsage.usage}</p>
+          {fileUsage.warning && (
+            <p className="text-red-600" role="alert">
+              {fileUsage.warning}
+            </p>
+          )}
+        </div>
+      )}
 
       {checklist.items.length === 0 ? (
         <p className="text-gray-500">

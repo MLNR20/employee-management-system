@@ -233,8 +233,10 @@ export const useDocumentFile = () => {
     mutationFn: async ({ id, file, record }) => {
       const documentId = id ?? (await employeeDocumentUseCases.add(record)).id;
       if (!file) return documentChecklistUseCases.removeFile(documentId);
-      if (id && record) await employeeDocumentUseCases.update(id, record); // e.g. the new copy's expiry date
-      return documentChecklistUseCases.upload(documentId, file);
+      await documentChecklistUseCases.upload(documentId, file);
+      // Only once the new copy is stored, e.g. its expiry date: a refused upload must leave the old one as it was.
+      if (id && record) await employeeDocumentUseCases.update(id, record);
+      return documentId;
     },
     // Even after a failure: the record may have been created before the upload was refused.
     onSettled: () => {

@@ -4,6 +4,7 @@ import config from './src/infrastructure/config/config.js';
 import * as useCases from './src/container.js';
 import { createApp } from './src/presentation/http/app.js';
 import { createSocketServer } from './src/infrastructure/realtime/createSocketServer.js';
+import { replaceLegacyUniqueIndexes } from './src/infrastructure/persistence/mongo/softDeleteIndexes.js';
 
 const DATABASE_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 const app = createApp({
@@ -34,6 +35,9 @@ httpServer.listen(config.PORT, () =>{
 // Log connection status
 mongoose.connect(config.dbConnection).then(async ()=>{
     console.log('App connected to database');
+    // Before soft delete, unique indexes counted every document. Replace any that are left.
+    const dropped = await replaceLegacyUniqueIndexes();
+    if (dropped.length) console.log(`Replaced unique indexes: ${dropped.join(', ')}`);
     // Permissions are enforced, so somebody must always be able to grant them.
     await useCases.authUseCases.ensureAdministratorsExist();
     const { granted } = await useCases.accessUseCases.ensureAccessManager();

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { softDeletePlugin } from "./softDelete.js";
 import { ApplicationStatus } from "../../../../domain/job/JobApplication.js";
 
 const jobApplicationsSchema = createEntitySchema({
@@ -11,7 +12,8 @@ const jobApplicationsSchema = createEntitySchema({
 });
 
 // An employee applies to a job once. The database enforces it, so two simultaneous submits cannot both succeed.
-jobApplicationsSchema.index({ employeeId: 1, jobId: 1 }, { unique: true });
+jobApplicationsSchema.plugin(softDeletePlugin);
+jobApplicationsSchema.index({ employeeId: 1, jobId: 1, deletedAt: 1 }, { unique: true });
 jobApplicationsSchema.index({ jobId: 1 });
 
 export const JobApplicationModel = mongoose.model("jobapplications", jobApplicationsSchema);

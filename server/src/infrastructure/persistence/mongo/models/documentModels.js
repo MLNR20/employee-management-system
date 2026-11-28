@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { softDeletePlugin } from "./softDelete.js";
 
 const documentRequirementsSchema = createEntitySchema({
   name: { type: String, required: true, trim: true },
@@ -26,8 +27,9 @@ const employeeDocumentsSchema = createEntitySchema({
   file: { type: mongoose.Schema.Types.Mixed, default: null },
 });
 
-// One record per employee and requirement.
-employeeDocumentsSchema.index({ employeeId: 1, requirementId: 1 }, { unique: true });
+employeeDocumentsSchema.plugin(softDeletePlugin);
+// One live record per employee and requirement.
+employeeDocumentsSchema.index({ employeeId: 1, requirementId: 1, deletedAt: 1 }, { unique: true });
 employeeDocumentsSchema.index({ requirementId: 1 });
 
 export const EmployeeDocumentModel = mongoose.model("employeedocuments", employeeDocumentsSchema);
@@ -40,5 +42,7 @@ const documentFilesSchema = createEntitySchema({
   size: { type: Number, required: true },
   data: { type: Buffer, required: true },
 });
+
+documentFilesSchema.plugin(softDeletePlugin);
 
 export const DocumentFileModel = mongoose.model("documentfiles", documentFilesSchema);

@@ -50,8 +50,19 @@ export class DocumentFileRepository {
     throw new Error("DocumentFileRepository.findById not implemented");
   }
 
+  /** Takes a file out of use. It stays stored (soft delete). */
   async remove(id) {
     throw new Error("DocumentFileRepository.remove not implemented");
+  }
+
+  /** @returns {Promise<{count: number, bytes: number}>} the employee's files that have not been removed */
+  async usage(employeeId) {
+    throw new Error("DocumentFileRepository.usage not implemented");
+  }
+
+  /** @returns {Promise<number>} the bytes of every file stored, removed ones included */
+  async totalBytes() {
+    throw new Error("DocumentFileRepository.totalBytes not implemented");
   }
 
   async removeForEmployee(employeeId) {

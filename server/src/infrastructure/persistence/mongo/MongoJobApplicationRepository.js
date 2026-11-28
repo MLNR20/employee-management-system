@@ -39,7 +39,7 @@ export class MongoJobApplicationRepository extends MongoRepository {
 
   async removeForEmployee(employeeId) {
     if (!mongoose.isValidObjectId(employeeId)) return;
-    await JobApplicationModel.deleteMany({ employeeId });
+    await JobApplicationModel.softDelete({ employeeId });
   }
 
   async existsForJob(jobId) {

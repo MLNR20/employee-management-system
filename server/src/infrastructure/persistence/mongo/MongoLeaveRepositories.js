@@ -83,7 +83,7 @@ export class MongoLeaveBalanceRepository extends MongoRepository {
 
   async removeForEmployee(employeeId) {
     if (!isValid(employeeId)) return;
-    await LeaveBalanceModel.deleteMany({ employeeId });
+    await LeaveBalanceModel.softDelete({ employeeId });
   }
 }
 

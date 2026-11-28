@@ -33,6 +33,6 @@ export class MongoEmergencyContactRepository extends MongoRepository {
 
   async removeForEmployee(employeeId) {
     if (!mongoose.isValidObjectId(employeeId)) return;
-    await EmergencyContactModel.deleteMany({ employeeId });
+    await EmergencyContactModel.softDelete({ employeeId });
   }
 }

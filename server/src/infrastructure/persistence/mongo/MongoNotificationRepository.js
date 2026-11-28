@@ -30,7 +30,7 @@ export class MongoNotificationRepository extends MongoRepository {
 
   async removeForEmployee(employeeId) {
     if (!mongoose.isValidObjectId(employeeId)) return;
-    await this.model.deleteMany({ recipientEmployeeId: employeeId });
+    await this.model.softDelete({ recipientEmployeeId: employeeId });
   }
 
   countUnread() {

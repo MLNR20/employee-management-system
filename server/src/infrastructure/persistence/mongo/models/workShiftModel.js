@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { createEntitySchema } from "./baseSchema.js";
+import { softDeletePlugin } from "./softDelete.js";
 
 const workShiftsSchema = createEntitySchema({
   name: { type: String, required: true, trim: true },
@@ -29,6 +30,7 @@ const shiftAssignmentsSchema = createEntitySchema({
   assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: "administrators", required: true },
 });
 
+shiftAssignmentsSchema.plugin(softDeletePlugin);
 shiftAssignmentsSchema.index({ employeeId: 1, effectiveFrom: -1 });
 shiftAssignmentsSchema.index({ shiftId: 1 });
 
