@@ -56,8 +56,16 @@ import { createWorkShiftUseCases } from "./application/shift/workShiftUseCases.j
 import { createShiftAssignmentUseCases } from "./application/shift/shiftAssignmentUseCases.js";
 import { MongoWorkShiftRepository, MongoShiftAssignmentRepository } from "./infrastructure/persistence/mongo/MongoShiftRepositories.js";
 import { createOffboardingUseCases } from "./application/employee/offboardingUseCases.js";
+import { createPositionUseCases } from "./application/position/positionUseCases.js";
+import { MongoPositionRepository } from "./infrastructure/persistence/mongo/MongoPositionRepository.js";
+import { createPayrollDeductionUseCases } from "./application/payroll/deductionUseCases.js";
+import { MongoPayrollDeductionRepository } from "./infrastructure/persistence/mongo/MongoPayrollDeductionRepository.js";
 import { createDocumentRequirementUseCases, createEmployeeDocumentUseCases } from "./application/document/documentUseCases.js";
-import { MongoDocumentRequirementRepository, MongoEmployeeDocumentRepository } from "./infrastructure/persistence/mongo/MongoDocumentRepositories.js";
+import {
+  MongoDocumentFileRepository,
+  MongoDocumentRequirementRepository,
+  MongoEmployeeDocumentRepository,
+} from "./infrastructure/persistence/mongo/MongoDocumentRepositories.js";
 
 const administratorRepository = new MongoAdministratorRepository();
 const employeeRepository = new MongoEmployeeRepository();
@@ -124,10 +132,25 @@ export const attendanceUseCases = createAttendanceUseCases({
   utcOffsetMinutes,
 });
 
-export const payrollUseCases = createPayrollUseCases({ employeeRepository, attendanceRepository, salaryRateRepository });
+const payrollDeductionRepository = new MongoPayrollDeductionRepository();
+
+export const payrollDeductionUseCases = createPayrollDeductionUseCases({ payrollDeductionRepository });
+
+export const payrollUseCases = createPayrollUseCases({
+  employeeRepository,
+  attendanceRepository,
+  salaryRateRepository,
+  payrollDeductionRepository,
+  leaveBalanceRepository,
+  leaveTypeRepository,
+});
 
 const documentRequirementRepository = new MongoDocumentRequirementRepository();
 const employeeDocumentRepository = new MongoEmployeeDocumentRepository();
+const documentFileRepository = new MongoDocumentFileRepository();
+const borrowingRepository = new MongoBorrowingRepository();
+const jobApplicationRepository = new MongoJobApplicationRepository();
+const notificationRepository = new MongoNotificationRepository();
 
 export const documentRequirementUseCases = createDocumentRequirementUseCases({
   documentRequirementRepository,
@@ -137,6 +160,7 @@ export const documentRequirementUseCases = createDocumentRequirementUseCases({
 export const employeeDocumentUseCases = createEmployeeDocumentUseCases({
   employeeDocumentRepository,
   documentRequirementRepository,
+  documentFileRepository,
   employeeRepository,
   utcOffsetMinutes,
 });
@@ -158,6 +182,16 @@ export const employeeUseCases = createEmployeeUseCases({
   itemRepository,
   emergencyContactRepository,
   employmentTypeRepository,
+  attendanceRepository,
+  salaryRateRepository,
+  borrowingRepository,
+  employeeRecords: [
+    shiftAssignmentRepository,
+    employeeDocumentRepository,
+    documentFileRepository,
+    jobApplicationRepository,
+    notificationRepository,
+  ],
   passwordHasher,
 });
 
@@ -168,9 +202,12 @@ export const emergencyContactUseCases = createEmergencyContactUseCases({
   employeeRepository,
 });
 
-export const departmentUseCases = createDepartmentUseCases({
-  departmentRepository: new MongoDepartmentRepository(),
-});
+const departmentRepository = new MongoDepartmentRepository();
+const positionRepository = new MongoPositionRepository();
+
+export const departmentUseCases = createDepartmentUseCases({ departmentRepository, positionRepository });
+
+export const positionUseCases = createPositionUseCases({ positionRepository, departmentRepository });
 
 export const roleUseCases = createRoleUseCases({ roleRepository, roleAssignmentRepository });
 
@@ -195,7 +232,7 @@ export const leaveBalanceUseCases = createLeaveBalanceUseCases({
 // index.js attaches the Socket.IO server to this once the HTTP server exists.
 export const notificationPublisher = new SocketIoNotificationPublisher();
 export const notificationUseCases = createNotificationUseCases({
-  notificationRepository: new MongoNotificationRepository(),
+  notificationRepository,
   notificationPublisher,
 });
 
@@ -219,12 +256,11 @@ export const dashboardUseCases = createDashboardUseCases({ employeeRepository, l
 
 export const borrowingUseCases = createBorrowingUseCases({
   itemRepository,
-  borrowingRepository: new MongoBorrowingRepository(),
+  borrowingRepository,
   employeeRepository,
 });
 
 const jobRepository = new MongoJobRepository();
-const jobApplicationRepository = new MongoJobApplicationRepository();
 
 export const jobUseCases = createJobUseCases({ jobRepository, jobApplicationRepository });
 

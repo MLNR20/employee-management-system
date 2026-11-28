@@ -20,6 +20,7 @@ export class EmployeeDocument extends Entity {
    * @param {string | null} [props.reviewedBy] administrator who verified or rejected it
    * @param {Date | null} [props.reviewedAt]
    * @param {string} [props.remarks] e.g. why it was rejected
+   * @param {object | null} [props.file] what is known about the uploaded copy
    */
   constructor({
     employeeId,
@@ -30,6 +31,7 @@ export class EmployeeDocument extends Entity {
     reviewedBy = null,
     reviewedAt = null,
     remarks = "",
+    file = null,
     ...base
   } = {}) {
     super(base);
@@ -41,5 +43,7 @@ export class EmployeeDocument extends Entity {
     this.reviewedBy = reviewedBy;
     this.reviewedAt = reviewedAt;
     this.remarks = remarks;
+    // The uploaded copy: { id, name, contentType, size, uploadedBy, uploadedAt }, or null.
+    this.file = file;
   }
 }

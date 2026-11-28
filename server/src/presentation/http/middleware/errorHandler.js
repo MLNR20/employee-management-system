@@ -1,4 +1,7 @@
 import {
+  DepartmentInUseError,
+  DuplicateDeductionError,
+  DuplicatePositionError,
   DuplicateAdministratorError,
   DuplicateDepartmentError,
   DuplicateEmployeeError,
@@ -39,6 +42,9 @@ const MAPPINGS = [
   [DuplicateAdministratorError, () => ({ status: 400, body: { code: 11000 } })],
   [DuplicateEmployeeError, () => ({ status: 409, body: {} })],
   [DuplicateDepartmentError, () => ({ status: 409, body: {} })],
+  [DuplicatePositionError, () => ({ status: 409, body: {} })],
+  [DepartmentInUseError, () => ({ status: 409, body: {} })],
+  [DuplicateDeductionError, () => ({ status: 409, body: {} })],
   [DuplicateEmploymentTypeError, () => ({ status: 409, body: {} })],
   [EmploymentTypeInUseError, () => ({ status: 409, body: {} })],
   [DuplicateRoleError, () => ({ status: 409, body: {} })],

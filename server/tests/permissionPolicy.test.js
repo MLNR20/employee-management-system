@@ -19,7 +19,8 @@ import { createDepartmentRouter } from "../src/presentation/http/routes/departme
 import { createEmploymentTypeRouter } from "../src/presentation/http/routes/employmentTypeRoutes.js";
 import { createAttendanceRouter } from "../src/presentation/http/routes/attendanceRoutes.js";
 import { createSalaryRateRouter } from "../src/presentation/http/routes/salaryRateRoutes.js";
-import { createPayrollRouter } from "../src/presentation/http/routes/payrollRoutes.js";
+import { createPayrollDeductionRouter, createPayrollRouter } from "../src/presentation/http/routes/payrollRoutes.js";
+import { createPositionRouter } from "../src/presentation/http/routes/positionRoutes.js";
 import { createWorkShiftRouter, createShiftAssignmentRouter } from "../src/presentation/http/routes/shiftRoutes.js";
 import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "../src/presentation/http/routes/documentRoutes.js";
 import {
@@ -108,6 +109,14 @@ const RULES = [
   ["POST", "/document-requirements", "document-requirements:create"],
   ["POST", "/salary-rates", "salary-rates:assign"],
   ["GET", "/payroll", "salary-rates:view"],
+  ["POST", `/payroll/final-pay/${ID}`, "salary-rates:view"],
+  ["POST", "/payroll-deductions", "salary-rates:assign"],
+  ["DELETE", `/payroll-deductions/${ID}`, "salary-rates:assign"],
+  ["GET", "/positions", "employees:view"],
+  ["POST", "/positions", "departments:create"],
+  ["GET", `/employee-documents/files/${ID}`, "documents:view"],
+  ["PUT", `/employee-documents/${ID}/file`, "documents:create"],
+  ["DELETE", `/employee-documents/${ID}/file`, "documents:edit"],
   ["DELETE", `/inventory/${ID}`, "inventory:delete"],
   ["GET", "/audit-logs", "audit-logs:view"],
   ["POST", "/jobs", "employees:create"],
@@ -175,6 +184,8 @@ test("every administrator route the routers serve has a rule", async () => {
     ["/attendance", createAttendanceRouter],
     ["/salary-rates", createSalaryRateRouter],
     ["/payroll", createPayrollRouter],
+    ["/payroll-deductions", createPayrollDeductionRouter],
+    ["/positions", createPositionRouter],
     ["/work-shifts", createWorkShiftRouter],
     ["/shift-assignments", createShiftAssignmentRouter],
     ["/document-requirements", createDocumentRequirementRouter],

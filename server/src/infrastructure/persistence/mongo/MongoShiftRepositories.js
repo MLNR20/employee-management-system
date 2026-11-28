@@ -101,6 +101,11 @@ export class MongoShiftAssignmentRepository extends MongoRepository {
     return doc ? toShiftAssignment(doc) : null;
   }
 
+  async removeForEmployee(employeeId) {
+    if (!mongoose.isValidObjectId(employeeId)) return;
+    await ShiftAssignmentModel.deleteMany({ employeeId });
+  }
+
   async existsForShift(shiftId) {
     if (!mongoose.isValidObjectId(shiftId)) return false;
     return Boolean(await ShiftAssignmentModel.exists({ shiftId }));

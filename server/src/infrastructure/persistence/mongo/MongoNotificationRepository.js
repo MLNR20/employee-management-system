@@ -28,6 +28,11 @@ export class MongoNotificationRepository extends MongoRepository {
     });
   }
 
+  async removeForEmployee(employeeId) {
+    if (!mongoose.isValidObjectId(employeeId)) return;
+    await this.model.deleteMany({ recipientEmployeeId: employeeId });
+  }
+
   countUnread() {
     return this.model.countDocuments({ ...ADMIN_ONLY, isRead: false });
   }

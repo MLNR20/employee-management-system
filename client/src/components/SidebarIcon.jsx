@@ -37,6 +37,8 @@ const paths = {
 export const resourceIcons = {
   departments: "building",
   "employment-types": "idCard",
+  positions: "tag",
+  "payroll-deductions": "scale",
   roles: "shield",
   "role-assignments": "idCard",
   "leave-requests": "calendar",

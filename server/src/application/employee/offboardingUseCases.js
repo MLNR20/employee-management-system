@@ -230,7 +230,8 @@ export const createOffboardingUseCases = ({
           },
         ],
       });
-      await employeeDocumentUseCases.removeStageDocuments(employeeId, DocumentStage.OFFBOARDING);
+      // The history entry above points at the uploaded copies, so they are kept.
+      await employeeDocumentUseCases.removeStageDocuments(employeeId, DocumentStage.OFFBOARDING, { keepFiles: true });
       return view(updated);
     },
   };

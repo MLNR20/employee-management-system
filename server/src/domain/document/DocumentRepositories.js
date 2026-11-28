@@ -29,4 +29,32 @@ export class EmployeeDocumentRepository extends Repository {
   async existsForRequirement(requirementId) {
     throw new Error("EmployeeDocumentRepository.existsForRequirement not implemented");
   }
+
+  async removeForEmployee(employeeId) {
+    throw new Error("EmployeeDocumentRepository.removeForEmployee not implemented");
+  }
+}
+
+/** The uploaded copies of documents, kept apart from the records so that listing them stays light. */
+export class DocumentFileRepository {
+  /**
+   * @param {{employeeId: string, name: string, contentType: string, size: number, data: Buffer}} file
+   * @returns {Promise<{id: string}>}
+   */
+  async save(file) {
+    throw new Error("DocumentFileRepository.save not implemented");
+  }
+
+  /** @returns {Promise<{id: string, employeeId: string, name: string, contentType: string, size: number, data: Buffer} | null>} */
+  async findById(id) {
+    throw new Error("DocumentFileRepository.findById not implemented");
+  }
+
+  async remove(id) {
+    throw new Error("DocumentFileRepository.remove not implemented");
+  }
+
+  async removeForEmployee(employeeId) {
+    throw new Error("DocumentFileRepository.removeForEmployee not implemented");
+  }
 }

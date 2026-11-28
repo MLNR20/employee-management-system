@@ -1,9 +1,12 @@
 import Swal from "sweetalert2";
 import { Badge } from "../resources/shared";
+import DocumentFileLink from "./DocumentFileLink";
+import { ACCEPTED_FILES, fileError } from "../domain/document/fileRules";
 import {
   useAccess,
   useCreateEmployeeDocument,
   useDocumentChecklist,
+  useDocumentFile,
   useReviewDocument,
   useUpdateEmployeeDocument,
 } from "../hooks/useEntities";
@@ -44,6 +47,7 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
   const create = useCreateEmployeeDocument();
   const update = useUpdateEmployeeDocument();
   const review = useReviewDocument();
+  const files = useDocumentFile();
   const { can } = useAccess();
   const mayVerify = can("documents:verify");
   // A first copy creates a record; a new copy of one edits it.
@@ -61,6 +65,33 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
       create.mutate({ employeeId, requirementId: requirement.id, status: "received", ...(expiryDate && { expiryDate }) }, done);
     }
   };
+
+  // Uploading counts as handing the document in. An expired or rejected one needs its new expiry date.
+  const upload = async ({ requirement, document, state }, file) => {
+    const problem = fileError(file);
+    if (problem) return Swal.fire("Cannot upload", problem, "error");
+
+    const needsExpiry = requirement.hasExpiry && (!document?.expiryDate || state === "expired" || state === "rejected");
+    const expiryDate = needsExpiry ? await askExpiry(requirement, document?.expiryDate) : undefined;
+    if (needsExpiry && !expiryDate) return undefined;
+
+    const record = document
+      ? expiryDate && { expiryDate }
+      : { employeeId, requirementId: requirement.id, status: "received", ...(expiryDate && { expiryDate }) };
+    return files.mutate({ id: document?.id, file, record }, { onError: showError("Could not upload") });
+  };
+
+  const removeFile = ({ document }) =>
+    Swal.fire({
+      title: "Remove this file?",
+      text: "The uploaded copy is deleted. The document record stays.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Remove",
+    }).then((result) => {
+      if (result.isConfirmed) files.mutate({ id: document.id }, { onError: showError("Could not remove the file") });
+    });
 
   const verify = ({ document }) => review.mutate({ id: document.id, action: "verify" }, { onError: showError("Could not verify") });
 
@@ -119,6 +150,7 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
                 <th className="px-4 py-3">Received</th>
                 <th className="px-4 py-3">Expires</th>
                 <th className="px-4 py-3">Notes</th>
+                <th className="px-4 py-3">File</th>
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -140,6 +172,33 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
                     <td className="px-4 py-3">{document?.receivedAt ? document.receivedAt.toLocaleDateString() : "-"}</td>
                     <td className="px-4 py-3">{document?.expiryDate ?? (requirement.hasExpiry ? "not set" : "-")}</td>
                     <td className="px-4 py-3 text-gray-600">{document?.remarks || ""}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col items-start gap-1">
+                        {document?.file ? <DocumentFileLink file={document.file} /> : <span className="text-gray-400">-</span>}
+                        {mayReceive(document) && (
+                          <label className="text-gray-700 text-xs font-medium border border-gray-300 rounded-lg px-2 py-1 cursor-pointer hover:bg-gray-50 whitespace-nowrap">
+                            {document?.file ? "Replace file" : "Upload file"}
+                            <input
+                              type="file"
+                              accept={ACCEPTED_FILES}
+                              className="sr-only"
+                              aria-label={`Upload ${requirement.name}`}
+                              disabled={files.isPending}
+                              onChange={(event) => {
+                                const [file] = event.target.files;
+                                event.target.value = ""; // so the same file can be chosen again
+                                if (file) upload(item, file);
+                              }}
+                            />
+                          </label>
+                        )}
+                        {document?.file && can("documents:edit") && (
+                          <button type="button" className="text-xs text-red-700 hover:underline" onClick={() => removeFile(item)}>
+                            Remove file
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-row gap-2">
                         {canReceive(state) && mayReceive(document) && (

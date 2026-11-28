@@ -20,6 +20,24 @@ export class HttpDocumentRepository {
     };
   }
 
+  /** Sends the file's bytes as the request body. */
+  async upload(documentId, file) {
+    await this.client.put(`/employee-documents/${documentId}/file`, file, {
+      params: { name: file.name },
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+    });
+  }
+
+  async removeFile(documentId) {
+    await this.client.delete(`/employee-documents/${documentId}/file`);
+  }
+
+  /** @returns {Promise<Blob>} the contents of an uploaded copy */
+  async getFile(fileId) {
+    const { data } = await this.client.get(`/employee-documents/files/${fileId}`, { responseType: "blob" });
+    return data;
+  }
+
   async verify(documentId) {
     await this.client.post(`/employee-documents/${documentId}/verify`);
   }

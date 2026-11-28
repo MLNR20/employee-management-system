@@ -108,7 +108,7 @@ export default function Administrators() {
                   <td className="px-4 py-3">{account.email}</td>
                   <td className="px-4 py-3">
                     {account.id === me?.id ? (
-                      <Link to="/account" className="text-blue-700 font-medium hover:underline">
+                      <Link to="/profile" className="text-blue-700 font-medium hover:underline">
                         Change my password
                       </Link>
                     ) : (

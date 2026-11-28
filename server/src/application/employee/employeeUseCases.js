@@ -16,6 +16,11 @@ const MAX_REPORTING_DEPTH = 100;
  * @param {import("../../domain/inventory/ItemRepository").ItemRepository} [deps.itemRepository] when given, an employee holding items cannot be deleted
  * @param {import("../../domain/employee/EmergencyContactRepository").EmergencyContactRepository} [deps.emergencyContactRepository] when given, an employee's emergency contacts are deleted with them
  * @param {import("../../domain/employmentType/EmploymentTypeRepository").EmploymentTypeRepository} [deps.employmentTypeRepository] when given, an employment type sent with an employee must exist and be active
+ * @param {import("../../domain/attendance/AttendanceRepository").AttendanceRepository} [deps.attendanceRepository] when given, an employee with attendance cannot be deleted
+ * @param {import("../../domain/salary/SalaryRateRepository").SalaryRateRepository} [deps.salaryRateRepository] when given, an employee with pay rates cannot be deleted
+ * @param {import("../../domain/inventory/BorrowingRepository").BorrowingRepository} [deps.borrowingRepository] when given, an employee who has borrowed equipment cannot be deleted
+ * @param {Array<{removeForEmployee: (id: string) => Promise<unknown>} | undefined>} [deps.employeeRecords]
+ *   other records that only describe an employee (documents, schedule...), deleted along with them
  */
 export const createEmployeeUseCases = ({
   employeeRepository,
@@ -24,6 +29,10 @@ export const createEmployeeUseCases = ({
   itemRepository,
   emergencyContactRepository,
   employmentTypeRepository,
+  attendanceRepository,
+  salaryRateRepository,
+  borrowingRepository,
+  employeeRecords = [],
   passwordHasher,
 }) => {
   const crud = createCrudUseCases({
@@ -160,10 +169,11 @@ export const createEmployeeUseCases = ({
     },
 
     /**
-     * An employee with filed leave keeps that history, one who still holds inventory items must return
-     * them, one who manages others must have those people moved to another manager first, and one with an
-     * offboarding keeps their rehire tag, so none of them can be deleted (offboard them instead). Their
-     * unused leave balances are deleted with them.
+     * Deleting is for a record made by mistake. An employee with filed leave, attendance, pay rates,
+     * equipment borrowing or an offboarding keeps that history, one who still holds inventory items must
+     * return them, and one who manages others must have those people moved to another manager first, so
+     * none of them can be deleted (offboard them instead). Everything else recorded about them (leave
+     * balances, emergency contacts and `employeeRecords`) is deleted with them.
      */
     async deleteEmployee(id) {
       const history = await leaveRequestRepository.findByEmployeeId(id);
@@ -178,10 +188,21 @@ export const createEmployeeUseCases = ({
       if (employee?.separation || employee?.separationHistory?.length) {
         throw new EmployeeInUseError("This employee has an offboarding record, which must be kept. They cannot be deleted.");
       }
+      const kept = [
+        [attendanceRepository && (() => attendanceRepository.findByEmployeeId(id, 1)), "attendance records, which payroll depends on"],
+        [salaryRateRepository && (() => salaryRateRepository.findByEmployeeId(id)), "a pay rate history"],
+        [borrowingRepository && (() => borrowingRepository.findByEmployeeId(id)), "an equipment borrowing history"],
+      ];
+      for (const [find, what] of kept) {
+        if (find && (await find()).length > 0) {
+          throw new EmployeeInUseError(`This employee has ${what}. Offboard them instead of deleting.`);
+        }
+      }
 
       await crud.remove(id);
       await leaveBalanceRepository.removeForEmployee(id);
       await emergencyContactRepository?.removeForEmployee(id);
+      for (const records of employeeRecords) await records?.removeForEmployee(id);
     },
   };
 };

@@ -1,11 +1,17 @@
 import { createCrudUseCases } from "../shared/crudUseCases.js";
+import { DepartmentInUseError } from "../../domain/errors.js";
 import {
   assertValidDepartment,
   pickDepartmentFields,
 } from "../../domain/department/departmentRules.js";
 
-/** @param {{departmentRepository: import("../../domain/department/DepartmentRepository").DepartmentRepository}} deps */
-export const createDepartmentUseCases = ({ departmentRepository }) => {
+/**
+ * @param {Object} deps
+ * @param {import("../../domain/department/DepartmentRepository").DepartmentRepository} deps.departmentRepository
+ * @param {import("../../domain/position/PositionRepository").PositionRepository} [deps.positionRepository]
+ *   when given, a department with positions cannot be deleted
+ */
+export const createDepartmentUseCases = ({ departmentRepository, positionRepository }) => {
   const crud = createCrudUseCases({
     repository: departmentRepository,
     entityName: "Department",
@@ -19,6 +25,9 @@ export const createDepartmentUseCases = ({ departmentRepository }) => {
     getDepartment: crud.get,
     addDepartment: crud.add,
     updateDepartment: crud.update,
-    deleteDepartment: crud.remove,
+    async deleteDepartment(id) {
+      if (await positionRepository?.existsForDepartment(id)) throw new DepartmentInUseError();
+      return crud.remove(id);
+    },
   };
 };

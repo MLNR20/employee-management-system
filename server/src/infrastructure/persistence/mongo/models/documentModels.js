@@ -22,6 +22,8 @@ const employeeDocumentsSchema = createEntitySchema({
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "administrators", default: null },
   reviewedAt: { type: Date, default: null },
   remarks: { type: String, trim: true, default: "" },
+  // Set only by an upload: { id, name, contentType, size, uploadedBy, uploadedAt }.
+  file: { type: mongoose.Schema.Types.Mixed, default: null },
 });
 
 // One record per employee and requirement.
@@ -29,3 +31,14 @@ employeeDocumentsSchema.index({ employeeId: 1, requirementId: 1 }, { unique: tru
 employeeDocumentsSchema.index({ requirementId: 1 });
 
 export const EmployeeDocumentModel = mongoose.model("employeedocuments", employeeDocumentsSchema);
+
+// The uploaded copies themselves (at most 5 MB each, well within MongoDB's document limit).
+const documentFilesSchema = createEntitySchema({
+  employeeId: { type: mongoose.Schema.Types.ObjectId, ref: "employees", required: true, index: true },
+  name: { type: String, required: true },
+  contentType: { type: String, required: true },
+  size: { type: Number, required: true },
+  data: { type: Buffer, required: true },
+});
+
+export const DocumentFileModel = mongoose.model("documentfiles", documentFilesSchema);

@@ -6,7 +6,7 @@ payroll, inventory, onboarding and offboarding documents, roles and permissions,
 
 - **Server:** Node 22, Express 5, MongoDB (Mongoose), Socket.IO for live notifications
 - **Client:** React 19 (Create React App), React Router 7, TanStack Query, Tailwind CSS + Flowbite
-- **Tests:** 206 server tests (`node --test`) and 43 client tests (Jest), run by GitHub Actions on every push
+- **Tests:** 221 server tests (`node --test`) and 45 client tests (Jest), run by GitHub Actions on every push
 
 ## Offboarding and the rehire tag
 
@@ -25,6 +25,26 @@ record. The employee edit form can no longer switch an active employee to inacti
 
 The checklist lines are managed under **Document Requirements**. The server adds the standard onboarding or
 offboarding lines on start-up when that checklist has none.
+
+## Organization, documents and pay
+
+- **Departments and positions** are managed under Organization, and the employee forms list them. Employees
+  store the names as text, so renaming one does not change the employees who already hold it; the edit form
+  shows the old name as "no longer listed". A department with positions cannot be deleted.
+- **Document files:** each checklist line takes one PDF, PNG or JPEG of up to 5 MB, checked by its content.
+  Files are stored in MongoDB (collection `documentfiles`), so they count against the database's storage.
+- **Deductions** (Time & Pay) are a fixed amount, a percent of pay or a bracket table, taken from gross pay
+  or from what is left after the gross ones. Amounts are per payroll cut-off. **None are built in:** enter
+  the current government rates and tax tables yourself. Payroll uses the deductions in force when the
+  report is opened, including for earlier periods.
+- **Final pay** is on the Offboarding page: unpaid salary, plus one twelfth of the year's earnings from
+  attendance (13th month), plus unused paid leave at the daily rate, less deductions on the unpaid salary
+  and any lines HR adds. It is not stored, and it does not know about 13th month or salary already paid.
+  Check it before paying, and attach the export to the "Final pay computation" document.
+- **Deleting an employee** is for a record made by mistake. Anyone with leave, attendance, pay rate,
+  equipment or offboarding history cannot be deleted. Otherwise their documents, files, schedule, job
+  applications, notifications, leave balances and contacts are deleted with them. Records orphaned by
+  earlier deletions are not cleaned up.
 
 ## Repository layout
 
@@ -76,11 +96,13 @@ Run these from the `server` folder with `MONGO_URI` set. Each is safe to run aga
 | Script | Creates |
 | --- | --- |
 | `node scripts/seed.js` | Development administrator accounts and their roles (see `src/domain/role/defaultAccounts.js`) |
-| `node scripts/seedDepartments.js` | Departments |
 | `node scripts/seedEmployees.js` | 100 sample employees across the departments (no portal passwords) |
 | `node scripts/seedLeaves.js` | Leave types, balances and filed leave |
 | `node scripts/seedPayroll.js` | An hourly rate and daily time records for one portal user, to fill the payroll periods |
 | `node scripts/seedInventory.js` | 20 inventory items |
+
+The server itself creates the standard departments, positions and document checklists at start-up when
+there are none.
 
 The seeded accounts have well-known passwords. Never seed a database that real people can reach.
 
@@ -115,9 +137,9 @@ On Windows the system already defines `USERNAME`, which takes priority over the 
 
 - **Permissions are enforced on every administrator route.** Which permission each route needs is listed in
   one file, `server/src/presentation/http/middleware/permissionPolicy.js`. A route in a guarded group that
-  has no rule there is refused. Employment types share the Departments permissions; offboarding, emergency
-  contacts and job openings use the Employees ones; managing administrator accounts needs
-  `role-assignments:create`.
+  has no rule there is refused. Positions and employment types share the Departments permissions;
+  offboarding, emergency contacts and job openings use the Employees ones; payroll, deductions and final
+  pay use the Salary Rates ones; managing administrator accounts needs `role-assignments:create`.
 - **A new administrator can do nothing** until given a role under **Role Assignments**. Changes to roles
   reach a signed-in administrator when the access token renews (up to 15 minutes), or at the next sign-in.
 - **No anonymous registration.** Signed-in administrators add others on the **Administrators** page.
@@ -125,8 +147,8 @@ On Windows the system already defines `USERNAME`, which takes priority over the 
   them, the server gives the `Administrator` role, with every permission, to the configured first
   administrator (matched by email, then username) or else the oldest one, and logs who. To choose someone
   yourself, run this from `server` with `MONGO_URI` set: `node scripts/grantFullAccess.js <username>`.
-- **Passwords** are 8 to 72 characters. Administrators change their own under **Change password** (which
-  signs them out everywhere) and reset a colleague's on the Administrators page. Employees change theirs on
+- **Passwords** are 8 to 72 characters. Administrators change their own on their profile, opened from their
+  name in the top bar (which signs them out everywhere), and reset a colleague's on the Administrators page. Employees change theirs on
   their portal profile; an administrator resets it on the Edit Employee screen. A portal token already
   issued keeps working until it expires (8 hours by default).
 

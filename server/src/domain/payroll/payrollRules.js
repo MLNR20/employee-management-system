@@ -1,4 +1,5 @@
 import { ValidationError } from "../errors.js";
+import { applyDeductions } from "./deductionRules.js";
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -40,9 +41,12 @@ export function rateInForce(rates, day) {
  * Active employees always appear (with zeros when they did not work); an inactive one appears only
  * if they have records in the period.
  *
- * @param {{employees: Array, attendance: Array, rates: Array, from: string, to: string}} input
+ * Each deduction rule is applied once to the period's gross pay, so fixed amounts and tax tables are
+ * per payroll cut-off.
+ *
+ * @param {{employees: Array, attendance: Array, rates: Array, deductionRules?: Array, from: string, to: string}} input
  */
-export function buildPayroll({ employees, attendance, rates, from, to }) {
+export function buildPayroll({ employees, attendance, rates, deductionRules = [], from, to }) {
   const recordsBy = new Map();
   for (const record of attendance) {
     if (record.date < from || record.date > to) continue;
@@ -70,6 +74,8 @@ export function buildPayroll({ employees, attendance, rates, from, to }) {
         pay: round2((record.hoursWorked ?? 0) * (record.hourlyRate ?? 0)),
       }));
 
+      const grossPay = round2(days.reduce((sum, day) => sum + day.pay, 0));
+
       return {
         employeeId: employee.id,
         employeeName: `${employee.first_name} ${employee.last_name}`.trim(),
@@ -80,7 +86,8 @@ export function buildPayroll({ employees, attendance, rates, from, to }) {
         daysWorked: days.filter((day) => day.hoursWorked !== null).length,
         hoursWorked: round2(days.reduce((sum, day) => sum + (day.hoursWorked ?? 0), 0)),
         lateMinutes: days.reduce((sum, day) => sum + day.lateMinutes, 0),
-        grossPay: round2(days.reduce((sum, day) => sum + day.pay, 0)),
+        grossPay,
+        ...applyDeductions(grossPay, deductionRules),
         days,
       };
     })
@@ -93,6 +100,8 @@ export function buildPayroll({ employees, attendance, rates, from, to }) {
       employees: rows.length,
       hoursWorked: round2(rows.reduce((sum, row) => sum + row.hoursWorked, 0)),
       grossPay: round2(rows.reduce((sum, row) => sum + row.grossPay, 0)),
+      totalDeductions: round2(rows.reduce((sum, row) => sum + row.totalDeductions, 0)),
+      netPay: round2(rows.reduce((sum, row) => sum + row.netPay, 0)),
     },
     data: rows,
   };

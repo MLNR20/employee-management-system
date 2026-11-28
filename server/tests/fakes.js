@@ -26,6 +26,7 @@ import { nameKey, scheduleKey } from "../src/domain/shift/shiftRules.js";
 import { DocumentRequirement } from "../src/domain/document/DocumentRequirement.js";
 import { EmployeeDocument } from "../src/domain/document/EmployeeDocument.js";
 import { requirementNameKey } from "../src/domain/document/documentRules.js";
+import { Position } from "../src/domain/position/Position.js";
 import {
   DuplicateAdministratorError,
   DuplicateDepartmentError,
@@ -40,6 +41,7 @@ import {
   DuplicateShiftError,
   DuplicateDocumentRequirementError,
   DuplicateEmployeeDocumentError,
+  DuplicatePositionError,
 } from "../src/domain/errors.js";
 
 let nextId = 1;
@@ -408,6 +410,10 @@ export class InMemoryNotificationRepository extends InMemoryRepository {
     super((props) => new Notification(props), [], () => new Error("duplicate"));
   }
 
+  async removeForEmployee(employeeId) {
+    for (const [id, n] of this.items) if (n.recipientEmployeeId === employeeId) this.items.delete(id);
+  }
+
   async countUnread() {
     return [...this.items.values()].filter((n) => !n.isRead && !n.recipientEmployeeId).length;
   }
@@ -526,6 +532,10 @@ export class InMemoryJobApplicationRepository extends InMemoryRepository {
     return [...this.items.values()].filter((a) => a.jobId === jobId).reverse();
   }
 
+  async removeForEmployee(employeeId) {
+    for (const [id, a] of this.items) if (a.employeeId === employeeId) this.items.delete(id);
+  }
+
   async existsForJob(jobId) {
     return [...this.items.values()].some((a) => a.jobId === jobId);
   }
@@ -551,8 +561,10 @@ export class InMemoryAttendanceRepository extends InMemoryRepository {
     return [...this.items.values()].reverse().find((a) => a.employeeId === employeeId && !a.timeOut) ?? null;
   }
 
-  async findBetween(from, to) {
-    return [...this.items.values()].filter((a) => a.date >= from && a.date <= to);
+  async findBetween(from, to, employeeId) {
+    return [...this.items.values()].filter(
+      (a) => a.date >= from && a.date <= to && (employeeId === undefined || a.employeeId === employeeId)
+    );
   }
 }
 
@@ -647,6 +659,10 @@ export class InMemoryShiftAssignmentRepository extends InMemoryRepository {
     );
   }
 
+  async removeForEmployee(employeeId) {
+    for (const [id, a] of this.items) if (a.employeeId === employeeId) this.items.delete(id);
+  }
+
   async existsForShift(shiftId) {
     return [...this.items.values()].some((a) => a.shiftId === shiftId);
   }
@@ -666,6 +682,39 @@ export class InMemoryDocumentRequirementRepository extends InMemoryRepository {
   }
 }
 
+/** Uploaded document copies, held in a map. */
+export class InMemoryDocumentFileRepository {
+  files = new Map();
+
+  async save(file) {
+    const id = newId();
+    this.files.set(id, { ...file, id });
+    return { id };
+  }
+
+  async findById(id) {
+    return this.files.get(id) ?? null;
+  }
+
+  async remove(id) {
+    this.files.delete(id);
+  }
+
+  async removeForEmployee(employeeId) {
+    for (const [id, file] of this.files) if (file.employeeId === employeeId) this.files.delete(id);
+  }
+}
+
+export class InMemoryPositionRepository extends InMemoryRepository {
+  constructor() {
+    super((props) => new Position(props), [["departmentId", "name"]], () => new DuplicatePositionError());
+  }
+
+  async existsForDepartment(departmentId) {
+    return [...this.items.values()].some((p) => p.departmentId === departmentId);
+  }
+}
+
 export class InMemoryEmployeeDocumentRepository extends InMemoryRepository {
   constructor() {
     super((props) => new EmployeeDocument(props), [["employeeId", "requirementId"]], () => new DuplicateEmployeeDocumentError());
@@ -673,6 +722,10 @@ export class InMemoryEmployeeDocumentRepository extends InMemoryRepository {
 
   async findByEmployeeId(employeeId) {
     return [...this.items.values()].filter((d) => d.employeeId === employeeId);
+  }
+
+  async removeForEmployee(employeeId) {
+    for (const [id, d] of this.items) if (d.employeeId === employeeId) this.items.delete(id);
   }
 
   async findByEmployeeAndRequirement(employeeId, requirementId) {

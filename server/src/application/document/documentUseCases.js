@@ -11,6 +11,7 @@ import { isMissing } from "../../domain/pickFields.js";
 import { localDay } from "../../domain/attendance/localTime.js";
 import { DocumentStatus } from "../../domain/document/EmployeeDocument.js";
 import { DEFAULT_REQUIREMENTS } from "../../domain/document/defaultRequirements.js";
+import { checkUpload } from "../../domain/document/fileRules.js";
 import { DocumentStage } from "../../domain/document/DocumentRequirement.js";
 import {
   assertValidEmployeeDocument,
@@ -106,12 +107,15 @@ export const createDocumentRequirementUseCases = ({ documentRequirementRepositor
  * @param {import("../../domain/document/DocumentRepositories").EmployeeDocumentRepository} deps.employeeDocumentRepository
  * @param {import("../../domain/document/DocumentRepositories").DocumentRequirementRepository} deps.documentRequirementRepository
  * @param {import("../../domain/employee/EmployeeRepository").EmployeeRepository} deps.employeeRepository
+ * @param {import("../../domain/document/DocumentRepositories").DocumentFileRepository} [deps.documentFileRepository]
+ *   without it no files can be uploaded
  * @param {number} [deps.utcOffsetMinutes] the workplace clock, used for "today" when checking expiry
  * @param {() => Date} [deps.now]
  */
 export const createEmployeeDocumentUseCases = ({
   employeeDocumentRepository,
   documentRequirementRepository,
+  documentFileRepository,
   employeeRepository,
   utcOffsetMinutes = 0,
   now = () => new Date(),
@@ -140,6 +144,10 @@ export const createEmployeeDocumentUseCases = ({
       .filter(({ requirement }) => requirement?.stage === stage);
   };
 
+  const removeStoredFile = async (file) => {
+    if (file) await documentFileRepository?.remove(file.id);
+  };
+
   const review = async (id, reviewerId, changes) =>
     employeeDocumentRepository.update(id, { ...changes, reviewedBy: reviewerId, reviewedAt: now() });
 
@@ -147,7 +155,63 @@ export const createEmployeeDocumentUseCases = ({
     listEmployeeDocuments: crud.list,
     listEmployeeDocumentsPage: crud.listPage,
     getEmployeeDocument: crud.get,
-    deleteEmployeeDocument: crud.remove,
+    /** Deletes a record along with its uploaded copy. */
+    async deleteEmployeeDocument(id) {
+      const document = await crud.get(id);
+      await crud.remove(id);
+      await removeStoredFile(document.file);
+    },
+
+    /**
+     * Stores a scanned copy on a record, replacing any earlier one. A new copy counts as handed in and
+     * has to be checked: the record becomes received and any earlier review is cleared.
+     * @param {{name?: string, data?: Buffer}} upload
+     */
+    async attachFile(id, upload, administratorId) {
+      if (!documentFileRepository) throw new ValidationError("File uploads are not enabled");
+      const document = await crud.get(id);
+      const file = checkUpload(upload);
+
+      const stored = await documentFileRepository.save({ ...file, employeeId: document.employeeId });
+      const { data, ...details } = file;
+      let updated;
+      try {
+        updated = await employeeDocumentRepository.update(id, {
+          file: { id: stored.id, ...details, uploadedBy: administratorId, uploadedAt: now() },
+          status: DocumentStatus.RECEIVED,
+          receivedAt: now(),
+          reviewedBy: null,
+          reviewedAt: null,
+          remarks: "",
+        });
+      } catch (error) {
+        await documentFileRepository.remove(stored.id); // never leave a file nothing points at
+        throw error;
+      }
+      await removeStoredFile(document.file);
+      return updated;
+    },
+
+    /** Takes the uploaded copy off a record. A verified record has to be checked again. */
+    async removeFile(id) {
+      const document = await crud.get(id);
+      if (!document.file) throw new NotFoundError("This document has no file");
+
+      const recheck =
+        document.status === DocumentStatus.VERIFIED
+          ? { status: DocumentStatus.RECEIVED, reviewedBy: null, reviewedAt: null }
+          : {};
+      const updated = await employeeDocumentRepository.update(id, { file: null, ...recheck });
+      await removeStoredFile(document.file);
+      return updated;
+    },
+
+    /** One uploaded copy, with its contents: a current one, or one kept from an earlier offboarding. */
+    async getFile(fileId) {
+      const file = await documentFileRepository?.findById(fileId);
+      if (!file) throw new NotFoundError("File not found");
+      return file;
+    },
 
     /** Records that an employee has handed in (or is expected to hand in) a document. */
     async addEmployeeDocument(input = {}) {
@@ -232,13 +296,18 @@ export const createEmployeeDocumentUseCases = ({
         reviewedBy: document.reviewedBy,
         reviewedAt: document.reviewedAt,
         remarks: document.remarks,
+        file: document.file,
       }));
     },
 
-    /** Clears one checklist of an employee. */
-    async removeStageDocuments(employeeId, stage) {
+    /**
+     * Clears one checklist of an employee. Their uploaded copies are deleted too, unless `keepFiles`
+     * is set because a history entry still points at them.
+     */
+    async removeStageDocuments(employeeId, stage, { keepFiles = false } = {}) {
       for (const { document } of await stageRecords(employeeId, stage)) {
         await employeeDocumentRepository.remove(document.id);
+        if (!keepFiles) await removeStoredFile(document.file);
       }
     },
 

@@ -1,5 +1,7 @@
 import { departmentResource } from "./departments";
 import { employmentTypeResource } from "./employmentTypes";
+import { positionResource } from "./positions";
+import { payrollDeductionResource } from "./payrollDeductions";
 import { roleResource, roleAssignmentResource } from "./roles";
 import { inventoryResource } from "./inventory";
 import { auditLogResource } from "./audit";
@@ -14,6 +16,7 @@ import { workShiftResource, shiftAssignmentResource, documentRequirementResource
  */
 export const resources = [
   departmentResource,
+  positionResource,
   employmentTypeResource,
   roleResource,
   roleAssignmentResource,
@@ -23,6 +26,7 @@ export const resources = [
   inventoryResource,
   attendanceResource,
   salaryRateResource,
+  payrollDeductionResource,
   auditLogResource,
   documentRequirementResource,
   workShiftResource,

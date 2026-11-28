@@ -17,9 +17,9 @@ const resourceLink = (resource) => ({
 });
 
 const sectionKeys = [
-  { label: "Organization", keys: ["departments", "employment-types", "roles", "role-assignments"] },
+  { label: "Organization", keys: ["departments", "positions", "employment-types", "roles", "role-assignments"] },
   { label: "Leave Management", keys: ["leave-requests", "leave-balances", "leave-types"] },
-  { label: "Time & Pay", keys: ["attendance", "salary-rates"] },
+  { label: "Time & Pay", keys: ["attendance", "salary-rates", "payroll-deductions"] },
   { label: "Assets", keys: ["inventory"] },
   { label: "Onboarding", keys: ["document-requirements", "work-shifts", "shift-assignments"] },
   { label: "Administration", keys: ["audit-logs"] },
@@ -120,12 +120,6 @@ const SideBar=()=> {
                         ))}
                         </div>
                         <ul className="pt-4 mt-4 border-t border-gray-200 font-medium">
-                        <li>
-                            <NavLink to="/account" title="Change password" className="sidebar-link flex items-center p-2 text-gray-500 rounded-lg hover:bg-gray-100 group">
-                                <SidebarIcon name="lock" />
-                                <span className="sidebar-label flex-1 ms-3 whitespace-nowrap">Change password</span>
-                            </NavLink>
-                        </li>
                         <li>
                             <Link to="/login/" onClick={logout} title="Logout" className="sidebar-link flex items-center p-2 text-red-600 rounded-lg hover:bg-gray-100 group">
                                 <SidebarIcon name="logout" />

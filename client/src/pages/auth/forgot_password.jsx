@@ -16,7 +16,7 @@ export default function ForgotPassword() {
       <ol className="text-base text-gray-900 mt-8 space-y-3" style={{ listStyle: "decimal", paddingLeft: "1.25rem" }}>
         <li>Ask an administrator who manages access to reset your password (Administrators page).</li>
         <li>Sign in with the new password they give you.</li>
-        <li>Change it to one only you know, using Change password in the sidebar.</li>
+        <li>Change it to one only you know, on your profile (your name at the top of the screen).</li>
       </ol>
 
       <Link

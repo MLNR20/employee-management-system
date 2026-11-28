@@ -27,7 +27,7 @@ export class DocumentRequirement extends Entity {
 
 /** What one employee handed in for one requirement, and whether HR has checked it. */
 export class EmployeeDocument extends Entity {
-  constructor({ employeeId, requirementId, status, receivedAt, expiryDate, reviewedBy, reviewedAt, remarks = "", ...base } = {}) {
+  constructor({ employeeId, requirementId, status, receivedAt, expiryDate, reviewedBy, reviewedAt, remarks = "", file = null, ...base } = {}) {
     super(base);
     this.employeeId = employeeId;
     this.requirementId = requirementId;
@@ -37,6 +37,7 @@ export class EmployeeDocument extends Entity {
     this.reviewedBy = reviewedBy;
     this.reviewedAt = reviewedAt;
     this.remarks = remarks;
+    this.file = file; // the uploaded copy { id, name, size }, or null
   }
 
   static fromApi(raw = {}) {
@@ -50,6 +51,7 @@ export class EmployeeDocument extends Entity {
       reviewedBy: raw.reviewedBy ?? null,
       reviewedAt: toDate(raw.reviewedAt),
       remarks: raw.remarks ?? "",
+      file: raw.file ?? null,
     });
   }
 }

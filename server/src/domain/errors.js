@@ -40,6 +40,24 @@ export class DuplicateDepartmentError extends DomainError {
   }
 }
 
+export class DuplicatePositionError extends DomainError {
+  constructor(message = "This department already has a position with that name") {
+    super(message);
+  }
+}
+
+export class DepartmentInUseError extends DomainError {
+  constructor(message = "This department has positions. Delete or move them first.") {
+    super(message);
+  }
+}
+
+export class DuplicateDeductionError extends DomainError {
+  constructor(message = "A deduction with this name already exists") {
+    super(message);
+  }
+}
+
 export class DuplicateEmploymentTypeError extends DomainError {
   constructor(message = "An employment type with this name already exists") {
     super(message);

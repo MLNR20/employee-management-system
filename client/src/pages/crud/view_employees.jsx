@@ -90,7 +90,7 @@ export default function View_Employees() {
   const confirmDelete = (id) => {
     Swal.fire({
       title: "Are you sure?",
-      text: "This action cannot be undone.",
+      text: "Their documents, uploaded files, shift schedule, job applications and contacts are deleted too. This cannot be undone.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",

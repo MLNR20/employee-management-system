@@ -18,7 +18,7 @@ import DocumentChecklist from './pages/documents/checklist';
 import Payroll from './pages/payroll/payroll';
 import Offboarding from './pages/offboarding/offboarding';
 import Administrators from './pages/administrators/administrators';
-import Account from './pages/account/account';
+import Profile from './pages/account/profile';
 import { resourceAccess } from './domain/role/access';
 import ProtectedRoute from './components/protectedroute';
 import RequirePermission from './components/RequirePermission';
@@ -65,7 +65,7 @@ function App() {
             <Route path="/employees/add" element={guard("employees-add", <AddEmployees />, "employees:create")} />
             <Route path="/employees/edit/:id" element={guard("employees-edit", <EditEmployees />, "employees:edit")} />
             <Route path="/administrators" element={guard("administrators", <Administrators />, "role-assignments:create")} />
-            <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
             {resources.flatMap((resource) => [
               <Route

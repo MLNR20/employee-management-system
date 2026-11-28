@@ -4,6 +4,7 @@
  * @property {string} username
  * @property {string} first_name
  * @property {string} last_name
+ * @property {string[]} roles the names of their roles when they signed in
  */
 
 export function createAdministrator(raw = {}) {
@@ -12,6 +13,7 @@ export function createAdministrator(raw = {}) {
     username: raw.username,
     first_name: raw.first_name,
     last_name: raw.last_name,
+    roles: raw.roles ?? [],
   };
 }
 

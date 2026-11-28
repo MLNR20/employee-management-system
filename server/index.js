@@ -38,6 +38,11 @@ mongoose.connect(config.dbConnection).then(async ()=>{
     await useCases.authUseCases.ensureAdministratorsExist();
     const { granted } = await useCases.accessUseCases.ensureAccessManager();
     if (granted) console.log(`No administrator could manage access: gave full access to "${granted}"`);
+    // An empty organization gets the standard departments and positions the employee forms offer.
+    const organization = await useCases.positionUseCases.ensureDefaultOrganization();
+    if (organization.departments || organization.positions) {
+        console.log(`Created ${organization.departments} departments and ${organization.positions} positions`);
+    }
     // Creates the standard onboarding or offboarding checklist when that stage has no requirements yet.
     return useCases.documentRequirementUseCases.ensureDefaultRequirements().then(({ created }) => {
         if (created) console.log(`Created ${created} default document requirements`);

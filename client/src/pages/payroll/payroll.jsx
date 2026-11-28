@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Navbar_DS from "../../components/navbar_ds";
 import SideBar from "../../components/sidebar";
 import Card from "../../components/Card";
@@ -86,7 +87,9 @@ const columns = [
   { key: "daysWorked", header: "Days" },
   { key: "hoursWorked", header: "Hours", render: (row) => money(row.hoursWorked) },
   { key: "lateMinutes", header: "Late (min)" },
-  { key: "grossPay", header: "Gross Pay", render: (row) => <span className="font-semibold text-gray-900">{money(row.grossPay)}</span> },
+  { key: "grossPay", header: "Gross Pay", render: (row) => money(row.grossPay) },
+  { key: "totalDeductions", header: "Deductions", render: (row) => money(row.totalDeductions) },
+  { key: "netPay", header: "Net Pay", render: (row) => <span className="font-semibold text-gray-900">{money(row.netPay)}</span> },
 ];
 
 /**
@@ -134,10 +137,11 @@ export default function Payroll() {
       <SideBar />
       <Navbar_DS />
       <div className="p-8 main-content">
-        <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 mt-14 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Employees" value={report?.totals.employees ?? "-"} icon="users" />
           <StatCard label="Hours worked" value={report ? money(report.totals.hoursWorked) : "-"} icon="clock" />
           <StatCard label="Gross pay" value={report ? money(report.totals.grossPay) : "-"} icon="banknotes" accent="green" />
+          <StatCard label="Net pay" value={report ? money(report.totals.netPay) : "-"} icon="banknotes" accent="green" />
         </div>
 
         <Card
@@ -165,8 +169,12 @@ export default function Payroll() {
           }
         >
           <p className="mb-4 text-sm text-gray-500">
-            Gross pay is the hours worked each day multiplied by the hourly rate HR assigned for that day. It is shown to HR
-            only.
+            Gross pay is the hours worked each day multiplied by the hourly rate HR assigned for that day. Net pay is gross
+            pay less the{" "}
+            <Link to="/payroll-deductions" className="text-blue-700 hover:underline">
+              deductions
+            </Link>{" "}
+            in force now. Shown to HR only.
           </p>
           <DataTable
             columns={tableColumns}
@@ -182,6 +190,11 @@ export default function Payroll() {
 
         {open && (
           <Card title={`${open.employeeName}: days in ${selected.label}`} className="mt-6">
+            <p className="mb-4 text-sm text-gray-700">
+              {open.deductions.length === 0
+                ? "No deductions."
+                : `Deductions: ${open.deductions.map((d) => `${d.name} ${money(d.amount)}`).join(", ")}.`}
+            </p>
             {open.days.length === 0 ? (
               <p className="text-sm text-gray-500">No attendance records in this period.</p>
             ) : (

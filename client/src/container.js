@@ -7,6 +7,7 @@ import { HttpDepartmentRepository } from "./infrastructure/repositories/HttpDepa
 import { HttpLeaveRequestRepository } from "./infrastructure/repositories/HttpLeaveRequestRepository";
 import { HttpPermissionRepository } from "./infrastructure/repositories/HttpPermissionRepository";
 import { HttpDocumentRepository } from "./infrastructure/repositories/HttpDocumentRepository";
+import { downloadBlob } from "./infrastructure/export/download";
 import { HttpOffboardingRepository } from "./infrastructure/repositories/HttpOffboardingRepository";
 import { HttpAccountRepository } from "./infrastructure/repositories/HttpAccountRepository";
 import { WorkShift, ShiftAssignment } from "./domain/shift/WorkShift";
@@ -24,6 +25,8 @@ import { HttpDashboardRepository } from "./infrastructure/repositories/HttpDashb
 import { HttpEmployeePortalRepository } from "./infrastructure/repositories/HttpEmployeePortalRepository";
 import { AuditLog } from "./domain/audit/AuditLog";
 import { EmploymentType } from "./domain/employmentType/EmploymentType";
+import { Position } from "./domain/position/Position";
+import { PayrollDeduction } from "./domain/payroll/PayrollDeduction";
 import { HttpEmergencyContactRepository } from "./infrastructure/repositories/HttpEmergencyContactRepository";
 import { SalaryRate } from "./domain/salary/SalaryRate";
 import { HttpAttendanceRepository } from "./infrastructure/repositories/HttpAttendanceRepository";
@@ -48,6 +51,8 @@ export const emergencyContactUseCases = {
   listForEmployee: (employeeId) => emergencyContactRepository.getByEmployee(employeeId),
 };
 export const employmentTypeUseCases = restCrud("employment-types", EmploymentType.fromApi);
+export const positionUseCases = restCrud("positions", Position.fromApi);
+export const payrollDeductionUseCases = restCrud("payroll-deductions", PayrollDeduction.fromApi);
 export const attendanceUseCases = createCrudUseCases(new HttpAttendanceRepository());
 // HR only: the server refuses every request to /salary-rates unless the administrator holds the permission.
 export const salaryRateUseCases = restCrud("salary-rates", SalaryRate.fromApi);
@@ -70,6 +75,9 @@ export const documentChecklistUseCases = {
   checklist: (employeeId, stage) => documentRepository.getChecklist(employeeId, stage),
   verify: (documentId) => documentRepository.verify(documentId),
   reject: (documentId, remarks) => documentRepository.reject(documentId, remarks),
+  upload: (documentId, file) => documentRepository.upload(documentId, file),
+  removeFile: (documentId) => documentRepository.removeFile(documentId),
+  download: async (file) => downloadBlob(await documentRepository.getFile(file.id), file.name),
 };
 
 const accountRepository = new HttpAccountRepository();
@@ -114,6 +122,7 @@ export const auditLogUseCases = restCrud("audit-logs", AuditLog.fromApi);
 const payrollRepository = new HttpPayrollRepository();
 export const payrollUseCases = {
   report: (period) => payrollRepository.getReport(period),
+  finalPay: (employeeId, input) => payrollRepository.getFinalPay(employeeId, input),
 };
 
 const notificationRepository = new HttpNotificationRepository();

@@ -31,6 +31,8 @@ export const GUARDED = [
   "/notifications",
   "/offboarding",
   "/payroll",
+  "/payroll-deductions",
+  "/positions",
   "/role-assignments",
   "/roles",
   "/salary-rates",
@@ -123,7 +125,14 @@ export const createPermissionPolicy = ({ requireAuth, requirePermission }) => {
   allow("put", "/job-applications/:id/status", "employees:edit");
 
   // --- Organization ---
-  crud("/departments", "departments");
+  // The employee forms list departments and positions, so whoever works with employees may read them.
+  crud("/departments", "departments", ["employees:view"]);
+  resource("/positions", {
+    view: ["departments:view", "employees:view"],
+    create: ["departments:create"],
+    edit: ["departments:edit"],
+    remove: ["departments:delete"],
+  });
   resource("/employment-types", {
     view: ["departments:view", "employees:view"],
     create: ["departments:create"],
@@ -157,10 +166,20 @@ export const createPermissionPolicy = ({ requireAuth, requirePermission }) => {
   allow("get", "/salary-rates/employee/:employeeId", "salary-rates:view");
   resource("/salary-rates", { view: ["salary-rates:view"], create: ["salary-rates:assign"] });
   allow("get", "/payroll", "salary-rates:view");
+  allow("post", "/payroll/final-pay/:employeeId", "salary-rates:view"); // a calculation: nothing is stored
+  resource("/payroll-deductions", {
+    view: ["salary-rates:view"],
+    create: ["salary-rates:assign"],
+    edit: ["salary-rates:assign"],
+    remove: ["salary-rates:assign"],
+  });
   crud("/inventory", "inventory");
   crud("/document-requirements", "document-requirements", ["documents:view"]);
   allow("get", "/employee-documents/checklist/:employeeId", "documents:view");
   allow("post", ["/employee-documents/:id/verify", "/employee-documents/:id/reject"], "documents:verify");
+  allow("get", "/employee-documents/files/:fileId", "documents:view");
+  allow("put", "/employee-documents/:id/file", "documents:create", "documents:edit");
+  allow("delete", "/employee-documents/:id/file", "documents:edit");
   crud("/employee-documents", "documents");
 
   // --- The dashboard ---

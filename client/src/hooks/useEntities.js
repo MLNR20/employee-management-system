@@ -5,6 +5,8 @@ import {
   employeeUseCases,
   emergencyContactUseCases,
   employmentTypeUseCases,
+  positionUseCases,
+  payrollDeductionUseCases,
   attendanceUseCases,
   salaryRateUseCases,
   departmentUseCases,
@@ -221,6 +223,27 @@ export const useOffboardingAction = () => {
   });
 };
 
+/**
+ * Uploads or removes a document's file: mutate({ id, file }) uploads, mutate({ id }) removes. A record
+ * that does not exist yet is created first from `record`.
+ */
+export const useDocumentFile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, file, record }) => {
+      const documentId = id ?? (await employeeDocumentUseCases.add(record)).id;
+      if (!file) return documentChecklistUseCases.removeFile(documentId);
+      if (id && record) await employeeDocumentUseCases.update(id, record); // e.g. the new copy's expiry date
+      return documentChecklistUseCases.upload(documentId, file);
+    },
+    // Even after a failure: the record may have been created before the upload was refused.
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["employee-documents"] });
+      queryClient.invalidateQueries({ queryKey: ["offboarding"] });
+    },
+  });
+};
+
 /** HR verifies or rejects a received document (rejecting needs the reason). */
 export const useReviewDocument = () => {
   const queryClient = useQueryClient();
@@ -279,6 +302,28 @@ export const {
 
 // The audit trail is read-only: pages and single entries only.
 export const { usePage: useAuditLogsPage, useOne: useAuditLog } = createCrudHooks("audit-logs", auditLogUseCases);
+
+/** Works out a leaving employee's final pay: mutate({ employeeId, input }); the result is `data`. */
+export const useFinalPay = () =>
+  useMutation({ mutationFn: ({ employeeId, input }) => payrollUseCases.finalPay(employeeId, input) });
+
+export const {
+  useList: usePositions,
+  usePage: usePositionsPage,
+  useOne: usePosition,
+  useCreate: useCreatePosition,
+  useUpdate: useUpdatePosition,
+  useRemove: useRemovePosition,
+} = createCrudHooks("positions", positionUseCases);
+
+export const {
+  useList: usePayrollDeductions,
+  usePage: usePayrollDeductionsPage,
+  useOne: usePayrollDeduction,
+  useCreate: useCreatePayrollDeduction,
+  useUpdate: useUpdatePayrollDeduction,
+  useRemove: useRemovePayrollDeduction,
+} = createCrudHooks("payroll-deductions", payrollDeductionUseCases);
 
 /** HR's payroll report for the days from `from` to `to` ("YYYY-MM-DD"). Waits until both are set. */
 export const usePayroll = ({ from, to }) =>

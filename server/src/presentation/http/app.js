@@ -7,7 +7,8 @@ import { createDepartmentRouter } from "./routes/departmentRoutes.js";
 import { createEmploymentTypeRouter } from "./routes/employmentTypeRoutes.js";
 import { createAttendanceRouter } from "./routes/attendanceRoutes.js";
 import { createSalaryRateRouter } from "./routes/salaryRateRoutes.js";
-import { createPayrollRouter } from "./routes/payrollRoutes.js";
+import { createPayrollDeductionRouter, createPayrollRouter } from "./routes/payrollRoutes.js";
+import { createPositionRouter } from "./routes/positionRoutes.js";
 import { createWorkShiftRouter, createShiftAssignmentRouter } from "./routes/shiftRoutes.js";
 import { createDocumentRequirementRouter, createEmployeeDocumentRouter } from "./routes/documentRoutes.js";
 import { createOffboardingRouter } from "./routes/offboardingRoutes.js";
@@ -70,6 +71,8 @@ export const createApp = ({
   documentRequirementUseCases, // optional: without it /document-requirements is not served
   employeeDocumentUseCases, // optional: without it /employee-documents is not served
   offboardingUseCases, // optional: without it /offboarding is not served
+  positionUseCases, // optional: without it /positions is not served
+  payrollDeductionUseCases, // optional, with authorizationUseCases: without both /payroll-deductions is not served
   jobUseCases, // optional: without it /jobs is not served
   jobApplicationUseCases, // optional, with jobUseCases: without both /job-applications and the portal job routes are not served
   getHealth = () => ({}), // optional: extra fields for GET /health, e.g. the database state
@@ -136,6 +139,11 @@ export const createApp = ({
     app.use("/employee-documents", createEmployeeDocumentRouter({ employeeDocumentUseCases, requireAuth }));
   }
   if (offboardingUseCases) app.use("/offboarding", createOffboardingRouter({ offboardingUseCases, requireAuth }));
+  if (positionUseCases) app.use("/positions", createPositionRouter({ positionUseCases, requireAuth }));
+  // HR only: like salary rates, never served without the permission checks.
+  if (payrollDeductionUseCases && authorizationUseCases) {
+    app.use("/payroll-deductions", createPayrollDeductionRouter({ payrollDeductionUseCases, requireAuth }));
+  }
   if (salaryRateUseCases && authorizationUseCases) {
     const requirePermission = createRequirePermission(authorizationUseCases);
     app.use("/salary-rates", createSalaryRateRouter({ salaryRateUseCases, requireAuth, requirePermission }));

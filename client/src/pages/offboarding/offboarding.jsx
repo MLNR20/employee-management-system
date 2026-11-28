@@ -4,6 +4,8 @@ import Swal from "sweetalert2";
 import PageLayout from "../../components/PageLayout";
 import EmployeeChecklist from "../../components/EmployeeChecklist";
 import RehireTag from "../../components/RehireTag";
+import FinalPay from "../../components/FinalPay";
+import DocumentFileLink from "../../components/DocumentFileLink";
 import { useAccess, useEmployees, useOffboarding, useOffboardingAction } from "../../hooks/useEntities";
 import {
   NOTES_MAX,
@@ -178,6 +180,7 @@ function Clearance({ clearance }) {
 }
 
 function History({ entries }) {
+  const showFiles = useAccess().can("documents:view");
   if (!entries.length) return null;
   return (
     <section>
@@ -188,6 +191,14 @@ function History({ entries }) {
             {separationTypeLabel(entry.separationType)}, last working day {entry.lastWorkingDay}. Rehired on{" "}
             {new Date(entry.rehiredAt).toLocaleDateString()} ({entry.documents.filter((d) => d.status === "verified").length} documents
             had been verified).
+            {showFiles &&
+              entry.documents
+                .filter((d) => d.file)
+                .map((d) => (
+                  <span key={d.file.id} className="block pl-4">
+                    {d.requirement}: <DocumentFileLink file={d.file} />
+                  </span>
+                ))}
           </li>
         ))}
       </ul>
@@ -196,7 +207,7 @@ function History({ entries }) {
 }
 
 /** One employee's offboarding: start it, then tag them, track clearance and collect the documents. */
-function EmployeeOffboarding({ employeeId }) {
+function EmployeeOffboarding({ employeeId, employeeName }) {
   const { data, isLoading, error } = useOffboarding(employeeId);
   const action = useOffboardingAction();
   const { can } = useAccess();
@@ -302,6 +313,14 @@ function EmployeeOffboarding({ employeeId }) {
 
       <Clearance clearance={clearance} />
 
+      {can("salary-rates:view") && (
+        <section>
+          <h2 className="mb-3 text-lg font-semibold text-gray-900">Final pay</h2>
+          {/* Keyed on the last working day, so a result never outlives the date it was worked out for. */}
+          <FinalPay key={separation.lastWorkingDay} employeeId={employeeId} employeeName={employeeName} />
+        </section>
+      )}
+
       {can("documents:view") && (
         <section>
           <h2 className="mb-3 text-lg font-semibold text-gray-900">Offboarding documents</h2>
@@ -405,7 +424,11 @@ export default function Offboarding() {
 
       {employeeId ? (
         // Keyed so that a half-typed form never carries over to another employee.
-        <EmployeeOffboarding key={employeeId} employeeId={employeeId} />
+        <EmployeeOffboarding
+          key={employeeId}
+          employeeId={employeeId}
+          employeeName={employees.find((employee) => employee.id === employeeId)?.fullName ?? "employee"}
+        />
       ) : (
         <Leavers employees={employees} onChoose={choose} />
       )}

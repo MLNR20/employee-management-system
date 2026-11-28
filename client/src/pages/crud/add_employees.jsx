@@ -11,6 +11,7 @@ import { validateGovernmentIds } from "../../domain/employee/governmentIds";
 import { useNavigate } from "react-router-dom";
 import { validatePersonName } from "../../validation/personName";
 import ManagerSelect from "../../components/ManagerSelect";
+import { DepartmentSelect, PositionSelect } from "../../components/DepartmentPositionSelect";
 import EmploymentTypeSelect from "../../components/EmploymentTypeSelect";
 
 export default function Add_Employees() {
@@ -311,29 +312,14 @@ export default function Add_Employees() {
                     >
                       Department
                     </label>
-                    <select
-                      id="department"
+                    <DepartmentSelect
                       value={department}
-                      onChange={(e) => {
-                        setDepartment(e.target.value)
-                        setErrors((prevErrors) => {
-                            const newErrors = { ...prevErrors };
-                            delete newErrors.department;
-                            return newErrors;
-                          });
+                      onChange={(value) => {
+                        setDepartment(value);
+                        setPosition(""); // positions differ per department
+                        setErrors((previous) => ({ ...previous, department: undefined }));
                       }}
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    >
-                      <option selected>Choose a department</option>
-                      <option value="Finance and Accounting">
-                        Finance and Accounting
-                      </option>
-                      <option value="Human Resources">Human Resources</option>
-                      <option value="Information Technology">
-                        Information Technology
-                      </option>
-                      <option value="Management">Management</option>
-                    </select>
+                    />
                       {errors.department && (
                       <label className="text-sm text-red-500">
                         {errors.department}
@@ -349,60 +335,14 @@ export default function Add_Employees() {
                     >
                       Position
                     </label>
-                    <select
-                      id="position"
+                    <PositionSelect
+                      department={department}
                       value={position}
-                      onChange={(e) => {
-                        setPosition(e.target.value)
-                         setErrors((prevErrors) => {
-                            const newErrors = { ...prevErrors };
-                            delete newErrors.position;
-                            return newErrors;
-                          });
+                      onChange={(value) => {
+                        setPosition(value);
+                        setErrors((previous) => ({ ...previous, position: undefined }));
                       }}
-                      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    >
-                      <option selected>Choose a position</option>
-                      <optgroup label="Finance and Accounting">
-                        <option value="Accountant">Accountant</option>
-                        <option value="Financial Analyst">
-                          Financial Analyst
-                        </option>
-                        <option value="Payroll Specialist">
-                          Payroll Specialist
-                        </option>
-                      </optgroup>
-
-                      <optgroup label="Human Resources">
-                        <option value="HR Manager">HR Manager</option>
-                        <option value="Recruitment Specialist">
-                          Recruitment Specialist
-                        </option>
-                        <option value="Training Coordinator">
-                          Training Coordinator
-                        </option>
-                      </optgroup>
-
-                      <optgroup label="Information Technology">
-                        <option value="IT Support Specialist">
-                          IT Support Specialist
-                        </option>
-                        <option value="Network Administrator">
-                          Network Administrator
-                        </option>
-                        <option value="Systems Analyst">Systems Analyst</option>
-                      </optgroup>
-
-                      <optgroup label="Management">
-                        <option value="Operations Manager">
-                          Operations Manager
-                        </option>
-                        <option value="Project Manager">Project Manager</option>
-                        <option value="Executive Assistant">
-                          Executive Assistant
-                        </option>
-                      </optgroup>
-                    </select>
+                    />
                      {errors.position && (
                       <label className="text-sm text-red-500">
                         {errors.position}

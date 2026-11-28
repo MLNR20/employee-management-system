@@ -112,7 +112,13 @@ test("the report shows the hourly rate, hours and gross pay for the period only"
   assert.equal(idle.hourlyRate, null, "no rate assigned");
   assert.equal(idle.grossPay, 0);
 
-  assert.deepEqual(body.totals, { employees: 2, hoursWorked: 24, grossPay: 600000 });
+  assert.deepEqual(body.totals, {
+    employees: 2,
+    hoursWorked: 24,
+    grossPay: 600000,
+    totalDeductions: 0,
+    netPay: 600000,
+  });
 });
 
 test("a bad period is rejected", async () => {

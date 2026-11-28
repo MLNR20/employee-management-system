@@ -38,7 +38,12 @@ const Navbars=() =>{
         </div>
         <div className="flex items-center gap-3 lg:order-2">
             <NotificationBell />
-            <h1 className="font-semibold">{first_name + " " + last_name}</h1>
+            <Link to="/profile" title="My profile" className="flex items-center gap-2 p-1 font-semibold rounded-lg hover:bg-gray-100">
+              <span aria-hidden="true" className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-800 text-white text-sm">
+                {(first_name.trim()[0] || "?").toUpperCase()}
+              </span>
+              <span>{first_name + " " + last_name}</span>
+            </Link>
         </div>
       </div>
     </nav>

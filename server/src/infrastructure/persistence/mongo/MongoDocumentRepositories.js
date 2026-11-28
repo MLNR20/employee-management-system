@@ -4,7 +4,7 @@ import { DocumentRequirement } from "../../../domain/document/DocumentRequiremen
 import { EmployeeDocument } from "../../../domain/document/EmployeeDocument.js";
 import { requirementNameKey } from "../../../domain/document/documentRules.js";
 import { DuplicateDocumentRequirementError, DuplicateEmployeeDocumentError } from "../../../domain/errors.js";
-import { DocumentRequirementModel, EmployeeDocumentModel } from "./models/documentModels.js";
+import { DocumentFileModel, DocumentRequirementModel, EmployeeDocumentModel } from "./models/documentModels.js";
 import { toBaseProps } from "./models/baseSchema.js";
 
 const toRequirement = (doc) =>
@@ -28,6 +28,7 @@ const toEmployeeDocument = (doc) =>
     reviewedBy: doc.reviewedBy ? String(doc.reviewedBy) : null,
     reviewedAt: doc.reviewedAt ?? null,
     remarks: doc.remarks ?? "",
+    file: doc.file ?? null,
   });
 
 const withKey = (data) => (data.name !== undefined ? { ...data, nameKey: requirementNameKey(data.name) } : data);
@@ -86,5 +87,36 @@ export class MongoEmployeeDocumentRepository extends MongoRepository {
   async existsForRequirement(requirementId) {
     if (!mongoose.isValidObjectId(requirementId)) return false;
     return Boolean(await EmployeeDocumentModel.exists({ requirementId }));
+  }
+
+  async removeForEmployee(employeeId) {
+    if (!mongoose.isValidObjectId(employeeId)) return;
+    await EmployeeDocumentModel.deleteMany({ employeeId });
+  }
+}
+
+export class MongoDocumentFileRepository {
+  async save({ employeeId, name, contentType, size, data }) {
+    const doc = await DocumentFileModel.create({ employeeId, name, contentType, size, data });
+    return { id: String(doc._id) };
+  }
+
+  async findById(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    // Not lean: that way the data comes back as a Buffer.
+    const doc = await DocumentFileModel.findById(id);
+    if (!doc) return null;
+    const { employeeId, name, contentType, size, data } = doc;
+    return { id: String(doc._id), employeeId: String(employeeId), name, contentType, size, data };
+  }
+
+  async remove(id) {
+    if (!mongoose.isValidObjectId(id)) return;
+    await DocumentFileModel.deleteOne({ _id: id });
+  }
+
+  async removeForEmployee(employeeId) {
+    if (!mongoose.isValidObjectId(employeeId)) return;
+    await DocumentFileModel.deleteMany({ employeeId });
   }
 }
