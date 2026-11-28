@@ -12,7 +12,7 @@ import {
   useRemoveRoleAssignment,
   useAdministrators,
 } from "../hooks/useEntities";
-import { statusColumn, dateColumn, nameOf } from "./shared";
+import { statusColumn, dateColumn, nameOf, lookups } from "./shared";
 
 export const roleResource = {
   key: "roles",
@@ -53,10 +53,7 @@ export const roleAssignmentResource = {
     useCreate: useCreateRoleAssignment,
     useRemove: useRemoveRoleAssignment,
   },
-  useExtras: () => ({
-    administrators: useAdministrators().data,
-    roles: useRoles().data,
-  }),
+  useExtras: () => lookups({ administrators: useAdministrators(), roles: useRoles() }),
   columns: ({ administrators, roles }) => [
     {
       key: "administrator",

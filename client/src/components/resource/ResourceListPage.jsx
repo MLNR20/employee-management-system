@@ -18,7 +18,7 @@ const noHook = () => null;
 export default function ResourceListPage({ resource }) {
   const { title, singular, basePath, hooks } = resource;
   const table = useServerTable();
-  const { data: page, isLoading, isFetching, error } = hooks.usePage(table.params);
+  const { data: page, isLoading, isFetching, isPlaceholderData, error } = hooks.usePage(table.params);
   const remove = (hooks.useRemove ?? noHook)();
   const extras = (resource.useExtras ?? noExtras)(); // e.g. lookup lists for readable columns
   // Buttons show when the resource supports the action and the administrator may take it.
@@ -101,8 +101,10 @@ export default function ResourceListPage({ resource }) {
         data={page?.items ?? []}
         total={page?.total ?? 0}
         server={table}
-        isLoading={isLoading}
+        // Waits for the lookup lists too, so names never show as "(removed)" while they load.
+        isLoading={isLoading || Boolean(extras.isLoading)}
         isFetching={isFetching}
+        isRendering={isPlaceholderData}
         error={error}
         emptyMessage="No records found."
       />

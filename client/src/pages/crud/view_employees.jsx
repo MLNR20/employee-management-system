@@ -80,7 +80,7 @@ const exportTable = (employees) => ({
 
 export default function View_Employees() {
   const table = useServerTable();
-  const { data: page, isLoading, isFetching, error } = useEmployeesPage(table.params);
+  const { data: page, isLoading, isFetching, isPlaceholderData, error } = useEmployeesPage(table.params);
   const { data: summary } = useEmployeeSummary();
   const removeEmployee = useRemoveEmployee();
   const { can } = useAccess();
@@ -177,6 +177,7 @@ export default function View_Employees() {
             server={table}
             isLoading={isLoading}
             isFetching={isFetching}
+            isRendering={isPlaceholderData}
             error={error}
             emptyMessage="No records found."
           />

@@ -8,7 +8,7 @@ import {
   useEmployees,
 } from "../hooks/useEntities";
 import { ItemStatus, itemStatusLabels } from "../domain/inventory/Item";
-import { Badge, nameOf } from "./shared";
+import { Badge, nameOf, lookups } from "./shared";
 
 const statusTones = {
   [itemStatusLabels[ItemStatus.AVAILABLE]]: "bg-green-100 text-green-700",
@@ -36,7 +36,7 @@ export const inventoryResource = {
     useUpdate: useUpdateInventoryItem,
     useRemove: useRemoveInventoryItem,
   },
-  useExtras: () => ({ employees: useEmployees().data }),
+  useExtras: () => lookups({ employees: useEmployees() }),
   columns: ({ employees }) => [
     { key: "name", header: "Item", sortKey: "name" },
     { key: "serialNumber", header: "Serial number", sortKey: "serialNumber" },

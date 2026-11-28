@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SkeletonBar, SkeletonRows } from "../Skeleton";
 
 /**
  * Reusable table with search, sorting and pagination.
@@ -6,6 +7,10 @@ import { useEffect, useMemo, useState } from "react";
  * Client mode (default): pass every row in `data`; search, sort and paging happen in the browser.
  * Server mode: pass `server` (from useServerTable) and `total`. `data` is then just the current
  * page, and search, sort and paging are asked of the server through server.params.
+ *
+ * While loading, placeholders stand in for the content: `isLoading` for the whole table (nothing to show
+ * yet) and `isRendering` for just the rows (the rows on hand belong to the previous page, sort, search
+ * or period). `isFetching` alone, a background refresh of what is shown, only dims the table.
  *
  * columns: [{
  *   key:        property name on the row (also the column id)
@@ -24,6 +29,7 @@ export default function DataTable({
   getRowId = (row) => row.id,
   isLoading = false,
   isFetching = false,
+  isRendering = false,
   error = null,
   emptyMessage = "No records found.",
   searchable = true,
@@ -119,6 +125,8 @@ export default function DataTable({
 
   if (error) return <p className="text-sm text-red-600 p-4">Something went wrong loading the data.</p>;
 
+  const pending = isLoading || isRendering;
+
   return (
     <div>
       <div className="mb-6 flex flex-row flex-wrap items-center gap-6">
@@ -162,8 +170,8 @@ export default function DataTable({
 
       <table
         className="text-base w-full text-left text-gray-500"
-        style={{ opacity: isFetching ? 0.6 : 1 }}
-        aria-busy={isFetching || isLoading}
+        style={{ opacity: isFetching && !pending ? 0.6 : 1 }}
+        aria-busy={isFetching || pending}
       >
         <thead className="bg-gray-100">
           <tr>
@@ -180,7 +188,7 @@ export default function DataTable({
                   }
                 >
                   {isLoading ? (
-                    <span className="skeleton" style={{ width: "4.5rem" }} />
+                    <SkeletonBar width="4.5rem" />
                   ) : sortable ? (
                     <button
                       type="button"
@@ -201,19 +209,14 @@ export default function DataTable({
           </tr>
         </thead>
         <tbody>
-          {isLoading ? (
-            Array.from({ length: pageSize }, (_, rowIndex) => (
-              <tr key={`skeleton-${rowIndex}`} className="odd:bg-white even:bg-gray-50">
-                {columns.map((column, colIndex) => (
-                  <td key={column.key} className="px-6 py-4">
-                    <span
-                      className="skeleton"
-                      style={{ width: SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length] }}
-                    />
-                  </td>
-                ))}
-              </tr>
-            ))
+          {pending ? (
+            <SkeletonRows
+              // As many rows as are on screen, so the table does not jump while the next ones load.
+              rows={(!isLoading && visibleRows.length) || pageSize}
+              columns={columns.length}
+              rowClassName="odd:bg-white even:bg-gray-50"
+              cellClassName="px-6 py-4"
+            />
           ) : visibleRows.length === 0 ? (
             <tr>
               <td className="px-6 py-4 text-center" colSpan={columns.length}>
@@ -235,8 +238,8 @@ export default function DataTable({
       </table>
 
       <div className="flex flex-wrap items-center justify-between gap-4 mt-4 text-sm text-gray-500">
-        {isLoading ? (
-          <span className="skeleton" style={{ width: "10rem" }} />
+        {pending ? (
+          <SkeletonBar width="10rem" />
         ) : (
           <span>
             Showing {totalRows === 0 ? 0 : start + 1}-{Math.min(start + pageSize, totalRows)} of{" "}
@@ -306,9 +309,6 @@ export default function DataTable({
     </div>
   );
 }
-
-// Varied widths so the placeholder rows look like real content rather than a solid block.
-const SKELETON_WIDTHS = ["60%", "80%", "45%", "70%", "55%"];
 
 /**
  * The page buttons between Previous and Next: the first page, the last page and three pages around

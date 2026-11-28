@@ -6,7 +6,7 @@ import {
   useEmployees,
   useAdministrators,
 } from "../hooks/useEntities";
-import { nameOf } from "./shared";
+import { nameOf, lookups } from "./shared";
 
 const money = (value) =>
   value === undefined || value === null
@@ -32,7 +32,7 @@ export const salaryRateResource = {
     useOne: useSalaryRate,
     useCreate: useAssignSalaryRate,
   },
-  useExtras: () => ({ employees: useEmployees().data, administrators: useAdministrators().data }),
+  useExtras: () => lookups({ employees: useEmployees(), administrators: useAdministrators() }),
   columns: ({ employees, administrators }) => [
     { key: "employee", header: "Employee", accessor: (r) => nameOf(employees, r.employeeId, (e) => e.fullName) },
     { key: "hourlyRate", header: "Hourly rate", sortKey: "hourlyRate", render: (r) => money(r.hourlyRate) },

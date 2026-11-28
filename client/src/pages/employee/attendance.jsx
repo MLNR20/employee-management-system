@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
 import PortalLayout from "../../components/employee/PortalLayout";
+import { SkeletonRows } from "../../components/Skeleton";
 import { employeePortal } from "../../container";
 
 const QUERY_KEY = ["employee-portal", "attendance"];
@@ -133,11 +134,11 @@ export default function EmployeeAttendance() {
           <h2 id="attendance-history-heading" className="portal-panel-title">
             Attendance history
           </h2>
-          {recent.length === 0 ? (
-            <p className="portal-empty">{attendance.isLoading ? "Loading…" : "No attendance yet."}</p>
+          {recent.length === 0 && !attendance.isLoading ? (
+            <p className="portal-empty">No attendance yet.</p>
           ) : (
             <div className="attendance-table-wrap">
-              <table className="attendance-table">
+              <table className="attendance-table" aria-busy={attendance.isLoading}>
                 <thead>
                   <tr>
                     <th scope="col">Date</th>
@@ -150,6 +151,7 @@ export default function EmployeeAttendance() {
                   </tr>
                 </thead>
                 <tbody>
+                  {attendance.isLoading && <SkeletonRows rows={5} columns={7} />}
                   {recent.map((record) => (
                     <tr key={record._id}>
                       <th scope="row">{dayText(record.date)}</th>

@@ -1,4 +1,5 @@
 import { useEmployees } from "../hooks/useEntities";
+import { SkeletonBar } from "./Skeleton";
 
 const selectClass =
   "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5";
@@ -36,8 +37,9 @@ export default function ManagerSelect({ value, onChange, excludeId }) {
 
 /** A manager's name for a table cell: a dash for none, "(removed)" if they no longer exist. */
 export function ManagerName({ id }) {
-  const { data: employees = [] } = useEmployees();
+  const { data: employees = [], isLoading } = useEmployees();
 
   if (!id) return <span className="text-gray-400">-</span>;
+  if (isLoading) return <SkeletonBar width="6rem" />;
   return employees.find((employee) => employee.id === id)?.fullName ?? "(removed)";
 }

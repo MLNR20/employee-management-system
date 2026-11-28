@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ExportButtons from "./ExportButtons";
+import TableSkeleton from "./Skeleton";
 import { useFinalPay } from "../hooks/useEntities";
 import { finalPayRows, money } from "../domain/payroll/finalPay";
 
@@ -89,7 +90,13 @@ export default function FinalPay({ employeeId, employeeName }) {
         </p>
       )}
 
-      {result && (
+      {compute.isPending && (
+        <div className="mt-4">
+          <TableSkeleton label="Calculating the final pay" headers={["Item", "Amount"]} rows={6} />
+        </div>
+      )}
+
+      {result && !compute.isPending && (
         <div className="mt-4">
           <div className="overflow-x-auto border border-gray-200 rounded-lg">
             <table className="w-full text-sm text-left">

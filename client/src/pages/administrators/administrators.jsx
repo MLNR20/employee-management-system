@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import PageLayout from "../../components/PageLayout";
 import FormBuilder from "../../components/form/FormBuilder";
+import TableSkeleton from "../../components/Skeleton";
 import { useAdministrators } from "../../hooks/useEntities";
 import { useAuth } from "../../context/AuthContext";
 import { accountUseCases } from "../../container";
@@ -86,7 +87,9 @@ export default function Administrators() {
         </section>
       )}
 
-      {isLoading && <p className="text-gray-500">Loading...</p>}
+      {isLoading && (
+        <TableSkeleton label="Loading the administrators" headers={["Name", "Username", "Email", "Actions"]} />
+      )}
       {error && <p className="text-red-600">{error.response?.data?.message ?? "Could not load the administrators."}</p>}
 
       {administrators.length > 0 && (

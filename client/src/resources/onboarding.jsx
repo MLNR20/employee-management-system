@@ -20,7 +20,7 @@ import {
   useAdministrators,
 } from "../hooks/useEntities";
 import { WEEKDAYS, describeDays, describeHours } from "../domain/shift/WorkShift";
-import { statusColumn, Badge, nameOf } from "./shared";
+import { statusColumn, Badge, nameOf, lookups } from "./shared";
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const yesNoTones = { yes: "bg-blue-100 text-blue-700", no: "bg-gray-100 text-gray-700" };
@@ -109,11 +109,8 @@ export const shiftAssignmentResource = {
     useCreate: useCreateShiftAssignment,
     useRemove: useRemoveShiftAssignment,
   },
-  useExtras: () => ({
-    employees: useEmployees().data,
-    shifts: useWorkShifts().data,
-    administrators: useAdministrators().data,
-  }),
+  useExtras: () =>
+    lookups({ employees: useEmployees(), shifts: useWorkShifts(), administrators: useAdministrators() }),
   columns: ({ employees, shifts, administrators }) => [
     { key: "employee", header: "Employee", accessor: (a) => nameOf(employees, a.employeeId, (e) => e.fullName) },
     { key: "shift", header: "Shift", accessor: (a) => nameOf(shifts, a.shiftId, (s) => `${s.name} (${describeHours(s)})`) },

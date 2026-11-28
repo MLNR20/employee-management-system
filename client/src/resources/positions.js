@@ -7,7 +7,7 @@ import {
   useUpdatePosition,
   useRemovePosition,
 } from "../hooks/useEntities";
-import { statusColumn, nameOf } from "./shared";
+import { statusColumn, nameOf, lookups } from "./shared";
 
 // The job titles each department offers: what the employee form lists after a department is chosen.
 export const positionResource = {
@@ -31,7 +31,7 @@ export const positionResource = {
     useUpdate: useUpdatePosition,
     useRemove: useRemovePosition,
   },
-  useExtras: () => ({ departments: useDepartments().data }),
+  useExtras: () => lookups({ departments: useDepartments() }),
   columns: ({ departments }) => [
     { key: "name", header: "Position", sortKey: "name" },
     { key: "department", header: "Department", accessor: (p) => nameOf(departments, p.departmentId, (d) => d.name) },

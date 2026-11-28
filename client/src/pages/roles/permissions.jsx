@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import PageLayout from "../../components/PageLayout";
+import TableSkeleton from "../../components/Skeleton";
 import { useAccess, useRoles, useUpdateRole, usePermissionCatalog } from "../../hooks/useEntities";
 import { permissionKey } from "../../domain/role/Role";
 import {
@@ -90,7 +91,7 @@ export default function RolePermissions() {
 
   let body;
   if (loadingRoles || loadingCatalog) {
-    body = <p className="text-gray-500">Loading...</p>;
+    body = <TableSkeleton label="Loading the permissions" headers={6} rows={10} />;
   } else if (!roles.length) {
     body = (
       <p className="text-gray-500">

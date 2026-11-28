@@ -5,6 +5,7 @@ import PageLayout from "../../components/PageLayout";
 import EmployeeChecklist from "../../components/EmployeeChecklist";
 import RehireTag from "../../components/RehireTag";
 import FinalPay from "../../components/FinalPay";
+import TableSkeleton from "../../components/Skeleton";
 import DocumentFileLink from "../../components/DocumentFileLink";
 import { useAccess, useEmployees, useOffboarding, useOffboardingAction } from "../../hooks/useEntities";
 import {
@@ -213,7 +214,7 @@ function EmployeeOffboarding({ employeeId, employeeName }) {
   const { can } = useAccess();
   const mayChange = can("employees:edit");
 
-  if (isLoading) return <p className="text-gray-500">Loading...</p>;
+  if (isLoading) return <TableSkeleton label="Loading the offboarding" headers={3} />;
   if (error) return <p className="text-red-600">{error.response?.data?.message ?? "Could not load the offboarding."}</p>;
   if (!data) return null;
 
@@ -399,7 +400,7 @@ export default function Offboarding() {
   // The chosen employee is in the address, so the employee list can link straight here.
   const [params, setParams] = useSearchParams();
   const employeeId = params.get("employee") ?? "";
-  const { data: employees = [] } = useEmployees();
+  const { data: employees = [], isLoading } = useEmployees();
   const choose = (id) => setParams(id ? { employee: id } : {});
 
   return (
@@ -428,6 +429,12 @@ export default function Offboarding() {
           key={employeeId}
           employeeId={employeeId}
           employeeName={employees.find((employee) => employee.id === employeeId)?.fullName ?? "employee"}
+        />
+      ) : isLoading ? (
+        // Until the employees arrive, "nobody is offboarding" is not yet known.
+        <TableSkeleton
+          label="Loading the employees"
+          headers={["Employee", "Stage", "Last working day", "Rehire tag", "Actions"]}
         />
       ) : (
         <Leavers employees={employees} onChoose={choose} />

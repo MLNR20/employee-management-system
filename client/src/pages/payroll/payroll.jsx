@@ -107,7 +107,7 @@ export default function Payroll() {
   const [openId, setOpenId] = useState(null);
   const selected = schedule.find((item) => item.id === periodId) ?? schedule[0];
   const period = { from: selected.from, to: selected.to };
-  const { data: report, isLoading, error } = usePayroll(period);
+  const { data: report, isLoading, isPlaceholderData, error } = usePayroll(period);
 
   const rows = report?.data ?? [];
   const open = rows.find((row) => row.employeeId === openId);
@@ -181,6 +181,7 @@ export default function Payroll() {
             data={rows}
             getRowId={(row) => row.employeeId}
             isLoading={isLoading}
+            isRendering={isPlaceholderData}
             error={error}
             pageSizeOptions={[7, 10, 25]}
             initialPageSize={7}

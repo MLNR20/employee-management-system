@@ -37,6 +37,16 @@ export const Badge = ({ value, tones }) => (
   </span>
 );
 
+/**
+ * What a resource's useExtras returns for the lists its columns look names up in: each list by name,
+ * plus isLoading while any of them is still on its way. Pass the queries:
+ * lookups({ employees: useEmployees() }).
+ */
+export const lookups = (queries) => ({
+  ...Object.fromEntries(Object.entries(queries).map(([name, query]) => [name, query.data])),
+  isLoading: Object.values(queries).some((query) => query.isLoading),
+});
+
 /** Looks an entity up by id in a loaded list and reads one property, e.g. nameOf(employees, id, e => e.fullName). */
 export const nameOf = (list = [], id, read) => {
   const found = list.find((item) => item.id === id);

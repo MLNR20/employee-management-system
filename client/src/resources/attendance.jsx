@@ -8,7 +8,7 @@ import {
   useEmployees,
   useCan,
 } from "../hooks/useEntities";
-import { nameOf } from "./shared";
+import { nameOf, lookups } from "./shared";
 
 const employeeOption = { useList: useEmployees, value: (e) => e.id, label: (e) => e.fullName };
 
@@ -47,7 +47,10 @@ export const attendanceResource = {
     useUpdate: useUpdateAttendance,
     useRemove: useRemoveAttendance,
   },
-  useExtras: () => ({ employees: useEmployees().data, canSeeRates: useCan("salary-rates:view").allowed }),
+  useExtras: () => ({
+    ...lookups({ employees: useEmployees() }),
+    canSeeRates: useCan("salary-rates:view").allowed,
+  }),
   columns: ({ employees, canSeeRates }) => [
     { key: "employee", header: "Employee", accessor: (r) => nameOf(employees, r.employeeId, (e) => e.fullName) },
     { key: "date", header: "Date", sortKey: "date" },

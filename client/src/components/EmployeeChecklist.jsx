@@ -1,6 +1,7 @@
 import Swal from "sweetalert2";
 import { Badge } from "../resources/shared";
 import DocumentFileLink from "./DocumentFileLink";
+import TableSkeleton from "./Skeleton";
 import { ACCEPTED_FILES, describeFileUsage, fileError } from "../domain/document/fileRules";
 import {
   useAccess,
@@ -110,7 +111,14 @@ export default function EmployeeChecklist({ employeeId, stage = "onboarding" }) 
       review.mutate({ id: document.id, action: "reject", remarks: result.value }, { onError: showError("Could not reject") });
     });
 
-  if (isLoading) return <p className="text-gray-500">Loading...</p>;
+  if (isLoading) {
+    return (
+      <TableSkeleton
+        label="Loading the checklist"
+        headers={["Document", "Status", "Received", "Expires", "Notes", "File", "Actions"]}
+      />
+    );
+  }
   if (error) return <p className="text-red-600">{error.response?.data?.message ?? "Could not load the checklist."}</p>;
   if (!checklist) return null;
 

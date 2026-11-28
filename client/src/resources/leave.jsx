@@ -23,7 +23,8 @@ import {
   useAccess,
 } from "../hooks/useEntities";
 import { LeaveStatus, dateOnly } from "../domain/leave/Leave";
-import { statusColumn, dateColumn, Badge, nameOf } from "./shared";
+import { statusColumn, dateColumn, Badge, nameOf, lookups } from "./shared";
+import { SkeletonBar } from "../components/Skeleton";
 
 const employeeOption = { useList: useEmployees, value: (e) => e.id, label: (e) => e.fullName };
 const leaveTypeOption = {
@@ -82,7 +83,7 @@ export const leaveBalanceResource = {
     useUpdate: useUpdateLeaveBalance,
     useRemove: useRemoveLeaveBalance,
   },
-  useExtras: () => ({ employees: useEmployees().data, leaveTypes: useLeaveTypes().data }),
+  useExtras: () => lookups({ employees: useEmployees(), leaveTypes: useLeaveTypes() }),
   columns: ({ employees, leaveTypes }) => [
     { key: "employee", header: "Employee", accessor: (b) => nameOf(employees, b.employeeId, (e) => e.fullName) },
     { key: "leaveType", header: "Leave type", accessor: (b) => nameOf(leaveTypes, b.leaveTypeId, (t) => t.name) },
@@ -172,10 +173,11 @@ function LeaveRequestActions({ row }) {
 /** "Approved by Jane Doe on 3/4/2025": read from the approval record. */
 function DecidedBy({ row }) {
   const decided = row.status === LeaveStatus.APPROVED || row.status === LeaveStatus.REJECTED;
-  const { data: approvals = [] } = useLeaveApprovals(decided ? row.id : undefined);
-  const { data: administrators = [] } = useAdministrators();
+  const { data: approvals = [], isLoading } = useLeaveApprovals(decided ? row.id : undefined);
+  const { data: administrators = [], isLoading: loadingAdministrators } = useAdministrators();
 
   if (!decided) return <span className="text-gray-400">-</span>;
+  if (isLoading || loadingAdministrators) return <SkeletonBar width="7rem" />;
   const approval = approvals[approvals.length - 1];
   if (!approval) return null;
 
@@ -203,7 +205,7 @@ export const leaveRequestResource = {
     useOne: useLeaveRequest,
     useCreate: useCreateLeaveRequest,
   },
-  useExtras: () => ({ employees: useEmployees().data, leaveTypes: useLeaveTypes().data }),
+  useExtras: () => lookups({ employees: useEmployees(), leaveTypes: useLeaveTypes() }),
   columns: ({ employees, leaveTypes }) => [
     { key: "employee", header: "Employee", accessor: (r) => nameOf(employees, r.employeeId, (e) => e.fullName) },
     { key: "leaveType", header: "Leave type", accessor: (r) => nameOf(leaveTypes, r.leaveTypeId, (t) => t.name) },

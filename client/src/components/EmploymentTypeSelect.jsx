@@ -1,4 +1,5 @@
 import { useEmploymentTypes } from "../hooks/useEntities";
+import { SkeletonBar } from "./Skeleton";
 
 const selectClass =
   "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5";
@@ -42,8 +43,9 @@ export default function EmploymentTypeSelect({ value, onChange }) {
 
 /** An employment type's name for a table cell: a dash for none, "(deleted)" if it was deleted. */
 export function EmploymentTypeName({ id }) {
-  const { data: types = [] } = useEmploymentTypes();
+  const { data: types = [], isLoading } = useEmploymentTypes();
 
   if (!id) return <span className="text-gray-400">-</span>;
+  if (isLoading) return <SkeletonBar width="6rem" />;
   return types.find((type) => type.id === id)?.name ?? "(deleted)";
 }
